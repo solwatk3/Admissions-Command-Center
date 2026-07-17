@@ -95,9 +95,11 @@ function geocodeAddress(address, delayMs) {
 // GEOCODE ALL SCHOOLS
 // Loops through every school that has an address,
 // checks the cache first, then calls Nominatim if needed.
+// Uses a fallback chain (exact -> city -> ZIP -> county) so that
+// even if the exact address isn't found, the pin lands near the right area.
 // Staggers requests by 1.1 seconds each to stay within rate limits.
-// Returns a promise that resolves to an array of
-// { school, lat, lng } objects.
+// Returns a promise resolving to { school, lat, lng, fallback } objects.
+// fallback:true means the location is approximate - user can drag to correct.
 // =============================================
 async function geocodeAllSchools(schools) {
   const cache   = getGeoCache();
@@ -110,22 +112,63 @@ async function geocodeAllSchools(schools) {
     const key = school.address.trim().toLowerCase();
 
     if (cache[key]) {
-      // Already have coordinates for this address - use the cache
-      results.push({ school: school, lat: cache[key].lat, lng: cache[key].lng });
-    } else {
-      // Not cached - fetch from Nominatim with staggered delay
-      const coords = await geocodeAddress(school.address.trim(), delay);
-      delay += 1100; // 1.1 second gap between requests
+      // Already cached - use it (includes manual drag corrections)
+      results.push({
+        school:   school,
+        lat:      cache[key].lat,
+        lng:      cache[key].lng,
+        fallback: !!cache[key].fallback,
+      });
+      continue;
+    }
+
+    // Build a fallback chain from most specific to least specific
+    const parts   = school.address.split(',').map(function(p) { return p.trim(); });
+    const city    = parts[1] || '';
+    const lastPart = parts[parts.length - 1] || '';
+    const zip     = lastPart.replace(/^TN\s*/i, '').trim();
+    const county  = getCounties().find(function(c) { return c.id === school.countyId; });
+
+    // Note: geocodeAddress() already appends ", Tennessee, USA" - do not add it here
+    const attempts = [
+      // 1. Full street address - most accurate
+      { query: school.address.trim(), fallback: false },
+    ];
+
+    // 2. City only - lands somewhere in the right town
+    if (city) {
+      attempts.push({ query: city, fallback: true });
+    }
+
+    // 3. ZIP code - drops pin in the right postal area
+    if (zip && /^\d{5}$/.test(zip)) {
+      attempts.push({ query: zip, fallback: true });
+    }
+
+    // 4. County name - last resort, at least gets the right county
+    if (county) {
+      attempts.push({ query: county.name + ' County', fallback: true });
+    }
+
+    // Try each query in order, stop at the first one that works
+    let found = null;
+    for (const attempt of attempts) {
+      const coords = await geocodeAddress(attempt.query, delay);
+      delay += 1100; // 1.1 second gap per request to respect rate limits
 
       if (coords) {
-        // Save to cache so we don't look it up again
-        cache[key] = coords;
-        results.push({ school: school, lat: coords.lat, lng: coords.lng });
+        found = { lat: coords.lat, lng: coords.lng, fallback: attempt.fallback };
+        break;
       }
+    }
+
+    if (found) {
+      // Cache with fallback flag so resync knows it can be retried
+      cache[key] = { lat: found.lat, lng: found.lng, fallback: found.fallback };
+      results.push({ school: school, lat: found.lat, lng: found.lng, fallback: found.fallback });
     }
   }
 
-  // Persist any new cache entries
   saveGeoCache(cache);
   return results;
 }
@@ -222,6 +265,16 @@ async function initSchoolMap() {
     const color  = priorityColor[item.school.priority] || '#546e7a';
     const county = getCounties().find(c => c.id === item.school.countyId);
 
+    // Fallback pins use a dashed orange border so they're visually distinct
+    const markerColor   = item.fallback ? '#ff9800' : color;
+    const markerBorder  = item.fallback ? '#ffffff'  : '#ffffff';
+    const markerOpacity = item.fallback ? 0.65       : 0.9;
+
+    // Add an approximate-location note for fallback pins
+    const fallbackNote = item.fallback
+      ? '<br/><span style="font-size:0.75rem; color:#ff9800; font-weight:600;">&#9432; Approximate location - open school detail to drag pin</span>'
+      : '';
+
     // Build the popup content shown when a marker is clicked
     const popupHtml = `
       <div style="font-family:inherit; min-width:160px;">
@@ -230,6 +283,7 @@ async function initSchoolMap() {
         <span style="font-size:0.8rem; color:#555;">${county ? county.name + ' County' : ''}</span>
         ${item.school.priority ? `<br/><span style="font-size:0.78rem; color:${color}; font-weight:600;">${item.school.priority}</span>` : ''}
         ${item.school.address ? `<br/><span style="font-size:0.75rem; color:#777;">${item.school.address}</span>` : ''}
+        ${fallbackNote}
         <br/><br/>
         <a href="#" onclick="showDirectoryList(); openSchoolDetail('${item.school.id}'); return false;"
            style="font-size:0.8rem; color:#9b30ff; text-decoration:none; font-weight:600;">
@@ -240,11 +294,13 @@ async function initSchoolMap() {
 
     L.circleMarker([item.lat, item.lng], {
       radius:      10,
-      fillColor:   color,
-      color:       '#ffffff',
-      weight:      2,
+      fillColor:   markerColor,
+      color:       markerBorder,
+      weight:      item.fallback ? 2 : 2,
       opacity:     1,
-      fillOpacity: 0.9,
+      fillOpacity: markerOpacity,
+      // Dashed outline to signal approximate placement
+      dashArray:   item.fallback ? '4 3' : null,
     })
     .addTo(mapInstance)
     .bindPopup(popupHtml);
