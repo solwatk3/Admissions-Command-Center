@@ -1,0 +1,73 @@
+/* =============================================
+   ACC - Google Calendar Sync Styles
+============================================== */
+
+/* Status row inside the calendar card */
+.gcal-status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* Connected/disconnected indicator dot */
+.gcal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.gcal-dot-on {
+  background: #4caf50;
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
+}
+
+.gcal-dot-off {
+  background: var(--text-muted);
+}
+
+/* Text block - label + meta line */
+.gcal-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.gcal-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.gcal-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Action buttons row */
+.gcal-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Mobile - stack everything */
+@media (max-width: 600px) {
+  .gcal-status {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .gcal-actions {
+    width: 100%;
+  }
+
+  .gcal-actions .btn {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+  }
+}

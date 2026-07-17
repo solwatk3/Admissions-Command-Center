@@ -363,6 +363,7 @@ function initHoverSidebar() {
 function init() {
   navigateTo('dashboard');
   initHoverSidebar();
+  initCalendar();
 }
 
 // Start the app when the DOM is ready

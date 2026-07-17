@@ -723,6 +723,11 @@ function saveRoute() {
   }
 
   saveRoutes(routes);
+
+  // Sync the saved route to Google Calendar if connected
+  const savedRoute = routes.find(r => r.id === (editingRouteId || routes[routes.length - 1].id));
+  if (savedRoute) syncRouteToCalendar(savedRoute);
+
   initRoutes(); // go back to the list view
 }
 
@@ -737,6 +742,10 @@ function cancelRouteBuilder() {
 // =============================================
 function confirmDeleteRoute(routeId) {
   if (!confirm('Delete this route? This cannot be undone.')) return;
+
+  // Remove the calendar event before deleting the route
+  deleteCalendarEvent(routeId);
+
   saveRoutes(getRoutes().filter(r => r.id !== routeId));
   initRoutes();
 }
