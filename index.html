@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ACC - Admissions Command Center</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/directory.css" />
+</head>
+<body>
+
+  <!-- =============================================
+       TOP HEADER BAR
+       Shows the app name and current page title
+  ============================================== -->
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Open menu">&#9776;</button>
+      <span class="app-title" onclick="navigateTo('dashboard')" style="cursor:pointer;" title="Go to Dashboard">ACC</span>
+    </div>
+    <div class="top-bar-right">
+      <span id="page-title" class="page-title">Dashboard</span>
+    </div>
+  </header>
+
+  <!-- =============================================
+       SIDEBAR NAVIGATION
+       Links to each section of the app
+  ============================================== -->
+  <nav id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <span>Admissions Command Center</span>
+      <button class="close-sidebar" onclick="toggleSidebar()">&#10005;</button>
+    </div>
+    <ul class="nav-links">
+      <li>
+        <a href="#" onclick="navigateTo('dashboard')" class="nav-link active" data-page="dashboard">
+          <span class="nav-icon">&#127968;</span> Dashboard
+        </a>
+      </li>
+      <li>
+        <a href="#" onclick="navigateTo('directory')" class="nav-link" data-page="directory">
+          <span class="nav-icon">&#127968;</span> School Directory
+        </a>
+      </li>
+      <li>
+        <a href="#" onclick="navigateTo('rolodex')" class="nav-link" data-page="rolodex">
+          <span class="nav-icon">&#128100;</span> Colleague Rolodex
+        </a>
+      </li>
+      <li>
+        <a href="#" onclick="navigateTo('visits')" class="nav-link" data-page="visits">
+          <span class="nav-icon">&#128203;</span> Visit Log
+        </a>
+      </li>
+      <li>
+        <a href="#" onclick="navigateTo('routes')" class="nav-link" data-page="routes">
+          <span class="nav-icon">&#128205;</span> Route Planner
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Overlay that dims the screen when sidebar is open on mobile -->
+  <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- =============================================
+       MAIN CONTENT AREA
+       Each section is a "page" - only one shows at a time
+  ============================================== -->
+  <main class="main-content">
+
+    <!-- DASHBOARD PAGE -->
+    <section id="page-dashboard" class="page active">
+      <div class="page-header">
+        <h1>Welcome back, Sol</h1>
+        <p class="subtitle">Here's your admissions overview</p>
+      </div>
+
+      <div class="cards-grid">
+        <!-- Upcoming visits card -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">&#128197;</span>
+            <h2>Upcoming Visits</h2>
+          </div>
+          <div class="card-body" id="dashboard-upcoming">
+            <p class="empty-state">No upcoming visits scheduled. Add events to get started.</p>
+          </div>
+        </div>
+
+        <!-- Return visits flagged card -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">&#128260;</span>
+            <h2>Return Visits Flagged</h2>
+          </div>
+          <div class="card-body" id="dashboard-returns">
+            <p class="empty-state">No return visits flagged yet.</p>
+          </div>
+        </div>
+
+        <!-- Season snapshot card -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">&#128200;</span>
+            <h2>Season Snapshot</h2>
+          </div>
+          <div class="card-body">
+            <div class="stat-row">
+              <span class="stat-label">Schools in Directory</span>
+              <span class="stat-value" id="stat-schools">0</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Visits Logged</span>
+              <span class="stat-value" id="stat-visits">0</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Colleagues in Rolodex</span>
+              <span class="stat-value" id="stat-colleagues">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Primary Schools quick-access card - always visible at bottom of dashboard -->
+      <div class="card card-full-width" style="margin-top: 16px;">
+        <div class="card-header">
+          <span class="card-icon">&#11088;</span>
+          <h2>Primary Schools</h2>
+          <span class="card-tag">Quick Access</span>
+        </div>
+        <div class="card-body" id="dashboard-primary-schools">
+          <p class="empty-state">No primary schools yet. Add schools in the School Directory and mark them as Primary.</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- SCHOOL DIRECTORY PAGE -->
+    <section id="page-directory" class="page">
+      <div class="page-header">
+        <h1>School Directory</h1>
+        <p class="subtitle">Your schools organized by county</p>
+      </div>
+      <!-- Search bar and controls row -->
+      <div class="directory-controls">
+        <input
+          type="text"
+          id="directory-search"
+          class="directory-search"
+          placeholder="Search counties or schools..."
+          oninput="filterDirectory(this.value)"
+        />
+        <div class="directory-btn-row">
+          <button class="btn btn-outline" onclick="expandAll()">Expand All</button>
+          <button class="btn btn-outline" onclick="collapseAll()">Collapse All</button>
+        </div>
+      </div>
+
+      <!-- County grid rendered here by directory.js -->
+      <div id="directory-content"></div>
+    </section>
+
+    <!-- COLLEAGUE ROLODEX PAGE (placeholder) -->
+    <section id="page-rolodex" class="page">
+      <div class="page-header">
+        <h1>Colleague Rolodex</h1>
+        <p class="subtitle">Other admissions counselors you know</p>
+      </div>
+      <div class="coming-soon">
+        <p>Colleague Rolodex - coming soon!</p>
+      </div>
+    </section>
+
+    <!-- VISIT LOG PAGE (placeholder) -->
+    <section id="page-visits" class="page">
+      <div class="page-header">
+        <h1>Visit Log</h1>
+        <p class="subtitle">Notes from your school and fair visits</p>
+      </div>
+      <div class="coming-soon">
+        <p>Visit Log - coming soon!</p>
+      </div>
+    </section>
+
+    <!-- ROUTE PLANNER PAGE (placeholder) -->
+    <section id="page-routes" class="page">
+      <div class="page-header">
+        <h1>Route Planner</h1>
+        <p class="subtitle">Plan your most efficient travel route</p>
+      </div>
+      <div class="coming-soon">
+        <p>Route Planner - coming soon!</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="js/app.js"></script>
+  <script src="js/directory.js"></script>
+</body>
+</html>

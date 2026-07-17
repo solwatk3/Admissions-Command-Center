@@ -1,0 +1,480 @@
+/* =============================================
+   ACC - School Directory Styles
+============================================== */
+
+/* =============================================
+   COUNTY BUCKET
+   The main container for each county
+============================================== */
+.county-bucket {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Controls row - search bar + expand/collapse buttons */
+.directory-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.directory-btn-row {
+  display: flex;
+  gap: 8px;
+}
+
+.directory-search {
+  width: 100%;
+  background: #1a001a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: #ffffff;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.directory-search:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(155,48,255,0.2);
+}
+
+.directory-search::placeholder {
+  color: var(--text-muted);
+}
+
+/* 4-column grid for county boxes */
+.county-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+/* Make sure expanded county content doesn't overflow the box */
+.county-bucket {
+  min-width: 0;  /* prevents grid blowout on long school names */
+}
+
+/* County header bar - clean and compact, click to expand */
+.county-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: #2a0a3a;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.county-header:hover {
+  background: #3a1050;
+}
+
+/* Chevron arrow */
+.county-chevron {
+  font-size: 0.7rem;
+  color: var(--accent-light);
+  flex-shrink: 0;
+}
+
+/* Action buttons row inside the expanded body */
+.county-actions {
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  background: #1a0028;
+}
+
+.county-actions .btn-icon {
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Collapsible county body - hidden when closed, shown when open */
+.county-body {
+  display: none;
+  border-top: 1px solid var(--border);
+}
+
+.county-body.open {
+  display: block;
+}
+
+.county-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.county-icon {
+  font-size: 1.1rem;
+}
+
+.county-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  flex: 1;            /* takes remaining space, pushing count to the right */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* School count badge - small circle on the right */
+.county-count {
+  background: var(--accent);
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 700;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Small icon buttons used in county and school headers */
+.btn-icon {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-icon:hover {
+  background: rgba(155,48,255,0.3);
+}
+
+.btn-icon-danger:hover {
+  background: rgba(239,68,68,0.3);
+  border-color: var(--danger);
+}
+
+/* County notes panel */
+.county-notes {
+  background: #1a0a2a;
+  border-bottom: 1px solid var(--border);
+}
+
+.county-notes-inner {
+  padding: 14px 18px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.county-notes-inner strong {
+  color: var(--accent-light);
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* =============================================
+   SCHOOL CARDS
+   Individual school entries inside a county
+============================================== */
+.schools-list {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.school-card {
+  background: #1f0a2e;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  transition: border-color 0.2s;
+}
+
+.school-card:hover {
+  border-color: var(--accent);
+}
+
+.school-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.school-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.school-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.school-address {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.school-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* School contact row */
+.school-contact {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.contact-label {
+  color: var(--accent-light);
+  font-weight: 600;
+}
+
+.contact-link {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.contact-link:hover {
+  color: var(--accent-light);
+  text-decoration: underline;
+}
+
+/* =============================================
+   PRIORITY BADGES
+   Color-coded pill showing Primary/Secondary/Tertiary
+============================================== */
+.priority-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  width: fit-content;
+}
+
+.priority-primary {
+  background: rgba(155,48,255,0.25);
+  color: #d4a0ff;
+  border: 1px solid var(--accent);
+}
+
+.priority-secondary {
+  background: rgba(34,197,94,0.15);
+  color: #86efac;
+  border: 1px solid #22c55e;
+}
+
+.priority-tertiary {
+  background: rgba(251,191,36,0.15);
+  color: #fde68a;
+  border: 1px solid #f59e0b;
+}
+
+/* =============================================
+   COUNTY FOOTER - Add School Button
+============================================== */
+.county-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: #12001a;
+}
+
+/* Add County row at the bottom of the page */
+.add-county-row {
+  text-align: center;
+  padding: 24px 0 8px;
+}
+
+/* =============================================
+   MODAL
+   Reusable popup for all add/edit forms
+============================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-box {
+  background: #1a001a;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(155,48,255,0.3);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: #2a0a3a;
+}
+
+.modal-header h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.close-modal:hover {
+  color: #ffffff;
+}
+
+.modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+}
+
+/* =============================================
+   FORM ELEMENTS
+   Inputs, selects, labels inside modals
+============================================== */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  background: #0d0d0d;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: #ffffff;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.form-group select option {
+  background: #1a001a;
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+/* Required field asterisk */
+.required {
+  color: var(--accent);
+}
+
+/* Small note text at bottom of form */
+.form-note {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* =============================================
+   RESPONSIVE GRID BREAKPOINTS
+   4 wide on desktop, fewer on smaller screens
+============================================== */
+@media (max-width: 1024px) {
+  .county-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .county-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .county-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .school-card-top {
+    flex-direction: column;
+  }
+
+  .school-actions {
+    align-self: flex-end;
+  }
+
+  .directory-btn-row {
+    flex-wrap: wrap;
+  }
+}
