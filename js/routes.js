@@ -208,7 +208,13 @@ function renderRouteDetail(routeId) {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
   });
 
-  const mapsUrl = buildMapsUrl(route.stops, route.origin);
+  // Pick the right maps URL based on device:
+  // iPhone/iPad gets Apple Maps (opens the native Maps app directly),
+  // everything else gets Google Maps.
+  const mapsUrl   = isIOS()
+    ? buildAppleMapsUrl(route.stops, route.origin)
+    : buildMapsUrl(route.stops, route.origin);
+  const mapsLabel = isIOS() ? '&#128205; Open in Apple Maps' : '&#128205; Open in Google Maps';
 
   container.innerHTML = `
     <div class="view-header">
@@ -266,8 +272,8 @@ function renderRouteDetail(routeId) {
         <!-- Action buttons -->
         <div class="route-action-row">
           ${mapsUrl
-            ? `<a class="btn btn-accent" href="${mapsUrl}" target="_blank" rel="noopener noreferrer">&#128205; Open in Google Maps</a>`
-            : `<p class="route-maps-note">Add addresses to your stops to enable Google Maps.</p>`
+            ? `<a class="btn btn-accent" href="${mapsUrl}" target="_blank" rel="noopener noreferrer">${mapsLabel}</a>`
+            : `<p class="route-maps-note">Add addresses to your stops to enable Maps.</p>`
           }
           <button class="btn btn-ghost" id="email-route-btn" onclick="emailRouteReminder('${route.id}')">&#9993; Email This Route</button>
         </div>
@@ -290,6 +296,15 @@ function formatTime(t) {
 }
 
 // =============================================
+// DEVICE DETECTION
+// Returns true if the user is on an iPhone or iPad.
+// Used to swap Google Maps for Apple Maps on iOS.
+// =============================================
+function isIOS() {
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+// =============================================
 // GOOGLE MAPS URL
 // Builds a multi-stop directions URL starting from the route's origin.
 // Google Maps opens with all stops in order - the user can
@@ -302,9 +317,28 @@ function buildMapsUrl(stops, origin) {
   if (addressed.length < 1) return null;
 
   // Start from the route's saved origin (defaults to Sol's office if blank)
-  const start  = (origin && origin.trim()) ? origin.trim() : '210 Hurt St, Martin, TN 38237';
-  const parts  = [start, ...addressed.map(s => s.address.trim())].map(encodeURIComponent);
+  const start = (origin && origin.trim()) ? origin.trim() : '210 Hurt St, Martin, TN 38237';
+  const parts = [start, ...addressed.map(s => s.address.trim())].map(encodeURIComponent);
   return 'https://www.google.com/maps/dir/' + parts.join('/');
+}
+
+// =============================================
+// APPLE MAPS URL
+// Builds a multi-stop directions URL for Apple Maps.
+// Apple Maps uses the "daddr=A+to:B+to:C" format for waypoints.
+// The maps:// scheme opens the native Maps app directly on iOS.
+// =============================================
+function buildAppleMapsUrl(stops, origin) {
+  const addressed = stops.filter(s => s.address && s.address.trim());
+  if (addressed.length < 1) return null;
+
+  const start = (origin && origin.trim()) ? origin.trim() : '210 Hurt St, Martin, TN 38237';
+
+  // First stop is the primary daddr; additional stops chain with "+to:"
+  const destinations = addressed.map(s => s.address.trim());
+  const daddr = destinations.join('+to:');
+
+  return 'maps://?saddr=' + encodeURIComponent(start) + '&daddr=' + encodeURIComponent(daddr);
 }
 
 // =============================================
