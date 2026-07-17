@@ -1,0 +1,349 @@
+/* =============================================
+   ACC - Visit Log Styles
+============================================== */
+
+/* Empty state */
+.visits-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+/* =============================================
+   VISIT LIST - month groups
+============================================== */
+.visit-group {
+  margin-bottom: 28px;
+}
+
+.visit-month-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 10px;
+}
+
+.visit-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* =============================================
+   VISIT CARD (list view)
+============================================== */
+.visit-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.visit-card:hover {
+  border-color: var(--accent);
+  background: #1a0a2e;
+}
+
+.visit-card-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.visit-mood-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.visit-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.visit-school-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* School name shown below the title on cards that have a title */
+.visit-card-school {
+  font-size: 0.78rem;
+  color: var(--accent-light);
+  margin-top: 1px;
+}
+
+.visit-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.visit-card-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.return-flag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-light);
+  background: rgba(155,48,255,0.15);
+  border: 1px solid var(--accent);
+  border-radius: 20px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.visit-chevron {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+}
+
+/* =============================================
+   VISIT DETAIL VIEW
+============================================== */
+.visit-detail-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  max-width: 700px;
+}
+
+.visit-detail-header {
+  background: #2a0a3a;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.visit-detail-title h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* School name shown below the title in the detail header */
+.visit-detail-school-sub {
+  font-size: 0.82rem;
+  color: var(--accent-light);
+  margin-top: 2px;
+}
+
+.visit-detail-date {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.visit-detail-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.visit-detail-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Stats row at top of detail */
+.visit-stats-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.visit-stat {
+  background: #1a0028;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 100px;
+  flex: 1;
+  text-align: center;
+}
+
+.visit-stat-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.visit-stat-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.visit-stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.return-stat {
+  border-color: var(--accent);
+  background: rgba(155,48,255,0.1);
+}
+
+/* Notes sections */
+.visit-section {
+  border-left: 3px solid var(--accent);
+  padding-left: 16px;
+}
+
+.visit-section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-light);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.visit-section-text {
+  font-size: 0.92rem;
+  color: var(--text);
+  line-height: 1.6;
+  white-space: pre-wrap;   /* preserves line breaks the user typed */
+}
+
+/* =============================================
+   FORM - checkbox row
+============================================== */
+.form-group-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-group-inline input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.form-group-inline label {
+  font-size: 0.92rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* =============================================
+   CUSTOM SCHOOL SEARCH DROPDOWN
+   Replaces the browser-native datalist with a
+   fully themed dropdown that matches the app.
+============================================== */
+
+/* Wrapper gives the <ul> something to position against */
+.school-dropdown-wrapper {
+  position: relative;
+}
+
+/* The filtered list - floats below the input */
+.school-dropdown-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #1a0a2e;
+  border: 1px solid var(--accent);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 200;
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+}
+
+/* Hidden state - toggled by JS */
+.school-dropdown-list.hidden {
+  display: none;
+}
+
+/* Each school option */
+.school-dd-item {
+  padding: 9px 14px;
+  font-size: 0.9rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.school-dd-item:hover {
+  background: rgba(155, 48, 255, 0.25);
+  color: #ffffff;
+}
+
+/* "No schools found" message - not clickable */
+.school-dd-no-match {
+  color: var(--text-muted);
+  font-style: italic;
+  cursor: default;
+}
+
+.school-dd-no-match:hover {
+  background: none;
+  color: var(--text-muted);
+}
+
+/* Round the input bottom corners when dropdown is open */
+.school-dropdown-wrapper:focus-within input {
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+/* =============================================
+   MOBILE
+============================================== */
+@media (max-width: 600px) {
+  .visit-detail-header {
+    flex-direction: column;
+  }
+
+  .visit-stats-row {
+    flex-direction: column;
+  }
+
+  .visit-stat {
+    flex-direction: row;
+    justify-content: flex-start;
+    text-align: left;
+    min-width: unset;
+  }
+}

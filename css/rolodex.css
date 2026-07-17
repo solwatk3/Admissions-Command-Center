@@ -1,0 +1,226 @@
+/* =============================================
+   ACC - Colleague Rolodex Styles
+============================================== */
+
+/* Top controls row - search + add button */
+.rolodex-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.rolodex-search {
+  flex: 1;
+  background: #1a001a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: #ffffff;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.rolodex-search:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(155,48,255,0.2);
+}
+
+.rolodex-search::placeholder {
+  color: var(--text-muted);
+}
+
+/* Empty state */
+.rolodex-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+/* =============================================
+   A-Z LETTER GROUPS
+============================================== */
+.rolodex-group {
+  margin-bottom: 24px;
+}
+
+/* Big letter divider */
+.rolodex-letter {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--accent);
+  padding: 4px 0 8px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 10px;
+  letter-spacing: 0.05em;
+}
+
+/* Grid of colleague cards - many per row since they're compact */
+.rolodex-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* =============================================
+   COLLEAGUE CARD - compact pill style
+============================================== */
+.colleague-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 30px;   /* pill shape */
+  padding: 6px 12px 6px 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  transition: border-color 0.2s, background 0.2s;
+  cursor: default;
+}
+
+.colleague-card:hover {
+  border-color: var(--accent);
+  background: #1f0a2e;
+}
+
+/* Initials avatar circle - smaller */
+.colleague-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--primary-light));
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.colleague-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+/* Hover popup - uses opacity/visibility so we can add a hide delay */
+.colleague-popup {
+  position: absolute;
+  top: calc(100% + 4px);   /* appears just below the pill */
+  left: 0;
+  min-width: 220px;
+  background: #2a0a3a;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  /* Extra top padding bridges the gap so moving mouse down doesn't lose hover */
+  padding: 12px 14px;
+  box-shadow: 0 4px 16px rgba(155,48,255,0.35);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  /* Hidden by default using opacity + visibility so transition works */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, visibility 0s linear 0.3s;  /* 0.3s delay before hiding */
+}
+
+/* Small invisible bridge above the popup so moving mouse into it stays hovered */
+.colleague-popup::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  height: 8px;   /* covers the gap between pill and popup */
+}
+
+.colleague-card:hover .colleague-popup,
+.colleague-popup:hover,
+.colleague-card.popup-open .colleague-popup {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: all;
+  transition: opacity 0.15s ease, visibility 0s linear 0s;  /* show immediately */
+}
+
+.popup-institution {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent-light);
+}
+
+.popup-link {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.popup-copy {
+  cursor: pointer;
+}
+
+.popup-link:hover {
+  color: #ffffff;
+}
+
+.popup-notes {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+/* Edit/delete inside the popup */
+.colleague-actions {
+  display: flex;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  margin-top: 2px;
+}
+
+.colleague-actions .btn-icon {
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* =============================================
+   MOBILE
+============================================== */
+@media (max-width: 600px) {
+  .rolodex-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rolodex-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .colleague-card {
+    flex-wrap: wrap;
+  }
+
+  /* On mobile the popup can't go off-screen to the right, so allow wider */
+  .colleague-popup {
+    min-width: 180px;
+    max-width: calc(100vw - 48px);
+    left: 0;
+    right: auto;
+  }
+}

@@ -1,0 +1,566 @@
+/* =============================================
+   ACC - Route Planner Styles
+============================================== */
+
+/* Empty state */
+.routes-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+/* =============================================
+   48-HOUR REMINDER BANNER
+============================================== */
+.route-reminder-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(155, 48, 255, 0.12);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.reminder-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.reminder-text {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--text);
+  min-width: 180px;
+}
+
+.reminder-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Small button variant used in reminder banner */
+.btn-sm {
+  padding: 5px 12px;
+  font-size: 0.8rem;
+}
+
+/* =============================================
+   ROUTE LIST - groups
+============================================== */
+.route-group {
+  margin-bottom: 28px;
+}
+
+.route-group-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 10px;
+}
+
+.route-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* =============================================
+   ROUTE CARD (list view)
+============================================== */
+.route-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.route-card:hover {
+  border-color: var(--accent);
+  background: #1a0a2e;
+}
+
+/* Past routes look slightly muted */
+.route-card-past {
+  opacity: 0.65;
+}
+
+.route-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.route-card-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.route-card-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.route-card-preview {
+  font-size: 0.78rem;
+  color: var(--accent-light);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.route-chevron {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* =============================================
+   ROUTE DETAIL VIEW
+============================================== */
+.route-detail-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  max-width: 700px;
+}
+
+.route-detail-header {
+  background: #2a0a3a;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.route-detail-title h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.route-detail-date {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.route-detail-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.route-detail-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* =============================================
+   STOP LIST (detail view)
+============================================== */
+.route-stop-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.route-stop-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px 0;
+}
+
+.route-stop-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.route-stop-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* Stop name and time badge on the same row */
+.route-stop-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.route-stop-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* Time badge shown next to the stop name in detail view */
+.route-stop-time {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-light);
+  background: rgba(155, 48, 255, 0.15);
+  border: 1px solid var(--accent);
+  border-radius: 20px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.route-stop-address {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.route-stop-no-address {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Starting location row - shown above the numbered stops */
+.route-origin-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px 0;
+}
+
+.route-origin-dot {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Arrow connector between stops */
+.route-stop-connector {
+  font-size: 1rem;
+  color: var(--border);
+  padding-left: 9px;
+  margin: -4px 0;
+}
+
+/* =============================================
+   ACTION ROW (detail view)
+============================================== */
+.route-action-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.route-maps-note {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* =============================================
+   ROUTE BUILDER
+============================================== */
+.route-builder-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.builder-heading {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: -8px;
+}
+
+/* Stop list section header */
+.builder-stops-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.builder-stops-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.builder-stops-header h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.builder-stop-count {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Empty state inside builder stop list */
+.builder-no-stops {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 10px 0;
+}
+
+/* One stop row in the builder */
+.builder-stop-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #12001e;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 6px;
+}
+
+.builder-stop-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.builder-stop-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.builder-stop-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* Inline address input inside each stop row */
+.builder-stop-address {
+  font-size: 0.82rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  color: var(--text-muted);
+  padding: 3px 0;
+  width: 100%;
+}
+
+.builder-stop-address:focus {
+  outline: none;
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+/* Time inputs row inside each builder stop */
+.builder-stop-times {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.time-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.builder-stop-time {
+  font-size: 0.82rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  color: var(--text);
+  padding: 2px 4px;
+  width: 100px;
+  color-scheme: dark;  /* makes the browser time picker dark */
+}
+
+.builder-stop-time:focus {
+  outline: none;
+  border-bottom-color: var(--accent);
+}
+
+/* Up/down/remove buttons */
+.builder-stop-controls {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Placeholder to keep layout stable when up/down button is hidden */
+.btn-icon-placeholder {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+}
+
+/* Add stop row at the bottom of the builder */
+.builder-add-stop {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.builder-add-label {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.builder-add-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* School search picker within the builder */
+.builder-school-picker {
+  flex: 1;
+  min-width: 180px;
+}
+
+.builder-or {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Save/cancel row */
+.builder-footer {
+  display: flex;
+  gap: 10px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+/* =============================================
+   MOBILE
+============================================== */
+@media (max-width: 600px) {
+  .route-detail-header {
+    flex-direction: column;
+  }
+
+  .route-detail-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .route-detail-actions .btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .route-action-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Builder stop row - stack the info block below the number on tiny screens */
+  .builder-stop-row {
+    flex-wrap: wrap;
+  }
+
+  /* Time inputs stack below address on small screens to avoid cramping */
+  .builder-stop-times {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  /* Each time pair (label + input) stays on one line */
+  .builder-stop-times > .time-label,
+  .builder-stop-times > .builder-stop-time {
+    display: inline;
+  }
+
+  /* Time input takes more width on mobile */
+  .builder-stop-time {
+    width: 130px;
+  }
+
+  .builder-add-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .builder-school-picker {
+    width: 100%;
+  }
+
+  /* Builder footer buttons full-width */
+  .builder-footer {
+    flex-direction: column;
+  }
+
+  .builder-footer .btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+}

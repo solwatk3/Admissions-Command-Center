@@ -106,19 +106,25 @@ a {
   left: 0;
   width: var(--sidebar-width);
   height: 100vh;
-  background: #110011;   /* match top bar - dark purple-black */
+  background: #110011;
   color: white;
   z-index: 300;
-  transform: translateX(-100%);  /* hidden off-screen by default */
-  transition: transform 0.25s ease;
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--border);
+  /* Always visible on desktop - no transform needed */
+  transform: translateX(0);
+  transition: transform 0.25s ease;
 }
 
-/* When sidebar is open, slide it in */
-.sidebar.open {
-  transform: translateX(0);
+/* On mobile the sidebar starts hidden and slides in when toggled */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
 }
 
 .sidebar-header {
@@ -202,14 +208,13 @@ a {
 
 /* =============================================
    MAIN CONTENT
+   On desktop, offset left to account for always-visible sidebar
 ============================================== */
 .main-content {
   margin-top: var(--topbar-height);
-  padding: 24px 20px;
+  padding: 24px 28px;
   min-height: calc(100vh - var(--topbar-height));
-  max-width: 960px;
-  margin-left: auto;
-  margin-right: auto;
+  width: 100%;   /* fill the full screen width */
 }
 
 /* Pages - only the active one is visible */
@@ -236,6 +241,15 @@ a {
   color: var(--text-muted);
   margin-top: 4px;
   font-size: 0.95rem;
+}
+
+/* Page header row - title on left, action button on right */
+.page-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 /* =============================================
@@ -307,9 +321,9 @@ a {
 }
 
 .stat-value {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: var(--primary);
+  color: #ffffff;
 }
 
 /* Full-width card - spans the whole row */
@@ -349,6 +363,13 @@ a {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.primary-school-chip:hover {
+  background: #1a0a2e;
+  border-color: #c070ff;
 }
 
 .primary-school-chip .chip-county {
@@ -368,6 +389,71 @@ a {
   text-align: center;
   color: var(--text-muted);
   font-size: 1rem;
+}
+
+/* Return visit rows on dashboard */
+.return-visit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.return-visit-row:last-child {
+  border-bottom: none;
+}
+
+.return-visit-date {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* Upcoming routes on dashboard */
+.upcoming-route-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.upcoming-route-row:last-child {
+  border-bottom: none;
+}
+
+.upcoming-route-row:hover {
+  opacity: 0.8;
+}
+
+.upcoming-route-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.upcoming-route-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.upcoming-route-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upcoming-route-meta {
+  font-size: 0.78rem;
+  color: var(--accent-light);
 }
 
 /* =============================================
@@ -411,28 +497,196 @@ a {
 
 .btn-outline {
   background: transparent;
-  color: var(--primary);
-  border: 2px solid var(--primary);
+  color: var(--accent-light);
+  border: 2px solid var(--accent);
 }
 
 .btn-outline:hover {
-  background: var(--primary);
+  background: var(--accent);
   color: white;
 }
 
+/* Solid primary button - visible on dark backgrounds */
+.btn-primary-solid {
+  background: #3b0a5c;
+  color: white;
+  border: 2px solid var(--accent-light);
+}
+
+.btn-primary-solid:hover {
+  background: var(--primary-light);
+}
+
+/* Ghost button - subtle but readable */
+.btn-ghost {
+  background: rgba(155,48,255,0.12);
+  color: var(--accent-light);
+  border: 1px solid var(--border);
+}
+
+.btn-ghost:hover {
+  background: rgba(155,48,255,0.25);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
 /* =============================================
-   MOBILE RESPONSIVE
+   DESKTOP - hover-triggered sidebar
 ============================================== */
-@media (max-width: 600px) {
+@media (min-width: 769px) {
+  /* Hide hamburger and close button on desktop */
+  .menu-toggle,
+  .close-sidebar {
+    display: none;
+  }
+
+  /* Hide sidebar header label on desktop */
+  .sidebar-header {
+    display: none;
+  }
+
+  /* Sidebar sits under the top bar, hidden off-screen by default */
+  .sidebar {
+    top: var(--topbar-height);
+    height: calc(100vh - var(--topbar-height));
+    transform: translateX(-100%);   /* hidden by default */
+    transition: transform 0.22s ease;
+    z-index: 400;
+  }
+
+  /* Shown when hovered or when the trigger zone is hovered */
+  .sidebar.peek {
+    transform: translateX(0);
+  }
+
+  /* No dim overlay on desktop */
+  .sidebar-overlay {
+    display: none !important;
+  }
+
+  /* Main content takes full width on desktop - sidebar overlays it */
   .main-content {
-    padding: 16px 12px;
+    margin-left: 0;
+  }
+
+  /* Thin invisible trigger strip on the left edge - hovering this opens the sidebar */
+  .sidebar-trigger {
+    display: block;
+    position: fixed;
+    top: var(--topbar-height);
+    left: 0;
+    width: 6px;
+    height: calc(100vh - var(--topbar-height));
+    z-index: 399;
+    cursor: pointer;
+  }
+}
+
+/* =============================================
+   MOBILE - bottom tab bar + hamburger
+============================================== */
+@media (max-width: 768px) {
+  /* On mobile, main content takes full width and has bottom padding for tab bar */
+  .main-content {
+    margin-left: 0;
+    padding: 12px 12px 84px;
   }
 
   .page-header h1 {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
+  }
+
+  .page-header .subtitle {
+    font-size: 0.82rem;
+  }
+
+  /* Stack the page header title + action button vertically */
+  .page-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  /* Make the action button full-width so it's easy to tap */
+  .page-header-row > .btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
   }
 
   .cards-grid {
     grid-template-columns: 1fr;
   }
+
+  /* iOS fix: inputs under 16px font-size cause the browser to auto-zoom on focus.
+     Force 16px on mobile to prevent that. */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* Buttons should be tall enough for comfortable tapping */
+  .btn {
+    min-height: 44px;
+  }
+
+  /* Bottom tab bar - always visible on mobile */
+  .bottom-nav {
+    display: flex;
+  }
+
+  /* Bigger tap area for bottom nav buttons */
+  .bottom-nav-btn {
+    font-size: 0.7rem;
+  }
+
+  .bottom-nav-btn .bnav-icon {
+    font-size: 1.4rem;
+  }
+
+  /* Primary school chips - 2 per row on mobile */
+  .primary-school-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* =============================================
+   BOTTOM TAB BAR (mobile only)
+============================================== */
+.bottom-nav {
+  display: none;   /* hidden on desktop, shown on mobile via media query above */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: #110011;
+  border-top: 1px solid var(--border);
+  z-index: 200;
+  align-items: stretch;
+}
+
+.bottom-nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 6px 2px;
+  transition: color 0.2s;
+}
+
+.bottom-nav-btn.active {
+  color: var(--accent);
+}
+
+.bottom-nav-btn .bnav-icon {
+  font-size: 1.3rem;
+  line-height: 1;
 }

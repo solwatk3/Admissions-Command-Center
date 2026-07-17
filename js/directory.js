@@ -1,13 +1,16 @@
 // =============================================
 // ACC - School Directory
-// Manages counties and schools within them
+// County pills -> Schools list -> School detail
 // =============================================
+
+// Tracks which view is active: 'counties', 'schools', 'detail'
+let dirView        = 'counties';
+let activeCountyId = null;   // county being viewed in schools view
+let activeSchoolId = null;   // school being viewed in detail view
 
 // =============================================
 // DATA HELPERS
-// Load and save counties and schools from storage
 // =============================================
-
 function getCounties() {
   return loadData('counties', [
     { id: 'c1', name: 'East TN',    notes: '' },
@@ -29,167 +32,123 @@ function saveSchools(schools) {
   saveData('schools', schools);
 }
 
-// Generate a simple unique ID for new records
 function makeId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
 // =============================================
-// RENDER DIRECTORY
-// Builds the full directory view with county
-// buckets collapsed by default for compact display
+// TOP-LEVEL ROUTER
+// Decides which view to render
 // =============================================
 function renderDirectory() {
+  if (dirView === 'counties') renderCountyPills();
+  if (dirView === 'schools')  renderSchoolsList(activeCountyId);
+  if (dirView === 'detail')   renderSchoolDetail(activeSchoolId);
+}
+
+// =============================================
+// VIEW 1 - COUNTY PILLS
+// Compact pill per county, hover shows primaries
+// click navigates into that county's schools
+// =============================================
+function renderCountyPills() {
   const container = document.getElementById('directory-content');
   if (!container) return;
 
   const counties = getCounties();
   const schools  = getSchools();
 
-  // Remember which counties are currently expanded so a re-render keeps their state
-  const expanded = {};
-  document.querySelectorAll('.county-body.open').forEach(el => {
-    expanded[el.dataset.countyId] = true;
-  });
+  // Show the controls bar
+  showDirectoryControls(true);
 
-  // Wrap all counties in a 4-column grid
-  const grid = '<div class="county-grid">' + counties.map(county => {
-    const countySchools = schools.filter(s => s.countyId === county.id);
-    const isOpen        = expanded[county.id] ? 'open' : '';
+  if (counties.length === 0) {
+    container.innerHTML = '<p class="empty-state" style="padding:40px; text-align:center;">No counties yet. Add one to get started.</p>';
+    return;
+  }
 
-    return `
-      <div class="county-bucket" id="county-${county.id}" data-county-name="${county.name.toLowerCase()}">
+  container.innerHTML = '<div class="county-pill-grid">' +
+    counties.map(county => {
+      const countySchools   = schools.filter(s => s.countyId === county.id);
+      const primarySchools  = countySchools.filter(s => s.priority === 'Primary');
+      const initials        = county.name.trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
-        <!-- Header - click anywhere to expand/collapse -->
-        <div class="county-header" onclick="toggleCounty('${county.id}')">
-          <span class="county-chevron" id="chevron-${county.id}">${isOpen ? '&#9660;' : '&#9654;'}</span>
-          <h2 class="county-name">${county.name}</h2>
-          <span class="county-count">${countySchools.length}</span>
-        </div>
+      const primaryPopup = primarySchools.length > 0
+        ? primarySchools.map(s => `<span class="popup-primary-school" onclick="event.stopPropagation(); openSchoolDetail('${s.id}')">&#11088; ${s.name}</span>`).join('')
+        : '<span class="popup-no-primary">No primary schools yet</span>';
 
-        <!-- Collapsible body -->
-        <div class="county-body ${isOpen}" id="county-body-${county.id}" data-county-id="${county.id}">
-
-          <!-- Action buttons row inside the body so they don't crowd the header -->
-          <div class="county-actions" onclick="event.stopPropagation()">
-            <button class="btn-icon" onclick="toggleCountyNotes('${county.id}')" title="View notes">&#128221; Notes</button>
-            <button class="btn-icon" onclick="openEditCounty('${county.id}')" title="Edit county">&#9998; Edit</button>
-            <button class="btn-icon btn-icon-danger" onclick="confirmDeleteCounty('${county.id}')" title="Delete county">&#128465; Delete</button>
+      return `
+        <div class="county-pill" id="county-pill-${county.id}" data-county-name="${county.name.toLowerCase()}">
+          <div class="county-pill-inner" onclick="openCountyView('${county.id}')">
+            <div class="county-avatar">${initials}</div>
+            <span class="county-pill-name">${county.name}</span>
+            <span class="county-pill-count">${countySchools.length}</span>
           </div>
 
-          <!-- County notes section -->
-          <div class="county-notes" id="county-notes-${county.id}" style="display:none;">
-            <div class="county-notes-inner">
-              <strong>County Notes:</strong>
-              <p>${county.notes || '<em>No notes yet. Click Edit to add notes about this county.</em>'}</p>
+          <!-- Hover popup showing primary schools and edit/delete actions -->
+          <div class="county-popup">
+            <p class="popup-label">Primary Schools</p>
+            <div class="popup-primaries">${primaryPopup}</div>
+            <div class="county-popup-actions">
+              <button class="btn-icon" onclick="event.stopPropagation(); openEditCounty('${county.id}')">&#9998; Edit</button>
+              <button class="btn-icon btn-icon-danger" onclick="event.stopPropagation(); confirmDeleteCounty('${county.id}')">&#128465; Delete</button>
             </div>
           </div>
-
-          <!-- Schools list -->
-          <div class="schools-list" id="schools-list-${county.id}">
-            ${countySchools.length === 0
-              ? '<p class="empty-state" style="padding: 16px;">No schools yet.</p>'
-              : countySchools.map(school => renderSchoolCard(school)).join('')
-            }
-          </div>
-
-          <!-- Add school button -->
-          <div class="county-footer">
-            <button class="btn btn-accent" style="width:100%; justify-content:center;" onclick="openAddSchool('${county.id}')">
-              + Add School
-            </button>
-          </div>
-
         </div>
-      </div>
-    `;
-  }).join('') + '</div>';
+      `;
+    }).join('') +
+  '</div>';
+}
 
-  container.innerHTML = grid + `
-    <div class="add-county-row">
-      <button class="btn btn-outline" onclick="openAddCounty()">+ Add New County</button>
+// =============================================
+// VIEW 2 - SCHOOLS LIST
+// All schools inside one county, with back button
+// =============================================
+function openCountyView(countyId) {
+  dirView        = 'schools';
+  activeCountyId = countyId;
+  renderDirectory();
+}
+
+function renderSchoolsList(countyId) {
+  const container = document.getElementById('directory-content');
+  if (!container) return;
+
+  const counties      = getCounties();
+  const county        = counties.find(c => c.id === countyId);
+  const schools       = getSchools();
+  const countySchools = schools.filter(s => s.countyId === countyId);
+
+  // Hide the top controls bar (search/add buttons) in this view
+  showDirectoryControls(false);
+
+  container.innerHTML = `
+    <!-- Back button and county title -->
+    <div class="view-header">
+      <button class="btn btn-ghost back-btn" onclick="backToCounties()">&#8592; Back to Counties</button>
+      <div class="view-title-row">
+        <h2 class="view-county-title">${county ? county.name + ' County' : 'County'}</h2>
+        <button class="btn btn-accent" onclick="openAddSchool('${countyId}')">+ Add School</button>
+        ${county && county.notes ? `<button class="btn btn-ghost" onclick="toggleInlineNotes('county-inline-notes')">&#128221; Notes</button>` : ''}
+        <button class="btn btn-ghost" onclick="openEditCounty('${countyId}')">&#9998; Edit County</button>
+      </div>
+      ${county && county.notes ? `
+        <div id="county-inline-notes" class="inline-notes" style="display:none;">
+          <strong>County Notes:</strong> ${county.notes}
+        </div>` : ''}
+    </div>
+
+    <!-- Schools grid -->
+    <div class="schools-pill-grid">
+      ${countySchools.length === 0
+        ? '<p class="empty-state" style="padding:40px; text-align:center;">No schools in this county yet. Add one above.</p>'
+        : countySchools.map(s => renderSchoolPill(s)).join('')
+      }
     </div>
   `;
 }
 
-// =============================================
-// TOGGLE COUNTY OPEN/CLOSED
-// Expands or collapses a county's school list
-// =============================================
-function toggleCounty(countyId) {
-  const body    = document.getElementById('county-body-' + countyId);
-  const chevron = document.getElementById('chevron-' + countyId);
-  if (!body) return;
-
-  const isOpen = body.classList.toggle('open');
-  if (chevron) chevron.innerHTML = isOpen ? '&#9660;' : '&#9654;';
-}
-
-// =============================================
-// EXPAND / COLLAPSE ALL
-// Opens or closes every county at once
-// =============================================
-function expandAll() {
-  document.querySelectorAll('.county-body').forEach(body => {
-    body.classList.add('open');
-  });
-  document.querySelectorAll('.county-chevron').forEach(ch => {
-    ch.innerHTML = '&#9660;';
-  });
-}
-
-function collapseAll() {
-  document.querySelectorAll('.county-body').forEach(body => {
-    body.classList.remove('open');
-  });
-  document.querySelectorAll('.county-chevron').forEach(ch => {
-    ch.innerHTML = '&#9654;';
-  });
-}
-
-// =============================================
-// SEARCH / FILTER
-// Filters counties and schools by search term
-// Expands matching counties automatically
-// =============================================
-function filterDirectory(term) {
-  const q        = term.trim().toLowerCase();
-  const counties = document.querySelectorAll('.county-bucket');
-
-  counties.forEach(bucket => {
-    const countyName  = bucket.dataset.countyName || '';
-    const schoolCards = bucket.querySelectorAll('.school-card');
-    let   anySchoolMatch = false;
-
-    // Check each school card for a name match
-    schoolCards.forEach(card => {
-      const schoolName = card.querySelector('.school-name')?.textContent.toLowerCase() || '';
-      const match      = !q || schoolName.includes(q);
-      card.style.display = match ? '' : 'none';
-      if (match) anySchoolMatch = true;
-    });
-
-    // Show the county if its name matches OR any school inside it matches
-    const countyMatch = !q || countyName.includes(q) || anySchoolMatch;
-    bucket.style.display = countyMatch ? '' : 'none';
-
-    // Auto-expand the county if there's a search term and it matched
-    if (q && countyMatch) {
-      const body    = bucket.querySelector('.county-body');
-      const chevron = bucket.querySelector('.county-chevron');
-      if (body && !body.classList.contains('open')) {
-        body.classList.add('open');
-        if (chevron) chevron.innerHTML = '&#9660;';
-      }
-    }
-  });
-}
-
-// =============================================
-// RENDER SCHOOL CARD
-// Returns HTML for one school entry
-// =============================================
-function renderSchoolCard(school) {
+// Renders one school as a pill in the schools list view
+function renderSchoolPill(school) {
   const priorityClass = {
     'Primary':   'priority-primary',
     'Secondary': 'priority-secondary',
@@ -197,46 +156,150 @@ function renderSchoolCard(school) {
   }[school.priority] || '';
 
   return `
-    <div class="school-card" id="school-${school.id}">
-      <div class="school-card-top">
-        <div class="school-info">
-          <span class="priority-badge ${priorityClass}">${school.priority}</span>
-          <h3 class="school-name">${school.name}</h3>
-          <p class="school-address">${school.address || 'No address on file'}</p>
-        </div>
-        <div class="school-actions">
-          <button class="btn-icon" onclick="openEditSchool('${school.id}')" title="Edit school">&#9998;</button>
-          <button class="btn-icon btn-icon-danger" onclick="confirmDeleteSchool('${school.id}')" title="Delete school">&#128465;</button>
-        </div>
+    <div class="school-pill">
+      <span class="priority-badge ${priorityClass}">${school.priority}</span>
+      <span class="school-pill-name" onclick="openSchoolDetail('${school.id}')">${school.name}</span>
+      <div class="school-pill-actions">
+        <button class="btn-icon" onclick="openEditSchool('${school.id}')">&#9998;</button>
+        <button class="btn-icon btn-icon-danger" onclick="confirmDeleteSchool('${school.id}')">&#128465;</button>
       </div>
-      ${school.contact ? `
-        <div class="school-contact">
-          <span class="contact-label">School Contact:</span>
-          <span>${school.contact}</span>
-          ${school.contactEmail ? `<a href="mailto:${school.contactEmail}" class="contact-link">${school.contactEmail}</a>` : ''}
-          ${school.contactPhone ? `<a href="tel:${school.contactPhone}" class="contact-link">${school.contactPhone}</a>` : ''}
-        </div>
-      ` : ''}
     </div>
   `;
 }
 
 // =============================================
-// COUNTY NOTES TOGGLE
-// Shows/hides the notes panel for a county
+// VIEW 3 - SCHOOL DETAIL
+// Full info page for one school
 // =============================================
-function toggleCountyNotes(countyId) {
-  const notes = document.getElementById('county-notes-' + countyId);
-  if (!notes) return;
-  notes.style.display = notes.style.display === 'none' ? 'block' : 'none';
+function openSchoolDetail(schoolId) {
+  const schools = getSchools();
+  const school  = schools.find(s => s.id === schoolId);
+  if (!school) return;
+
+  dirView        = 'detail';
+  activeSchoolId = schoolId;
+  // Always set the county so the back button knows where to return
+  activeCountyId = school.countyId;
+  renderDirectory();
+}
+
+function renderSchoolDetail(schoolId) {
+  const container = document.getElementById('directory-content');
+  if (!container) return;
+
+  const schools  = getSchools();
+  const school   = schools.find(s => s.id === schoolId);
+  if (!school) { backToCounties(); return; }
+
+  const counties = getCounties();
+  const county   = counties.find(c => c.id === school.countyId);
+
+  const priorityClass = {
+    'Primary':   'priority-primary',
+    'Secondary': 'priority-secondary',
+    'Tertiary':  'priority-tertiary',
+  }[school.priority] || '';
+
+  showDirectoryControls(false);
+
+  container.innerHTML = `
+    <div class="view-header">
+      <button class="btn btn-ghost back-btn" onclick="backToSchools()">&#8592; Back to ${county ? county.name : 'County'}</button>
+    </div>
+
+    <div class="school-detail-card">
+      <div class="school-detail-header">
+        <div>
+          <span class="priority-badge ${priorityClass}" style="margin-bottom:8px; display:inline-block;">${school.priority}</span>
+          <h2 class="school-detail-name">${school.name}</h2>
+          <p class="school-detail-county">${county ? county.name + ' County' : ''}</p>
+        </div>
+        <div class="school-detail-actions">
+          <button class="btn btn-ghost" onclick="openEditSchool('${school.id}')">&#9998; Edit School</button>
+          <button class="btn btn-danger" onclick="confirmDeleteSchool('${school.id}')">&#128465; Delete</button>
+        </div>
+      </div>
+
+      <div class="detail-fields">
+        <div class="detail-field">
+          <span class="detail-label">Address</span>
+          <span class="detail-value">${school.address || 'Not on file'}</span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-label">Contact Name</span>
+          <span class="detail-value">${school.contact || 'Not on file'}</span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-label">Contact Email</span>
+          <span class="detail-value">
+            ${school.contactEmail
+              ? `<span class="copy-value" onclick="copyToClipboard('${school.contactEmail}', this)">&#9993; ${school.contactEmail}</span>`
+              : 'Not on file'}
+          </span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-label">Contact Phone</span>
+          <span class="detail-value">
+            ${school.contactPhone
+              ? `<span class="copy-value" onclick="copyToClipboard('${school.contactPhone}', this)">&#128222; ${school.contactPhone}</span>`
+              : 'Not on file'}
+          </span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// =============================================
+// BACK NAVIGATION
+// =============================================
+function backToCounties() {
+  dirView        = 'counties';
+  activeCountyId = null;
+  activeSchoolId = null;
+  renderDirectory();
+}
+
+function backToSchools() {
+  dirView        = 'schools';
+  activeSchoolId = null;
+  renderDirectory();
+}
+
+// =============================================
+// SHOW/HIDE CONTROLS BAR
+// The search + add buttons are only shown on the county pills view
+// =============================================
+function showDirectoryControls(visible) {
+  const ctrl = document.querySelector('.directory-controls');
+  if (ctrl) ctrl.style.display = visible ? '' : 'none';
+}
+
+// =============================================
+// INLINE NOTES TOGGLE (schools view)
+// =============================================
+function toggleInlineNotes(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// =============================================
+// SEARCH FILTER (county pills view only)
+// =============================================
+function filterDirectory(term) {
+  const q     = term.trim().toLowerCase();
+  const pills = document.querySelectorAll('.county-pill');
+  pills.forEach(pill => {
+    const name  = pill.dataset.countyName || '';
+    const match = !q || name.includes(q);
+    pill.style.display = match ? '' : 'none';
+  });
 }
 
 // =============================================
 // MODAL SYSTEM
-// A single reusable modal for all forms
 // =============================================
 function openModal(title, bodyHtml, onSave) {
-  // Remove any existing modal first
   const existing = document.getElementById('acc-modal');
   if (existing) existing.remove();
 
@@ -260,11 +323,13 @@ function openModal(title, bodyHtml, onSave) {
   `;
 
   document.body.appendChild(modal);
-
-  // Wire up the save button to the provided callback
   document.getElementById('modal-save-btn').addEventListener('click', onSave);
 
-  // Close modal if user clicks outside the box
+  modal._ctrlEnterHandler = function(e) {
+    if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); onSave(); }
+  };
+  document.addEventListener('keydown', modal._ctrlEnterHandler);
+
   modal.addEventListener('click', function(e) {
     if (e.target === modal) closeModal();
   });
@@ -272,22 +337,43 @@ function openModal(title, bodyHtml, onSave) {
 
 function closeModal() {
   const modal = document.getElementById('acc-modal');
-  if (modal) modal.remove();
+  if (!modal) return;
+  if (modal._ctrlEnterHandler) document.removeEventListener('keydown', modal._ctrlEnterHandler);
+  modal.remove();
+}
+
+// =============================================
+// GLOBAL ADD SCHOOL (from top controls)
+// =============================================
+function openAddSchoolGlobal() {
+  const counties = getCounties();
+  if (counties.length === 0) { alert('Add a county first.'); return; }
+  openAddSchool(null);
 }
 
 // =============================================
 // ADD SCHOOL FORM
-// Opens a modal to add a new school to a county
 // =============================================
 function openAddSchool(countyId) {
   const counties = getCounties();
-  const county   = counties.find(c => c.id === countyId);
+  const county   = countyId ? counties.find(c => c.id === countyId) : null;
+
+  const countyField = county
+    ? `<p class="form-note">Adding to: <strong>${county.name} County</strong></p>`
+    : `<div class="form-group">
+        <label>County <span class="required">*</span></label>
+        <select id="f-county">
+          <option value="">-- Select a county --</option>
+          ${counties.map(c => `<option value="${c.id}">${c.name} County</option>`).join('')}
+        </select>
+       </div>`;
 
   const body = `
     <div class="form-group">
       <label>School Name <span class="required">*</span></label>
       <input type="text" id="f-name" placeholder="e.g. Oak Ridge High School" />
     </div>
+    ${countyField}
     <div class="form-group">
       <label>Address</label>
       <input type="text" id="f-address" placeholder="123 Main St, City, TN 37000" />
@@ -302,7 +388,7 @@ function openAddSchool(countyId) {
     </div>
     <div class="form-group">
       <label>School Contact Name</label>
-      <input type="text" id="f-contact" placeholder="e.g. Jane Smith - Counselor" />
+      <input type="text" id="f-contact" placeholder="e.g. Jane Smith" />
     </div>
     <div class="form-group">
       <label>Contact Email</label>
@@ -312,17 +398,19 @@ function openAddSchool(countyId) {
       <label>Contact Phone</label>
       <input type="tel" id="f-contact-phone" placeholder="(555) 000-0000" />
     </div>
-    <p class="form-note">Adding to: <strong>${county ? county.name + ' County' : ''}</strong></p>
   `;
 
   openModal('Add School', body, function() {
     const name = document.getElementById('f-name').value.trim();
     if (!name) { alert('School name is required.'); return; }
 
+    const selectedCountyId = countyId || document.getElementById('f-county')?.value;
+    if (!selectedCountyId) { alert('Please select a county.'); return; }
+
     const schools = getSchools();
     schools.push({
       id:           makeId(),
-      countyId:     countyId,
+      countyId:     selectedCountyId,
       name:         name,
       address:      document.getElementById('f-address').value.trim(),
       priority:     document.getElementById('f-priority').value,
@@ -334,13 +422,12 @@ function openAddSchool(countyId) {
     saveSchools(schools);
     closeModal();
     renderDirectory();
-    updateDashboardStats();  // keep dashboard stats in sync
+    updateDashboardStats();
   });
 }
 
 // =============================================
 // EDIT SCHOOL FORM
-// Pre-fills the form with existing school data
 // =============================================
 function openEditSchool(schoolId) {
   const schools = getSchools();
@@ -382,7 +469,6 @@ function openEditSchool(schoolId) {
     const name = document.getElementById('f-name').value.trim();
     if (!name) { alert('School name is required.'); return; }
 
-    // Update the matching school in the array
     const idx = schools.findIndex(s => s.id === schoolId);
     schools[idx] = {
       ...schools[idx],
@@ -403,17 +489,17 @@ function openEditSchool(schoolId) {
 
 // =============================================
 // DELETE SCHOOL
-// Confirms before removing a school permanently
 // =============================================
 function confirmDeleteSchool(schoolId) {
   const schools = getSchools();
   const school  = schools.find(s => s.id === schoolId);
   if (!school) return;
-
-  if (!confirm(`Remove "${school.name}" from the directory? This cannot be undone.`)) return;
+  if (!confirm(`Remove "${school.name}"? This cannot be undone.`)) return;
 
   saveSchools(schools.filter(s => s.id !== schoolId));
-  renderDirectory();
+  // If on detail view, go back to schools list after deleting
+  if (dirView === 'detail') backToSchools();
+  else renderDirectory();
   updateDashboardStats();
 }
 
@@ -428,7 +514,7 @@ function openAddCounty() {
     </div>
     <div class="form-group">
       <label>Notes (optional)</label>
-      <textarea id="f-county-notes" rows="4" placeholder="e.g. Exempt from housing rule, contact admissions office first..."></textarea>
+      <textarea id="f-county-notes" rows="3" placeholder="e.g. Exempt from housing rule..."></textarea>
     </div>
   `;
 
@@ -437,12 +523,7 @@ function openAddCounty() {
     if (!name) { alert('County name is required.'); return; }
 
     const counties = getCounties();
-    counties.push({
-      id:    makeId(),
-      name:  name,
-      notes: document.getElementById('f-county-notes').value.trim(),
-    });
-
+    counties.push({ id: makeId(), name, notes: document.getElementById('f-county-notes').value.trim() });
     saveCounties(counties);
     closeModal();
     renderDirectory();
@@ -464,7 +545,7 @@ function openEditCounty(countyId) {
     </div>
     <div class="form-group">
       <label>Notes</label>
-      <textarea id="f-county-notes" rows="4" placeholder="e.g. Exempt from housing rule...">${county.notes || ''}</textarea>
+      <textarea id="f-county-notes" rows="3">${county.notes || ''}</textarea>
     </div>
   `;
 
@@ -473,12 +554,7 @@ function openEditCounty(countyId) {
     if (!name) { alert('County name is required.'); return; }
 
     const idx = counties.findIndex(c => c.id === countyId);
-    counties[idx] = {
-      ...counties[idx],
-      name:  name,
-      notes: document.getElementById('f-county-notes').value.trim(),
-    };
-
+    counties[idx] = { ...counties[idx], name, notes: document.getElementById('f-county-notes').value.trim() };
     saveCounties(counties);
     closeModal();
     renderDirectory();
@@ -487,21 +563,16 @@ function openEditCounty(countyId) {
 
 // =============================================
 // DELETE COUNTY
-// Only allowed if the county has no schools
 // =============================================
 function confirmDeleteCounty(countyId) {
-  const counties = getCounties();
-  const county   = counties.find(c => c.id === countyId);
-  if (!county) return;
-
-  const schools        = getSchools();
-  const countySchools  = schools.filter(s => s.countyId === countyId);
+  const counties      = getCounties();
+  const county        = counties.find(c => c.id === countyId);
+  const countySchools = getSchools().filter(s => s.countyId === countyId);
 
   if (countySchools.length > 0) {
-    alert(`Cannot delete "${county.name} County" - it still has ${countySchools.length} school(s). Remove the schools first.`);
+    alert(`Cannot delete "${county.name}" - it still has ${countySchools.length} school(s). Remove the schools first.`);
     return;
   }
-
   if (!confirm(`Delete "${county.name} County"? This cannot be undone.`)) return;
 
   saveCounties(counties.filter(c => c.id !== countyId));
@@ -509,9 +580,16 @@ function confirmDeleteCounty(countyId) {
 }
 
 // =============================================
+// EXPAND / COLLAPSE ALL - no longer needed
+// Kept as stubs so old buttons don't break
+// =============================================
+function expandAll()   { /* not used in pill view */ }
+function collapseAll() { /* not used in pill view */ }
+
+// =============================================
 // INIT DIRECTORY
-// Called when the user navigates to the directory page
 // =============================================
 function initDirectory() {
+  dirView = 'counties';
   renderDirectory();
 }

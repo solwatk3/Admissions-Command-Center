@@ -3,29 +3,19 @@
 ============================================== */
 
 /* =============================================
-   COUNTY BUCKET
-   The main container for each county
+   CONTROLS ROW
 ============================================== */
-.county-bucket {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Controls row - search bar + expand/collapse buttons */
 .directory-controls {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .directory-btn-row {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .directory-search {
@@ -50,230 +40,252 @@
   color: var(--text-muted);
 }
 
-/* 4-column grid for county boxes */
-.county-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-/* Make sure expanded county content doesn't overflow the box */
-.county-bucket {
-  min-width: 0;  /* prevents grid blowout on long school names */
-}
-
-/* County header bar - clean and compact, click to expand */
-.county-header {
+/* =============================================
+   VIEW HEADER (back button + title row)
+============================================== */
+.view-header {
+  margin-bottom: 20px;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 14px;
-  background: #2a0a3a;
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.2s;
-}
-
-.county-header:hover {
-  background: #3a1050;
-}
-
-/* Chevron arrow */
-.county-chevron {
-  font-size: 0.7rem;
-  color: var(--accent-light);
-  flex-shrink: 0;
-}
-
-/* Action buttons row inside the expanded body */
-.county-actions {
-  display: flex;
-  gap: 6px;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border);
-  background: #1a0028;
-}
-
-.county-actions .btn-icon {
-  font-size: 0.8rem;
-  padding: 4px 10px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* Collapsible county body - hidden when closed, shown when open */
-.county-body {
-  display: none;
-  border-top: 1px solid var(--border);
-}
-
-.county-body.open {
-  display: block;
-}
-
-.county-header-left {
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
 }
 
-.county-icon {
-  font-size: 1.1rem;
+.back-btn {
+  align-self: flex-start;
+  font-size: 0.88rem;
 }
 
-.county-name {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #ffffff;
-  flex: 1;            /* takes remaining space, pushing count to the right */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.view-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-/* School count badge - small circle on the right */
-.county-count {
-  background: var(--accent);
-  color: white;
-  font-size: 0.72rem;
+.view-county-title {
+  font-size: 1.4rem;
   font-weight: 700;
-  min-width: 22px;
-  height: 22px;
+  color: var(--accent-light);
+  flex: 1;
+}
+
+.inline-notes {
+  background: #1a0a2a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* =============================================
+   COUNTY PILLS GRID
+============================================== */
+.county-pill-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Each county pill - like the colleague rolodex */
+.county-pill {
+  position: relative;
+}
+
+.county-pill-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  padding: 6px 14px 6px 6px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  user-select: none;
+}
+
+.county-pill-inner:hover {
+  border-color: var(--accent);
+  background: #1f0a2e;
+}
+
+/* County initials avatar */
+.county-avatar {
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--primary-light));
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-/* Small icon buttons used in county and school headers */
-.btn-icon {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
+.county-pill-name {
+  font-size: 0.88rem;
+  font-weight: 600;
   color: #ffffff;
-  border-radius: 6px;
-  padding: 5px 8px;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: background 0.2s;
+  white-space: nowrap;
 }
 
-.btn-icon:hover {
-  background: rgba(155,48,255,0.3);
-}
-
-.btn-icon-danger:hover {
-  background: rgba(239,68,68,0.3);
-  border-color: var(--danger);
-}
-
-/* County notes panel */
-.county-notes {
-  background: #1a0a2a;
-  border-bottom: 1px solid var(--border);
-}
-
-.county-notes-inner {
-  padding: 14px 18px;
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  line-height: 1.6;
-}
-
-.county-notes-inner strong {
-  color: var(--accent-light);
-  display: block;
-  margin-bottom: 6px;
+/* School count badge */
+.county-pill-count {
+  background: var(--accent);
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* =============================================
-   SCHOOL CARDS
-   Individual school entries inside a county
+   COUNTY HOVER POPUP
 ============================================== */
-.schools-list {
-  padding: 12px 16px;
+.county-popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 200px;
+  background: #2a0a3a;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  box-shadow: 0 4px 16px rgba(155,48,255,0.35);
+  z-index: 100;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, visibility 0s linear 0.3s;
 }
 
-.school-card {
-  background: #1f0a2e;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  transition: border-color 0.2s;
+.county-popup::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  height: 8px;
 }
 
-.school-card:hover {
-  border-color: var(--accent);
+.county-pill:hover .county-popup,
+.county-popup:hover {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: all;
+  transition: opacity 0.15s ease, visibility 0s linear 0s;
 }
 
-.school-card-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
+.popup-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+  margin-bottom: 2px;
 }
 
-.school-info {
-  flex: 1;
+.popup-primaries {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.school-name {
-  font-size: 1rem;
-  font-weight: 600;
+.popup-primary-school {
+  font-size: 0.83rem;
   color: #ffffff;
+  cursor: pointer;
+  transition: color 0.15s;
 }
 
-.school-address {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-.school-actions {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-/* School contact row */
-.school-contact {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
-.contact-label {
-  color: var(--accent-light);
-  font-weight: 600;
-}
-
-.contact-link {
-  color: var(--accent);
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.contact-link:hover {
+.popup-primary-school:hover {
   color: var(--accent-light);
   text-decoration: underline;
 }
 
+.popup-no-primary {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.county-popup-actions {
+  display: flex;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  margin-top: 2px;
+}
+
+.county-popup-actions .btn-icon {
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* =============================================
+   SCHOOLS LIST VIEW (inside a county)
+============================================== */
+.schools-pill-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Individual school row */
+.school-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  transition: border-color 0.2s;
+}
+
+.school-pill:hover {
+  border-color: var(--accent);
+}
+
+/* Clickable school name */
+.school-pill-name {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.school-pill-name:hover {
+  color: var(--accent-light);
+  text-decoration: underline;
+}
+
+.school-pill-actions {
+  display: flex;
+  gap: 6px;
+}
+
 /* =============================================
    PRIORITY BADGES
-   Color-coded pill showing Primary/Secondary/Tertiary
 ============================================== */
 .priority-badge {
   display: inline-block;
@@ -283,7 +295,7 @@
   border-radius: 20px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  width: fit-content;
+  white-space: nowrap;
 }
 
 .priority-primary {
@@ -305,23 +317,114 @@
 }
 
 /* =============================================
-   COUNTY FOOTER - Add School Button
+   SCHOOL DETAIL VIEW
 ============================================== */
-.county-footer {
-  padding: 12px 16px;
-  border-top: 1px solid var(--border);
-  background: #12001a;
+.school-detail-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  max-width: 640px;
 }
 
-/* Add County row at the bottom of the page */
-.add-county-row {
-  text-align: center;
-  padding: 24px 0 8px;
+.school-detail-header {
+  background: #2a0a3a;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.school-detail-name {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-top: 6px;
+}
+
+.school-detail-county {
+  font-size: 0.85rem;
+  color: var(--accent-light);
+  margin-top: 2px;
+}
+
+.school-detail-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.detail-fields {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.detail-field {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-field:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  width: 130px;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  font-size: 0.92rem;
+  color: #ffffff;
+}
+
+/* Clickable copy values on detail page */
+.copy-value {
+  cursor: pointer;
+  color: var(--accent-light);
+  transition: color 0.2s;
+}
+
+.copy-value:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+/* =============================================
+   SHARED ICON BUTTONS
+============================================== */
+.btn-icon {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-icon:hover {
+  background: rgba(155,48,255,0.3);
+}
+
+.btn-icon-danger:hover {
+  background: rgba(239,68,68,0.3);
+  border-color: var(--danger);
 }
 
 /* =============================================
    MODAL
-   Reusable popup for all add/edit forms
 ============================================== */
 .modal-overlay {
   position: fixed;
@@ -370,9 +473,7 @@
   transition: color 0.2s;
 }
 
-.close-modal:hover {
-  color: #ffffff;
-}
+.close-modal:hover { color: #ffffff; }
 
 .modal-body {
   padding: 20px;
@@ -391,7 +492,6 @@
 
 /* =============================================
    FORM ELEMENTS
-   Inputs, selects, labels inside modals
 ============================================== */
 .form-group {
   display: flex;
@@ -426,20 +526,11 @@
   border-color: var(--accent);
 }
 
-.form-group select option {
-  background: #1a001a;
-}
+.form-group select option { background: #1a001a; }
+.form-group textarea { resize: vertical; }
 
-.form-group textarea {
-  resize: vertical;
-}
+.required { color: var(--accent); }
 
-/* Required field asterisk */
-.required {
-  color: var(--accent);
-}
-
-/* Small note text at bottom of form */
 .form-note {
   font-size: 0.82rem;
   color: var(--text-muted);
@@ -447,34 +538,43 @@
 }
 
 /* =============================================
-   RESPONSIVE GRID BREAKPOINTS
-   4 wide on desktop, fewer on smaller screens
+   MOBILE
 ============================================== */
-@media (max-width: 1024px) {
-  .county-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 @media (max-width: 600px) {
-  .county-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .county-header {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .school-card-top {
+  .school-detail-header {
     flex-direction: column;
   }
 
-  .school-actions {
-    align-self: flex-end;
+  .detail-field {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
   }
 
+  .detail-label {
+    width: auto;
+  }
+
+  /* Modal should use nearly the full screen width on small phones */
+  .modal-overlay {
+    padding: 8px;
+    align-items: flex-end;  /* slide up from the bottom - easier to reach on mobile */
+  }
+
+  .modal-box {
+    max-width: 100%;
+    max-height: 85vh;
+    border-radius: 16px 16px 0 0;  /* rounded top corners only when at bottom */
+  }
+
+  /* Stack directory buttons vertically on very small screens */
   .directory-btn-row {
-    flex-wrap: wrap;
+    flex-direction: column;
+  }
+
+  .directory-btn-row .btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
   }
 }
