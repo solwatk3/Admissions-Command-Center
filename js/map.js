@@ -241,6 +241,66 @@ async function initSchoolMap() {
 }
 
 // =============================================
+// SCHOOL DETAIL MINI-MAP
+// Shows a small Leaflet map pinned to a single school's address.
+// Displayed in the school detail view to the right of the info fields.
+// Uses the same geocode cache as the full map view.
+// =============================================
+let detailMapInstance = null;
+
+async function initSchoolDetailMap(address) {
+  const mapEl = document.getElementById('school-detail-map');
+  if (!mapEl) return;
+
+  // Clean up any previous detail map instance
+  if (detailMapInstance) {
+    detailMapInstance.remove();
+    detailMapInstance = null;
+  }
+
+  // Try the cache first, then Nominatim if not cached
+  const key   = address.trim().toLowerCase();
+  const cache = getGeoCache();
+  let coords  = cache[key] || null;
+
+  if (!coords) {
+    coords = await geocodeAddress(address.trim(), 0);
+    if (coords) {
+      cache[key] = coords;
+      saveGeoCache(cache);
+    }
+  }
+
+  if (!coords) {
+    // Address couldn't be geocoded - show a plain message in the map area
+    mapEl.innerHTML = '<p style="color:var(--text-muted); font-size:0.82rem; padding:16px; text-align:center;">Location not found for this address.</p>';
+    return;
+  }
+
+  // Create the mini-map centered on the school's coordinates
+  detailMapInstance = L.map('school-detail-map', {
+    zoomControl:       true,
+    scrollWheelZoom:   false,  // prevent accidental zoom while scrolling the page
+    dragging:          true,
+  }).setView([coords.lat, coords.lng], 15);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 18,
+  }).addTo(detailMapInstance);
+
+  // Drop a purple circle marker at the exact location
+  L.circleMarker([coords.lat, coords.lng], {
+    radius:      12,
+    fillColor:   '#9b30ff',
+    color:       '#ffffff',
+    weight:      3,
+    opacity:     1,
+    fillOpacity: 0.9,
+  }).addTo(detailMapInstance);
+}
+
+// =============================================
 // COUNTY BOUNDARY OVERLAY
 // Fetches Tennessee county GeoJSON and draws county outlines.
 // Counties where the user has schools are highlighted in purple.

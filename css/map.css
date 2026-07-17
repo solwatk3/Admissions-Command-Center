@@ -115,7 +115,68 @@
   background: #ffffff;
 }
 
-/* Mobile - make the map shorter so it fits the screen */
+/* =============================================
+   SCHOOL DETAIL MINI-MAP
+============================================== */
+
+/* Two-column wrapper: info fields left, map right */
+.detail-body-row {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+}
+
+/* Info fields take up the left portion */
+.detail-body-row .detail-fields {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Mini-map column on the right */
+.school-detail-map-wrap {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border);
+}
+
+/* The Leaflet map canvas in the detail view */
+#school-detail-map {
+  flex: 1;
+  min-height: 200px;
+  background: #1a0a2e;
+  z-index: 1;
+}
+
+/* Address caption below the mini-map */
+.school-detail-map-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  background: #12001e;
+  line-height: 1.4;
+}
+
+/* Mobile - stack map below the fields instead of side by side */
+@media (max-width: 600px) {
+  .detail-body-row {
+    flex-direction: column;
+  }
+
+  .school-detail-map-wrap {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+
+  #school-detail-map {
+    height: 220px;
+  }
+}
+
+/* Mobile - make the full map shorter so it fits the screen */
 @media (max-width: 600px) {
   #school-map {
     height: 380px;

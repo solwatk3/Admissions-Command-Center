@@ -220,34 +220,52 @@ function renderSchoolDetail(schoolId) {
         </div>
       </div>
 
-      <div class="detail-fields">
-        <div class="detail-field">
-          <span class="detail-label">Address</span>
-          <span class="detail-value">${school.address || 'Not on file'}</span>
+      <!-- Two-column layout: fields on the left, mini-map on the right -->
+      <div class="detail-body-row">
+        <div class="detail-fields">
+          <div class="detail-field">
+            <span class="detail-label">Address</span>
+            <span class="detail-value">${school.address || 'Not on file'}</span>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Contact Name</span>
+            <span class="detail-value">${school.contact || 'Not on file'}</span>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Contact Email</span>
+            <span class="detail-value">
+              ${school.contactEmail
+                ? `<span class="copy-value" onclick="copyToClipboard('${school.contactEmail}', this)">&#9993; ${school.contactEmail}</span>`
+                : 'Not on file'}
+            </span>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Contact Phone</span>
+            <span class="detail-value">
+              ${school.contactPhone
+                ? `<span class="copy-value" onclick="copyToClipboard('${school.contactPhone}', this)">&#128222; ${school.contactPhone}</span>`
+                : 'Not on file'}
+            </span>
+          </div>
         </div>
-        <div class="detail-field">
-          <span class="detail-label">Contact Name</span>
-          <span class="detail-value">${school.contact || 'Not on file'}</span>
-        </div>
-        <div class="detail-field">
-          <span class="detail-label">Contact Email</span>
-          <span class="detail-value">
-            ${school.contactEmail
-              ? `<span class="copy-value" onclick="copyToClipboard('${school.contactEmail}', this)">&#9993; ${school.contactEmail}</span>`
-              : 'Not on file'}
-          </span>
-        </div>
-        <div class="detail-field">
-          <span class="detail-label">Contact Phone</span>
-          <span class="detail-value">
-            ${school.contactPhone
-              ? `<span class="copy-value" onclick="copyToClipboard('${school.contactPhone}', this)">&#128222; ${school.contactPhone}</span>`
-              : 'Not on file'}
-          </span>
-        </div>
+
+        <!-- Mini-map shown only if the school has an address -->
+        ${school.address ? `
+          <div class="school-detail-map-wrap">
+            <div id="school-detail-map"></div>
+            <p class="school-detail-map-note">&#128205; ${school.address}</p>
+          </div>
+        ` : ''}
       </div>
     </div>
   `;
+
+  // After the HTML is in the DOM, initialize the mini-map if there's an address
+  if (school.address) {
+    setTimeout(function() {
+      initSchoolDetailMap(school.address);
+    }, 0);
+  }
 }
 
 // =============================================
