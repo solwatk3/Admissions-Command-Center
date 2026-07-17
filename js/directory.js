@@ -37,6 +37,36 @@ function makeId() {
 }
 
 // =============================================
+// ADDRESS HELPERS
+// Builds and parses the standardized address format
+// used for geocoding: "Street, City, TN ZIP"
+// =============================================
+
+// Combines street, city, and zip into the geocoder-friendly format.
+// Always uses TN as the state since Sol only works in Tennessee.
+// Returns an empty string if no fields are filled in.
+function buildAddress(street, city, zip) {
+  const parts = [street, city ? city + ', TN' : '', zip].filter(Boolean);
+  if (!street && !city && !zip) return '';
+  return [street, city, 'TN', zip].filter(Boolean).join(', ').replace(', TN,', ', TN');
+}
+
+// Parses a stored address string back into its parts for form pre-filling.
+// Handles the format "Street, City, TN ZIP"
+function parseAddress(address) {
+  if (!address) return { street: '', city: '', zip: '' };
+  // Split on comma+space
+  const parts = address.split(',').map(function(p) { return p.trim(); });
+  // Format: ["Street", "City", "TN ZIP"] or ["Street", "City", "TN", "ZIP"]
+  const street = parts[0] || '';
+  const city   = parts[1] || '';
+  // Last part may be "TN 38330" or just the zip
+  const last   = parts[parts.length - 1] || '';
+  const zip    = last.replace(/^TN\s*/i, '').trim();
+  return { street: street, city: city, zip: zip };
+}
+
+// =============================================
 // TOP-LEVEL ROUTER
 // Decides which view to render
 // =============================================
@@ -410,8 +440,22 @@ function openAddSchool(countyId) {
     </div>
     ${countyField}
     <div class="form-group">
-      <label>Address</label>
-      <input type="text" id="f-address" placeholder="123 Main St, City, TN 37000" />
+      <label>Street Address</label>
+      <input type="text" id="f-street" placeholder="e.g. 130 Trenton Hwy" />
+    </div>
+    <div class="address-city-zip-row">
+      <div class="form-group" style="flex:1;">
+        <label>City</label>
+        <input type="text" id="f-city" placeholder="e.g. Dyer" />
+      </div>
+      <div class="form-group address-state-box">
+        <label>State</label>
+        <input type="text" value="TN" disabled style="opacity:0.5; cursor:not-allowed;" />
+      </div>
+      <div class="form-group" style="flex:0 0 90px;">
+        <label>ZIP</label>
+        <input type="text" id="f-zip" placeholder="38330" maxlength="5" />
+      </div>
     </div>
     <div class="form-group">
       <label>Priority Level <span class="required">*</span></label>
@@ -447,7 +491,11 @@ function openAddSchool(countyId) {
       id:           makeId(),
       countyId:     selectedCountyId,
       name:         name,
-      address:      document.getElementById('f-address').value.trim(),
+      address:      buildAddress(
+                      document.getElementById('f-street').value.trim(),
+                      document.getElementById('f-city').value.trim(),
+                      document.getElementById('f-zip').value.trim()
+                    ),
       priority:     document.getElementById('f-priority').value,
       contact:      document.getElementById('f-contact').value.trim(),
       contactEmail: document.getElementById('f-contact-email').value.trim(),
@@ -469,14 +517,31 @@ function openEditSchool(schoolId) {
   const school  = schools.find(s => s.id === schoolId);
   if (!school) return;
 
+  // Parse the stored address back into street / city / zip for pre-filling
+  const parsedAddr = parseAddress(school.address || '');
+
   const body = `
     <div class="form-group">
       <label>School Name <span class="required">*</span></label>
       <input type="text" id="f-name" value="${school.name}" />
     </div>
     <div class="form-group">
-      <label>Address</label>
-      <input type="text" id="f-address" value="${school.address || ''}" />
+      <label>Street Address</label>
+      <input type="text" id="f-street" value="${parsedAddr.street}" placeholder="e.g. 130 Trenton Hwy" />
+    </div>
+    <div class="address-city-zip-row">
+      <div class="form-group" style="flex:1;">
+        <label>City</label>
+        <input type="text" id="f-city" value="${parsedAddr.city}" placeholder="e.g. Dyer" />
+      </div>
+      <div class="form-group address-state-box">
+        <label>State</label>
+        <input type="text" value="TN" disabled style="opacity:0.5; cursor:not-allowed;" />
+      </div>
+      <div class="form-group" style="flex:0 0 90px;">
+        <label>ZIP</label>
+        <input type="text" id="f-zip" value="${parsedAddr.zip}" placeholder="38330" maxlength="5" />
+      </div>
     </div>
     <div class="form-group">
       <label>Priority Level</label>
@@ -508,7 +573,11 @@ function openEditSchool(schoolId) {
     schools[idx] = {
       ...schools[idx],
       name:         name,
-      address:      document.getElementById('f-address').value.trim(),
+      address:      buildAddress(
+                      document.getElementById('f-street').value.trim(),
+                      document.getElementById('f-city').value.trim(),
+                      document.getElementById('f-zip').value.trim()
+                    ),
       priority:     document.getElementById('f-priority').value,
       contact:      document.getElementById('f-contact').value.trim(),
       contactEmail: document.getElementById('f-contact-email').value.trim(),

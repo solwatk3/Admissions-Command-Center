@@ -540,6 +540,18 @@
 /* =============================================
    MOBILE
 ============================================== */
+/* City / State / ZIP row inside school forms - three fields on one line */
+.address-city-zip-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+/* State box is narrow and fixed width since it's always TN */
+.address-state-box {
+  flex: 0 0 52px;
+}
+
 @media (max-width: 600px) {
   .school-detail-header {
     flex-direction: column;
