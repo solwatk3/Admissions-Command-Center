@@ -230,6 +230,81 @@ function renderReturnVisits() {
 }
 
 // =============================================
+// DATA EXPORT
+// Collects every acc_ key from localStorage and
+// downloads it as a single JSON file the user can save
+// =============================================
+function exportAllData() {
+  const snapshot = {};
+
+  // Loop through every key in localStorage and grab the ones that belong to ACC
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('acc_')) {
+      try {
+        // Strip the acc_ prefix so the file is clean to read
+        snapshot[key] = JSON.parse(localStorage.getItem(key));
+      } catch (e) {
+        snapshot[key] = localStorage.getItem(key);
+      }
+    }
+  }
+
+  // Build a filename with today's date so exports are easy to tell apart
+  const dateStr = new Date().toISOString().split('T')[0];
+  const filename = 'acc-backup-' + dateStr + '.json';
+
+  // Create a temporary download link and click it programmatically
+  const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// =============================================
+// DATA IMPORT
+// Reads a JSON file exported by exportAllData()
+// and restores all acc_ keys into localStorage
+// =============================================
+function importAllData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const snapshot = JSON.parse(e.target.result);
+
+      // Confirm before overwriting - this replaces everything
+      if (!confirm('This will replace all your current data with the imported file. Continue?')) {
+        event.target.value = '';
+        return;
+      }
+
+      // Write each key back to localStorage with the acc_ prefix
+      Object.keys(snapshot).forEach(function(key) {
+        localStorage.setItem(key, JSON.stringify(snapshot[key]));
+      });
+
+      // Reset the file input so the same file can be imported again if needed
+      event.target.value = '';
+
+      // Refresh the dashboard to reflect the restored data
+      updateDashboardStats();
+      alert('Import successful! Your data has been restored.');
+    } catch (err) {
+      alert('Could not read that file. Make sure it is a valid ACC backup.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// =============================================
 // COPY TO CLIPBOARD
 // Copies a value and briefly shows "Copied!" confirmation
 // el is the element that was clicked - used to show feedback

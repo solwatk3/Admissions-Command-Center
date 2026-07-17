@@ -79,8 +79,21 @@
     <!-- DASHBOARD PAGE -->
     <section id="page-dashboard" class="page active">
       <div class="page-header">
-        <h1>Welcome back, Sol</h1>
-        <p class="subtitle">Here's your admissions overview</p>
+        <div class="page-header-row">
+          <div>
+            <h1>Welcome back, Sol</h1>
+            <p class="subtitle">Here's your admissions overview</p>
+          </div>
+          <!-- Data backup buttons - export saves a file, import restores from one -->
+          <div class="data-sync-row">
+            <button class="btn btn-ghost btn-sm" onclick="exportAllData()" title="Download all your data as a backup file">&#8659; Export Data</button>
+            <label class="btn btn-ghost btn-sm" title="Restore data from a backup file" style="cursor:pointer;">
+              &#8657; Import Data
+              <!-- Hidden file input - clicking the label triggers it -->
+              <input type="file" accept=".json" onchange="importAllData(event)" style="display:none;" />
+            </label>
+          </div>
+        </div>
       </div>
 
       <div class="cards-grid">

@@ -252,6 +252,14 @@ a {
   flex-wrap: wrap;
 }
 
+/* Export / Import buttons row on the dashboard header */
+.data-sync-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
 /* =============================================
    CARDS
 ============================================== */
@@ -605,6 +613,19 @@ a {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
+  }
+
+  /* Stack export/import buttons on mobile too */
+  .data-sync-row {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .data-sync-row .btn,
+  .data-sync-row label.btn {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
   }
 
   /* Make the action button full-width so it's easy to tap */
