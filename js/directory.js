@@ -273,6 +273,21 @@ function backToSchools() {
 function showDirectoryControls(visible) {
   const ctrl = document.querySelector('.directory-controls');
   if (ctrl) ctrl.style.display = visible ? '' : 'none';
+
+  // When navigating away from the county list, always go back to list view
+  // so the map doesn't linger behind a county/school detail screen
+  if (!visible) {
+    const mapWrap = document.getElementById('directory-map-wrap');
+    const content = document.getElementById('directory-content');
+    if (mapWrap) mapWrap.style.display = 'none';
+    if (content) content.style.display = '';
+
+    // Reset toggle button states
+    const listBtn = document.getElementById('dir-list-btn');
+    const mapBtn  = document.getElementById('dir-map-btn');
+    if (listBtn) listBtn.classList.add('active-toggle');
+    if (mapBtn)  mapBtn.classList.remove('active-toggle');
+  }
 }
 
 // =============================================

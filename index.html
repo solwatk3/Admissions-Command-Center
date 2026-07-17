@@ -9,6 +9,9 @@
   <link rel="stylesheet" href="css/rolodex.css" />
   <link rel="stylesheet" href="css/visits.css" />
   <link rel="stylesheet" href="css/routes.css" />
+  <link rel="stylesheet" href="css/map.css" />
+  <!-- Leaflet CSS - the mapping library used for the school map view -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
 
@@ -174,11 +177,29 @@
           <button class="btn btn-primary-solid" onclick="openAddCounty()">+ Add County</button>
           <button class="btn btn-ghost" onclick="expandAll()">&#9660; Expand All</button>
           <button class="btn btn-ghost" onclick="collapseAll()">&#9654; Collapse All</button>
+          <!-- List / Map toggle -->
+          <div class="dir-toggle-row">
+            <button class="dir-toggle-btn active-toggle" id="dir-list-btn" onclick="showDirectoryList()">&#9776; List</button>
+            <button class="dir-toggle-btn" id="dir-map-btn" onclick="showDirectoryMap()">&#128205; Map</button>
+          </div>
         </div>
       </div>
 
       <!-- County grid rendered here by directory.js -->
       <div id="directory-content"></div>
+
+      <!-- Map view - hidden until the user clicks the Map toggle -->
+      <div id="directory-map-wrap">
+        <p id="map-status"></p>
+        <div id="school-map"></div>
+        <!-- Legend explaining the marker colors -->
+        <div class="map-legend">
+          <span>Priority:</span>
+          <span class="map-legend-item"><span class="legend-dot" style="background:#9b30ff;"></span> Primary</span>
+          <span class="map-legend-item"><span class="legend-dot" style="background:#5c6bc0;"></span> Secondary</span>
+          <span class="map-legend-item"><span class="legend-dot" style="background:#546e7a;"></span> Low</span>
+        </div>
+      </div>
     </section>
 
     <!-- COLLEAGUE ROLODEX PAGE -->
@@ -251,10 +272,13 @@
 
   <!-- EmailJS SDK - enables sending emails directly from the browser -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <!-- Leaflet JS - powers the interactive school map view -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="js/app.js"></script>
   <script src="js/directory.js"></script>
   <script src="js/rolodex.js"></script>
   <script src="js/visits.js"></script>
   <script src="js/routes.js"></script>
+  <script src="js/map.js"></script>
 </body>
 </html>
