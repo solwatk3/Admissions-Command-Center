@@ -324,15 +324,43 @@ async function initSchoolDetailMap(address) {
     { position: 'topright', collapsed: false }
   ).addTo(detailMapInstance);
 
-  // Drop a purple circle marker at the exact location
-  L.circleMarker([coords.lat, coords.lng], {
-    radius:      12,
-    fillColor:   '#9b30ff',
-    color:       '#ffffff',
-    weight:      3,
-    opacity:     1,
-    fillOpacity: 0.9,
+  // Custom purple pin icon - matches the app's color scheme
+  const purpleIcon = L.divIcon({
+    className:   '',  // clear Leaflet's default white box
+    html:        '<div style="width:20px;height:20px;border-radius:50%;background:#9b30ff;border:3px solid #ffffff;box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>',
+    iconSize:    [20, 20],
+    iconAnchor:  [10, 10],  // center of the circle sits on the coordinate
+  });
+
+  // Use a draggable marker so the user can correct the pin position
+  const marker = L.marker([coords.lat, coords.lng], {
+    icon:      purpleIcon,
+    draggable: true,
+    title:     'Drag to correct position',
   }).addTo(detailMapInstance);
+
+  // When the user finishes dragging, save the new coordinates to the cache.
+  // The manual:true flag means this position won't be overwritten by geocoding.
+  marker.on('dragend', function() {
+    const pos      = marker.getLatLng();
+    const cache    = getGeoCache();
+    const cacheKey = address.trim().toLowerCase();
+
+    cache[cacheKey] = { lat: pos.lat, lng: pos.lng, manual: true };
+    saveGeoCache(cache);
+
+    // Brief confirmation shown in the address note below the map
+    const noteEl = document.querySelector('.school-detail-map-note');
+    if (noteEl) {
+      const original    = noteEl.innerHTML;
+      noteEl.innerHTML  = '&#10003; Position saved!';
+      noteEl.style.color = 'var(--success, #4caf50)';
+      setTimeout(function() {
+        noteEl.innerHTML   = original;
+        noteEl.style.color = '';
+      }, 2000);
+    }
+  });
 }
 
 // =============================================

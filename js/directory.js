@@ -285,7 +285,7 @@ function renderSchoolDetail(schoolId) {
       ${school.address ? `
         <div class="school-detail-map-wrap">
           <div id="school-detail-map"></div>
-          <p class="school-detail-map-note">&#128205; ${school.address}</p>
+          <p class="school-detail-map-note">&#128205; ${school.address} &nbsp;&middot;&nbsp; <span style="opacity:0.6;">Drag pin to correct position</span></p>
         </div>
       ` : ''}
 
