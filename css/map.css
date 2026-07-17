@@ -119,37 +119,34 @@
    SCHOOL DETAIL MINI-MAP
 ============================================== */
 
-/* Outer row: card on the left, map panel on the right */
+/* Outer row: card and map panel side by side, equal width and height */
 .school-detail-outer {
   display: flex;
   gap: 16px;
-  align-items: flex-start;
+  align-items: stretch;  /* makes both panels the same height */
 }
 
-/* The card stays its natural width, doesn't stretch */
-.school-detail-outer .school-detail-card {
-  flex: 0 0 auto;
-  width: 420px;
-  max-width: 100%;
-}
-
-/* Map panel fills the remaining space to the right */
+/* Both panels share the width equally */
+.school-detail-outer .school-detail-card,
 .school-detail-map-wrap {
   flex: 1;
   min-width: 0;
+}
+
+/* Map panel matches the card's style */
+.school-detail-map-wrap {
   display: flex;
   flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
-  min-height: 300px;
 }
 
-/* The Leaflet map canvas - fills the panel */
+/* The Leaflet map canvas - fills all available height in the panel */
 #school-detail-map {
   flex: 1;
-  min-height: 260px;
+  min-height: 220px;
   background: #1a0a2e;
   z-index: 1;
 }
