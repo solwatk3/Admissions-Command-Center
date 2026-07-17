@@ -167,11 +167,28 @@ async function initSchoolMap() {
   // Center on Tennessee, zoom level 7 shows the whole state
   mapInstance = L.map('school-map').setView([35.85, -86.35], 7);
 
-  // OpenStreetMap tiles - free, no key needed
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // Street view tile layer - OpenStreetMap
+  const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 18,
-  }).addTo(mapInstance);
+    maxZoom: 19,
+  });
+
+  // Satellite view tile layer - Esri World Imagery (free, no key needed)
+  const satelliteLayer = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA',
+    maxZoom: 19,
+  });
+
+  // Start on street view by default
+  streetLayer.addTo(mapInstance);
+
+  // Layer toggle control in the top-right corner
+  L.control.layers(
+    { 'Street': streetLayer, 'Satellite': satelliteLayer },
+    {},
+    { position: 'topright', collapsed: false }
+  ).addTo(mapInstance);
 
   mapInitialized = true;
 
@@ -279,15 +296,33 @@ async function initSchoolDetailMap(address) {
 
   // Create the mini-map centered on the school's coordinates
   detailMapInstance = L.map('school-detail-map', {
-    zoomControl:       true,
-    scrollWheelZoom:   false,  // prevent accidental zoom while scrolling the page
-    dragging:          true,
-  }).setView([coords.lat, coords.lng], 15);
+    zoomControl:     true,
+    scrollWheelZoom: false,  // prevent accidental zoom while scrolling the page
+    dragging:        true,
+  }).setView([coords.lat, coords.lng], 17);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // Street view layer
+  const detailStreet = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 18,
-  }).addTo(detailMapInstance);
+    maxZoom: 19,
+  });
+
+  // Satellite layer - zoomed in enough to see the building
+  const detailSatellite = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri',
+    maxZoom: 19,
+  });
+
+  // Start on satellite by default in the detail view - more useful at street level
+  detailSatellite.addTo(detailMapInstance);
+
+  // Layer toggle in top-right
+  L.control.layers(
+    { 'Street': detailStreet, 'Satellite': detailSatellite },
+    {},
+    { position: 'topright', collapsed: false }
+  ).addTo(detailMapInstance);
 
   // Drop a purple circle marker at the exact location
   L.circleMarker([coords.lat, coords.lng], {
