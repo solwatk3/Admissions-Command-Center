@@ -119,60 +119,69 @@
    SCHOOL DETAIL MINI-MAP
 ============================================== */
 
-/* Two-column wrapper: info fields left, map right */
-.detail-body-row {
+/* Outer row: card on the left, map panel on the right */
+.school-detail-outer {
   display: flex;
-  gap: 0;
-  align-items: stretch;
+  gap: 16px;
+  align-items: flex-start;
 }
 
-/* Info fields take up the left portion */
-.detail-body-row .detail-fields {
+/* The card stays its natural width, doesn't stretch */
+.school-detail-outer .school-detail-card {
+  flex: 0 0 auto;
+  width: 420px;
+  max-width: 100%;
+}
+
+/* Map panel fills the remaining space to the right */
+.school-detail-map-wrap {
   flex: 1;
   min-width: 0;
-}
-
-/* Mini-map column on the right */
-.school-detail-map-wrap {
-  width: 280px;
-  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  border-left: 1px solid var(--border);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  min-height: 300px;
 }
 
-/* The Leaflet map canvas in the detail view */
+/* The Leaflet map canvas - fills the panel */
 #school-detail-map {
   flex: 1;
-  min-height: 200px;
+  min-height: 260px;
   background: #1a0a2e;
   z-index: 1;
 }
 
-/* Address caption below the mini-map */
+/* Address caption strip at the bottom of the map panel */
 .school-detail-map-note {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
-  padding: 8px 12px;
+  padding: 8px 14px;
   border-top: 1px solid var(--border);
   background: #12001e;
   line-height: 1.4;
+  flex-shrink: 0;
 }
 
-/* Mobile - stack map below the fields instead of side by side */
-@media (max-width: 600px) {
-  .detail-body-row {
+/* Mobile - stack map below the card */
+@media (max-width: 768px) {
+  .school-detail-outer {
     flex-direction: column;
+  }
+
+  .school-detail-outer .school-detail-card {
+    width: 100%;
   }
 
   .school-detail-map-wrap {
     width: 100%;
-    border-left: none;
-    border-top: 1px solid var(--border);
+    min-height: 220px;
   }
 
   #school-detail-map {
-    height: 220px;
+    min-height: 200px;
   }
 }
 

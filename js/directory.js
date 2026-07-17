@@ -207,21 +207,22 @@ function renderSchoolDetail(schoolId) {
       <button class="btn btn-ghost back-btn" onclick="backToSchools()">&#8592; Back to ${county ? county.name : 'County'}</button>
     </div>
 
-    <div class="school-detail-card">
-      <div class="school-detail-header">
-        <div>
-          <span class="priority-badge ${priorityClass}" style="margin-bottom:8px; display:inline-block;">${school.priority}</span>
-          <h2 class="school-detail-name">${school.name}</h2>
-          <p class="school-detail-county">${county ? county.name + ' County' : ''}</p>
-        </div>
-        <div class="school-detail-actions">
-          <button class="btn btn-ghost" onclick="openEditSchool('${school.id}')">&#9998; Edit School</button>
-          <button class="btn btn-danger" onclick="confirmDeleteSchool('${school.id}')">&#128465; Delete</button>
-        </div>
-      </div>
+    <!-- Outer row: info card on the left, map panel on the right -->
+    <div class="school-detail-outer">
 
-      <!-- Two-column layout: fields on the left, mini-map on the right -->
-      <div class="detail-body-row">
+      <div class="school-detail-card">
+        <div class="school-detail-header">
+          <div>
+            <span class="priority-badge ${priorityClass}" style="margin-bottom:8px; display:inline-block;">${school.priority}</span>
+            <h2 class="school-detail-name">${school.name}</h2>
+            <p class="school-detail-county">${county ? county.name + ' County' : ''}</p>
+          </div>
+          <div class="school-detail-actions">
+            <button class="btn btn-ghost" onclick="openEditSchool('${school.id}')">&#9998; Edit School</button>
+            <button class="btn btn-danger" onclick="confirmDeleteSchool('${school.id}')">&#128465; Delete</button>
+          </div>
+        </div>
+
         <div class="detail-fields">
           <div class="detail-field">
             <span class="detail-label">Address</span>
@@ -248,15 +249,16 @@ function renderSchoolDetail(schoolId) {
             </span>
           </div>
         </div>
-
-        <!-- Mini-map shown only if the school has an address -->
-        ${school.address ? `
-          <div class="school-detail-map-wrap">
-            <div id="school-detail-map"></div>
-            <p class="school-detail-map-note">&#128205; ${school.address}</p>
-          </div>
-        ` : ''}
       </div>
+
+      <!-- Map panel - only shown when the school has an address -->
+      ${school.address ? `
+        <div class="school-detail-map-wrap">
+          <div id="school-detail-map"></div>
+          <p class="school-detail-map-note">&#128205; ${school.address}</p>
+        </div>
+      ` : ''}
+
     </div>
   `;
 
