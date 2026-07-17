@@ -87,11 +87,9 @@
           <!-- Data backup buttons - export saves a file, import restores from one -->
           <div class="data-sync-row">
             <button class="btn btn-ghost btn-sm" onclick="exportAllData()" title="Download all your data as a backup file">&#8659; Export Data</button>
-            <label class="btn btn-ghost btn-sm" title="Restore data from a backup file" style="cursor:pointer;">
-              &#8657; Import Data
-              <!-- Hidden file input - clicking the label triggers it -->
-              <input type="file" accept=".json" onchange="importAllData(event)" style="display:none;" />
-            </label>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-file-input').click()" title="Restore data from a backup file">&#8657; Import Data</button>
+            <!-- File input is visually hidden but still rendered so iOS Safari can trigger it -->
+            <input type="file" id="import-file-input" accept=".json" onchange="importAllData(event)" style="position:absolute; opacity:0; width:1px; height:1px; pointer-events:none;" />
           </div>
         </div>
       </div>
