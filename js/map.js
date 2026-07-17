@@ -364,6 +364,36 @@ async function initSchoolDetailMap(address) {
 }
 
 // =============================================
+// RESYNC MAP
+// Clears all auto-geocoded cache entries (keeps manually dragged pins)
+// then re-runs the full geocode + map init pass.
+// Called from the Resync button in the map view.
+// =============================================
+function resyncMap() {
+  const cache    = getGeoCache();
+  const cleaned  = {};
+
+  // Keep only entries the user manually corrected by dragging the pin
+  Object.keys(cache).forEach(function(key) {
+    if (cache[key].manual) {
+      cleaned[key] = cache[key];
+    }
+  });
+
+  saveGeoCache(cleaned);
+
+  // Show a brief status message so the user knows it's working
+  const statusEl = document.getElementById('map-status');
+  if (statusEl) {
+    statusEl.textContent = 'Resyncing all addresses...';
+    statusEl.style.display = 'block';
+  }
+
+  // Re-init the map with a clean cache
+  initSchoolMap();
+}
+
+// =============================================
 // COUNTY BOUNDARY OVERLAY
 // Fetches Tennessee county GeoJSON and draws county outlines.
 // Counties where the user has schools are highlighted in purple.

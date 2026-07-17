@@ -202,7 +202,10 @@
 
       <!-- Map view - hidden until the user clicks the Map toggle -->
       <div id="directory-map-wrap">
-        <p id="map-status"></p>
+        <div class="map-toolbar">
+          <p id="map-status"></p>
+          <button class="btn btn-ghost btn-sm" onclick="resyncMap()" title="Re-geocode all school addresses and refresh the map">&#8635; Resync Map</button>
+        </div>
         <div id="school-map"></div>
         <!-- Legend explaining the marker colors -->
         <div class="map-legend">
