@@ -256,15 +256,24 @@ function openLogVisit(preselectedSchoolId) {
       <input type="number" id="f-students" placeholder="e.g. 25" min="0" />
     </div>
     <div class="form-group">
-      <label>Most asked questions</label>
+      <div class="label-with-mic">
+        <label>Most asked questions</label>
+        <button type="button" class="btn-mic" id="mic-f-common-q" onclick="startVoiceMemo('f-common-q', this)" title="Tap to dictate">&#127908;</button>
+      </div>
       <textarea id="f-common-q" rows="3" placeholder="What questions came up most often?"></textarea>
     </div>
     <div class="form-group">
-      <label>New questions (never heard before)</label>
+      <div class="label-with-mic">
+        <label>New questions (never heard before)</label>
+        <button type="button" class="btn-mic" id="mic-f-new-q" onclick="startVoiceMemo('f-new-q', this)" title="Tap to dictate">&#127908;</button>
+      </div>
       <textarea id="f-new-q" rows="3" placeholder="Any questions that surprised you?"></textarea>
     </div>
     <div class="form-group">
-      <label>Notes for next time</label>
+      <div class="label-with-mic">
+        <label>Notes for next time</label>
+        <button type="button" class="btn-mic" id="mic-f-next-notes" onclick="startVoiceMemo('f-next-notes', this)" title="Tap to dictate">&#127908;</button>
+      </div>
       <textarea id="f-next-notes" rows="3" placeholder="What should you remember for the next visit?"></textarea>
     </div>
     <div class="form-group">
@@ -357,15 +366,24 @@ function openEditVisit(visitId) {
       <input type="number" id="f-students" value="${visit.studentCount || ''}" min="0" />
     </div>
     <div class="form-group">
-      <label>Most asked questions</label>
+      <div class="label-with-mic">
+        <label>Most asked questions</label>
+        <button type="button" class="btn-mic" id="mic-f-common-q" onclick="startVoiceMemo('f-common-q', this)" title="Tap to dictate">&#127908;</button>
+      </div>
       <textarea id="f-common-q" rows="3">${visit.commonQuestions || ''}</textarea>
     </div>
     <div class="form-group">
-      <label>New questions (never heard before)</label>
+      <div class="label-with-mic">
+        <label>New questions (never heard before)</label>
+        <button type="button" class="btn-mic" id="mic-f-new-q" onclick="startVoiceMemo('f-new-q', this)" title="Tap to dictate">&#127908;</button>
+      </div>
       <textarea id="f-new-q" rows="3">${visit.newQuestions || ''}</textarea>
     </div>
     <div class="form-group">
-      <label>Notes for next time</label>
+      <div class="label-with-mic">
+        <label>Notes for next time</label>
+        <button type="button" class="btn-mic" id="mic-f-next-notes" onclick="startVoiceMemo('f-next-notes', this)" title="Tap to dictate">&#127908;</button>
+      </div>
       <textarea id="f-next-notes" rows="3">${visit.nextTimeNotes || ''}</textarea>
     </div>
     <div class="form-group">
@@ -469,6 +487,75 @@ function escapeHtml(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+// =============================================
+// VOICE MEMO - SPEECH TO TEXT
+// Uses the browser's built-in Web Speech API to
+// transcribe spoken words and append them to a textarea.
+// Works on Chrome desktop, Chrome Android, and iOS Safari (HTTPS required).
+// =============================================
+
+// Tracks the active recognition session so we can stop it if the user taps again
+let activeRecognition = null;
+let activeMicBtn      = null;
+
+function startVoiceMemo(textareaId, btnEl) {
+  // Check if the browser supports speech recognition
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert('Your browser does not support voice input. Try Chrome or Safari on iOS.');
+    return;
+  }
+
+  // If already recording, stop the current session
+  if (activeRecognition) {
+    activeRecognition.stop();
+    return;
+  }
+
+  const textarea = document.getElementById(textareaId);
+  if (!textarea) return;
+
+  const recognition       = new SpeechRecognition();
+  recognition.lang        = 'en-US';
+  recognition.continuous  = false;   // single utterance per tap
+  recognition.interimResults = false; // only return final results
+
+  activeRecognition = recognition;
+  activeMicBtn      = btnEl;
+
+  // Show recording state on the button
+  btnEl.classList.add('btn-mic-recording');
+  btnEl.title = 'Recording... tap to stop';
+
+  recognition.onresult = function(event) {
+    // Get the transcribed text from the result
+    const transcript = event.results[0][0].transcript;
+
+    // Append to existing text with a space separator
+    const existing = textarea.value.trim();
+    textarea.value = existing ? existing + ' ' + transcript : transcript;
+  };
+
+  recognition.onerror = function(event) {
+    // Permission denied is a common one - tell the user clearly
+    if (event.error === 'not-allowed') {
+      alert('Microphone access was blocked. Please allow microphone permission and try again.');
+    }
+  };
+
+  recognition.onend = function() {
+    // Reset button state once the session ends (either naturally or stopped)
+    if (activeMicBtn) {
+      activeMicBtn.classList.remove('btn-mic-recording');
+      activeMicBtn.title = 'Tap to dictate';
+    }
+    activeRecognition = null;
+    activeMicBtn      = null;
+  };
+
+  recognition.start();
 }
 
 // =============================================

@@ -2,6 +2,49 @@
    ACC - Visit Log Styles
 ============================================== */
 
+/* =============================================
+   VOICE MEMO MIC BUTTON
+============================================== */
+
+/* Label row that holds the field label + mic button side by side */
+.label-with-mic {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Mic button - small, sits to the right of the label */
+.btn-mic {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  line-height: 1.6;
+  flex-shrink: 0;
+}
+
+.btn-mic:hover {
+  border-color: var(--accent);
+  color: var(--accent-light);
+}
+
+/* Pulsing red state shown while recording */
+.btn-mic-recording {
+  border-color: #e53935;
+  color: #e53935;
+  animation: mic-pulse 1s ease-in-out infinite;
+}
+
+@keyframes mic-pulse {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
 /* Empty state */
 .visits-empty {
   text-align: center;
