@@ -590,3 +590,93 @@
     justify-content: center;
   }
 }
+
+/* =============================================
+   SCHOOL VISIT HISTORY SECTION
+   Shows on the school detail page below the info + map row
+============================================== */
+.school-visit-history {
+  margin-top: 24px;
+}
+
+/* Header row - "Visit History" title + Log Visit button */
+.school-visit-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.school-visit-history-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent-light);
+  margin: 0;
+}
+
+/* Individual visit card inside the school detail */
+.school-visit-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.school-visit-card:hover {
+  border-color: var(--accent);
+  background: #1f0a2e;
+}
+
+.school-visit-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.school-visit-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.school-visit-card-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.school-visit-card-date {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.school-visit-card-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.school-visit-card-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+/* Mobile - let title wrap if needed */
+@media (max-width: 480px) {
+  .school-visit-card-title {
+    white-space: normal;
+  }
+}

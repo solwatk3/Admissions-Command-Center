@@ -290,6 +290,15 @@ function renderSchoolDetail(schoolId) {
       ` : ''}
 
     </div>
+
+    <!-- Visit history for this school -->
+    <div class="school-visit-history">
+      <div class="school-visit-history-header">
+        <h3>Visit History</h3>
+        <button class="btn btn-accent btn-sm" onclick="openLogVisit('${school.id}')">+ Log Visit</button>
+      </div>
+      ${renderSchoolVisitHistory(school.id)}
+    </div>
   `;
 
   // After the HTML is in the DOM, initialize the mini-map if there's an address
@@ -298,6 +307,56 @@ function renderSchoolDetail(schoolId) {
       initSchoolDetailMap(school.address);
     }, 0);
   }
+}
+
+// =============================================
+// SCHOOL VISIT HISTORY
+// Renders all visit logs for a school inside the school detail page.
+// Each card navigates to the full visit detail in the Visit Log.
+// =============================================
+function renderSchoolVisitHistory(schoolId) {
+  const visits = getVisits().filter(function(v) { return v.schoolId === schoolId; });
+
+  if (visits.length === 0) {
+    return '<p class="empty-state">No visits logged for this school yet.</p>';
+  }
+
+  // Most recent first
+  const sorted = visits.slice().sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+
+  return sorted.map(function(v) {
+    const d       = new Date(v.date);
+    // Offset fix - date strings parse as UTC midnight, shift to local
+    const dateStr = new Date(d.getTime() + d.getTimezoneOffset() * 60000)
+      .toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    const moodIcon   = { 'Great': '&#128512;', 'Good': '&#128578;', 'Okay': '&#128528;', 'Tough': '&#128533;' }[v.mood] || '&#128528;';
+    const returnFlag = v.returnVisit ? '<span class="return-flag">&#128260; Return</span>' : '';
+    return `
+      <div class="school-visit-card" onclick="openVisitFromDirectory('${v.id}')">
+        <div class="school-visit-card-left">
+          <span class="visit-mood-icon">${moodIcon}</span>
+          <div class="school-visit-card-info">
+            <span class="school-visit-card-title">${v.title || dateStr}</span>
+            ${v.title ? `<span class="school-visit-card-date">${dateStr}</span>` : ''}
+            <span class="school-visit-card-meta">~${v.studentCount || 0} students talked to</span>
+          </div>
+        </div>
+        <div class="school-visit-card-right">
+          ${returnFlag}
+          <span class="visit-chevron">&#8250;</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Navigates to the Visit Log page and immediately opens that visit's detail
+function openVisitFromDirectory(visitId) {
+  navigateTo('visits');
+  // Small delay to let the visits page render before opening the detail view
+  setTimeout(function() {
+    openVisitDetail(visitId);
+  }, 50);
 }
 
 // =============================================
