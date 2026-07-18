@@ -235,18 +235,17 @@ function renderRouteDetail(routeId) {
 
       <div class="route-detail-body">
 
-        <!-- Numbered stop list, with starting point shown above -->
-        <div class="route-stop-list">
-          <!-- Starting location -->
-          <div class="route-origin-item">
-            <div class="route-origin-dot">&#9679;</div>
-            <div class="route-stop-info">
-              <span class="route-stop-name">Starting From</span>
-              <span class="route-stop-address">${escapeHtml(route.origin || '210 Hurt St, Martin, TN 38237')}</span>
-            </div>
+        <!-- Starting location row -->
+        <div class="route-origin-item">
+          <div class="route-origin-dot"></div>
+          <div class="route-stop-info">
+            <span style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Starting From</span>
+            <span style="font-size:0.9rem; color:#ffffff; font-weight:500;">${escapeHtml(route.origin || '210 Hurt St, Martin, TN 38237')}</span>
           </div>
-          <div class="route-stop-connector">&#8595;</div>
+        </div>
 
+        <!-- Numbered stop list -->
+        <div class="route-stop-list">
           ${route.stops.map((stop, i) => {
             const timeRange = stop.startTime
               ? `${formatTime(stop.startTime)}${stop.endTime ? ' - ' + formatTime(stop.endTime) : ''}`
@@ -261,11 +260,10 @@ function renderRouteDetail(routeId) {
                 </div>
                 ${stop.address
                   ? `<span class="route-stop-address">${stop.address}</span>`
-                  : `<span class="route-stop-no-address">No address entered</span>`
+                  : `<span class="route-stop-no-address">No address on file</span>`
                 }
               </div>
             </div>
-            ${i < route.stops.length - 1 ? '<div class="route-stop-connector">&#8595;</div>' : ''}
           `;}).join('')}
         </div>
 
@@ -752,201 +750,347 @@ function confirmDeleteRoute(routeId) {
 }
 
 // =============================================
-// PRINT / SAVE AS PDF
-// Opens a clean print window with just the route details.
-// The user can print it or use "Save as PDF" in the print dialog.
-// Designed to look professional enough to forward to a boss.
+// PRINT ROUTE SELECTOR
+// Opens a modal so the user can pick one or more routes
+// to combine into a single PDF itinerary.
+// =============================================
+function openPrintRoutesSelector() {
+  const routes = getRoutes().sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+
+  if (routes.length === 0) {
+    alert('No routes saved yet.');
+    return;
+  }
+
+  const now     = new Date();
+  now.setHours(0, 0, 0, 0);
+  const upcoming = routes.filter(function(r) { return new Date(r.date) >= now; });
+  const past     = routes.filter(function(r) { return new Date(r.date) < now; });
+
+  function routeCheckRow(r) {
+    const d       = new Date(r.date);
+    const dateStr = new Date(d.getTime() + d.getTimezoneOffset() * 60000)
+      .toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    return `
+      <label class="print-route-check-row">
+        <input type="checkbox" class="print-route-checkbox" value="${r.id}" />
+        <span class="print-route-check-info">
+          <span class="print-route-check-name">${r.name}</span>
+          <span class="print-route-check-meta">${dateStr} &middot; ${r.stops.length} stop${r.stops.length !== 1 ? 's' : ''}</span>
+        </span>
+      </label>
+    `;
+  }
+
+  const upcomingHtml = upcoming.length > 0
+    ? `<p class="print-check-group-label">Upcoming</p>${upcoming.map(routeCheckRow).join('')}`
+    : '';
+
+  const pastHtml = past.length > 0
+    ? `<p class="print-check-group-label">Past Routes</p>${past.map(routeCheckRow).join('')}`
+    : '';
+
+  const body = `
+    <p style="font-size:0.86rem; color:var(--text-muted); margin-bottom:14px;">
+      Select the routes to include. They'll print in date order on one document.
+    </p>
+    <div class="print-route-checklist">
+      ${upcomingHtml}
+      ${pastHtml}
+    </div>
+  `;
+
+  openModal('Print Routes', body, function() {
+    const checked = Array.from(document.querySelectorAll('.print-route-checkbox:checked'))
+      .map(function(el) { return el.value; });
+    if (checked.length === 0) {
+      alert('Select at least one route.');
+      return;
+    }
+    closeModal();
+    printSelectedRoutes(checked);
+  });
+
+  // Relabel the generic Save button
+  const saveBtn = document.getElementById('modal-save-btn');
+  if (saveBtn) saveBtn.textContent = 'Generate PDF';
+}
+
+// =============================================
+// PRINT ONE ROUTE
+// Convenience wrapper - just prints that single route
+// using the same layout as the multi-route PDF.
 // =============================================
 function printRoute(routeId) {
-  const routes = getRoutes();
-  const route  = routes.find(function(r) { return r.id === routeId; });
-  if (!route) return;
+  printSelectedRoutes([routeId]);
+}
 
-  const d       = new Date(route.date);
-  const dateStr = new Date(d.getTime() + d.getTimezoneOffset() * 60000)
-    .toLocaleDateString('default', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+// =============================================
+// PRINT SELECTED ROUTES - MULTI-DAY ITINERARY
+// Combines one or more routes into a single polished print window.
+// No Maps links included - designed to be read on paper.
+// =============================================
+function printSelectedRoutes(routeIds) {
+  const allRoutes = getRoutes();
 
-  const origin    = route.origin || '210 Hurt St, Martin, TN 38237';
-  const mapsUrl   = buildMapsUrl(route.stops, route.origin);
-  const printedOn = new Date().toLocaleDateString('default', { month: 'long', day: 'numeric', year: 'numeric' });
+  // Pull the chosen routes in date order
+  const selected = routeIds
+    .map(function(id) { return allRoutes.find(function(r) { return r.id === id; }); })
+    .filter(Boolean)
+    .sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
 
-  // Build the stop rows for the print layout
-  const stopRows = route.stops.map(function(stop, i) {
-    const timeRange = stop.startTime
-      ? formatTime(stop.startTime) + (stop.endTime ? ' - ' + formatTime(stop.endTime) : '')
-      : '';
+  if (selected.length === 0) return;
+
+  // Build the date range shown in the document header
+  const fmt = function(dateObj) {
+    return new Date(dateObj.getTime() + dateObj.getTimezoneOffset() * 60000)
+      .toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const firstDate    = new Date(selected[0].date);
+  const lastDate     = new Date(selected[selected.length - 1].date);
+  const dateRangeStr = selected.length === 1 ? fmt(firstDate) : fmt(firstDate) + ' - ' + fmt(lastDate);
+  const totalStops   = selected.reduce(function(t, r) { return t + r.stops.length; }, 0);
+  const printedOn    = new Date().toLocaleDateString('default', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  // Build each route as its own section
+  const routeSections = selected.map(function(route, idx) {
+    const d      = new Date(route.date);
+    const dayStr = new Date(d.getTime() + d.getTimezoneOffset() * 60000)
+      .toLocaleDateString('default', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    const origin = route.origin || '210 Hurt St, Martin, TN 38237';
+
+    const stopRows = route.stops.map(function(stop, i) {
+      const timeRange = stop.startTime
+        ? formatTime(stop.startTime) + (stop.endTime ? ' - ' + formatTime(stop.endTime) : '')
+        : '';
+      const rowClass = i % 2 === 0 ? 'row-even' : 'row-odd';
+      return `
+        <tr class="${rowClass}">
+          <td class="stop-num">${i + 1}</td>
+          <td class="stop-name">${stop.name}</td>
+          <td class="stop-time">${timeRange || '-'}</td>
+          <td class="stop-address">${stop.address || '-'}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // Add a page-break hint between routes when there are more than two
+    const breakClass = idx > 0 ? ' route-break' : '';
+
     return `
-      <tr>
-        <td class="stop-num">${i + 1}</td>
-        <td class="stop-name">${stop.name}</td>
-        <td class="stop-time">${timeRange || '-'}</td>
-        <td class="stop-address">${stop.address || '-'}</td>
-      </tr>
+      <div class="route-section${breakClass}">
+        <div class="day-header">
+          <div class="day-header-left">
+            <div class="day-label">${dayStr}</div>
+            <div class="route-title">${route.name}</div>
+          </div>
+          <div class="stop-count-badge">${route.stops.length} stop${route.stops.length !== 1 ? 's' : ''}</div>
+        </div>
+
+        <div class="origin-row">
+          <span class="origin-label">Starting from</span>
+          <span class="origin-value">${origin}</span>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>School / Stop</th>
+              <th>Time</th>
+              <th>Address</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${stopRows}
+          </tbody>
+        </table>
+      </div>
     `;
   }).join('');
 
-  // Full HTML for the print window - self-contained with inline styles
+  // Self-contained HTML document with all styling inline
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>${route.name} - Route Summary</title>
+  <title>School Visit Itinerary - ${dateRangeStr}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: 12pt;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11pt;
       color: #1a1a1a;
-      background: #ffffff;
-      padding: 40px 48px;
+      background: #fff;
     }
 
-    /* Header - institution name and document type */
-    .print-header {
-      border-bottom: 2px solid #1a1a1a;
-      padding-bottom: 12px;
-      margin-bottom: 24px;
+    /* ---- DOCUMENT HEADER BAR ---- */
+    .doc-header {
+      background: #3b0764;
+      color: #ffffff;
+      padding: 22px 40px;
       display: flex;
       justify-content: space-between;
-      align-items: flex-end;
+      align-items: center;
+      margin-bottom: 30px;
     }
-    .print-org { font-size: 10pt; color: #555; letter-spacing: 0.05em; text-transform: uppercase; }
-    .print-doc-type { font-size: 10pt; color: #555; }
+    .doc-org {
+      font-size: 9pt;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.7;
+      margin-bottom: 5px;
+    }
+    .doc-title {
+      font-size: 20pt;
+      font-weight: bold;
+      letter-spacing: 0.01em;
+    }
+    .doc-meta {
+      text-align: right;
+      font-size: 10pt;
+      line-height: 1.8;
+      opacity: 0.85;
+    }
+    .doc-meta strong { font-size: 12pt; display: block; }
 
-    /* Route title block */
-    .print-title { font-size: 22pt; font-weight: bold; margin-bottom: 4px; }
-    .print-date  { font-size: 12pt; color: #333; margin-bottom: 20px; }
+    /* ---- ROUTE SECTIONS ---- */
+    .route-section { padding: 0 40px 30px; }
 
-    /* Meta info row */
-    .print-meta {
+    .route-break {
+      border-top: 2px solid #ede9fe;
+      padding-top: 28px;
+      margin-top: 4px;
+    }
+
+    /* ---- DAY HEADER ---- */
+    .day-header {
       display: flex;
-      gap: 40px;
-      margin-bottom: 28px;
-      font-size: 11pt;
+      justify-content: space-between;
+      align-items: center;
+      background: #f5f3ff;
+      border-left: 5px solid #7c3aed;
+      padding: 14px 18px;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 14px;
     }
-    .print-meta-item { display: flex; flex-direction: column; gap: 2px; }
-    .print-meta-label { font-size: 9pt; text-transform: uppercase; letter-spacing: 0.06em; color: #777; }
-    .print-meta-value { font-weight: bold; color: #1a1a1a; }
-
-    /* Stops table */
-    .stops-label {
-      font-size: 9pt;
+    .day-label {
+      font-size: 8.5pt;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #777;
-      margin-bottom: 8px;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 4px;
+      letter-spacing: 0.1em;
+      color: #6d28d9;
+      margin-bottom: 4px;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 11pt;
-      margin-bottom: 24px;
+    .route-title {
+      font-size: 15pt;
+      font-weight: bold;
+      color: #1a1a1a;
     }
-    th {
-      text-align: left;
+    .stop-count-badge {
+      background: #7c3aed;
+      color: #fff;
       font-size: 9pt;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #777;
-      padding: 6px 8px;
-      border-bottom: 1px solid #ddd;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      white-space: nowrap;
     }
-    td { padding: 10px 8px; border-bottom: 1px solid #efefef; vertical-align: top; }
-    .stop-num  { width: 32px; font-weight: bold; color: #555; }
-    .stop-name { font-weight: bold; }
-    .stop-time { width: 130px; color: #333; }
-    .stop-address { color: #555; font-size: 10pt; }
-    tr:last-child td { border-bottom: none; }
 
-    /* Maps link */
-    .maps-link {
+    /* ---- ORIGIN ROW ---- */
+    .origin-row {
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
       font-size: 10pt;
       color: #555;
-      margin-bottom: 32px;
-      word-break: break-all;
+      margin-bottom: 14px;
     }
-    .maps-link a { color: #1a1a1a; }
-
-    /* Footer */
-    .print-footer {
-      border-top: 1px solid #ddd;
-      padding-top: 10px;
-      font-size: 9pt;
+    .origin-label {
+      font-size: 8.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
       color: #aaa;
+      white-space: nowrap;
+    }
+    .origin-value { color: #333; }
+
+    /* ---- STOPS TABLE ---- */
+    table { width: 100%; border-collapse: collapse; font-size: 10.5pt; }
+    thead tr { background: #f5f3ff; }
+    th {
+      text-align: left;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #7c3aed;
+      padding: 8px 10px;
+      border-bottom: 2px solid #ddd6fe;
+    }
+    td { padding: 10px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    .row-even { background: #fff; }
+    .row-odd  { background: #faf9ff; }
+    tr:last-child td { border-bottom: none; }
+
+    .stop-num     { width: 32px; font-weight: 700; color: #7c3aed; text-align: center; }
+    .stop-name    { font-weight: 600; color: #1a1a1a; }
+    .stop-time    { width: 140px; color: #444; }
+    .stop-address { color: #666; font-size: 9.5pt; }
+
+    /* ---- FOOTER ---- */
+    .doc-footer {
+      border-top: 1px solid #ddd6fe;
+      margin: 20px 40px 0;
+      padding: 12px 0;
       display: flex;
       justify-content: space-between;
+      font-size: 8.5pt;
+      color: #bbb;
     }
 
+    /* ---- PRINT OVERRIDES ---- */
     @media print {
-      body { padding: 24px 32px; }
-      @page { margin: 0.6in; }
+      .doc-header, .day-header, .stop-count-badge, .row-odd, thead tr {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .route-break { page-break-before: auto; }
+      @page { margin: 0.5in; }
     }
   </style>
 </head>
 <body>
 
-  <div class="print-header">
-    <span class="print-org">Admissions Command Center</span>
-    <span class="print-doc-type">School Visit Route Summary</span>
-  </div>
-
-  <div class="print-title">${route.name}</div>
-  <div class="print-date">${dateStr}</div>
-
-  <div class="print-meta">
-    <div class="print-meta-item">
-      <span class="print-meta-label">Starting From</span>
-      <span class="print-meta-value">${origin}</span>
+  <div class="doc-header">
+    <div>
+      <div class="doc-org">Admissions Command Center</div>
+      <div class="doc-title">School Visit Itinerary</div>
     </div>
-    <div class="print-meta-item">
-      <span class="print-meta-label">Total Stops</span>
-      <span class="print-meta-value">${route.stops.length}</span>
+    <div class="doc-meta">
+      <strong>${dateRangeStr}</strong>
+      ${selected.length} day${selected.length !== 1 ? 's' : ''} &nbsp;&bull;&nbsp; ${totalStops} total stop${totalStops !== 1 ? 's' : ''}
     </div>
   </div>
 
-  <div class="stops-label">Planned Stops</div>
-  <table>
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>School / Stop</th>
-        <th>Time</th>
-        <th>Address</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${stopRows}
-    </tbody>
-  </table>
+  ${routeSections}
 
-  ${mapsUrl ? `
-  <div class="maps-link">
-    <strong>Google Maps Link:</strong><br/>
-    <a href="${mapsUrl}">${mapsUrl}</a>
-  </div>` : ''}
-
-  <div class="print-footer">
-    <span>Generated by ACC - Admissions Command Center</span>
+  <div class="doc-footer">
+    <span>ACC - Admissions Command Center</span>
     <span>Printed ${printedOn}</span>
   </div>
 
 </body>
 </html>`;
 
-  // Open a new window, write the content, and trigger print
-  const win = window.open('', '_blank', 'width=800,height=700');
+  const win = window.open('', '_blank', 'width=860,height=750');
   if (!win) {
     alert('Pop-up blocked. Please allow pop-ups for this page and try again.');
     return;
   }
   win.document.write(html);
   win.document.close();
-
-  // Small delay lets the browser finish rendering before the print dialog opens
   win.onload = function() { win.print(); };
-  // Fallback in case onload already fired
   setTimeout(function() { if (win && !win.closed) win.print(); }, 400);
 }

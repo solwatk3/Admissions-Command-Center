@@ -141,29 +141,40 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
-  max-width: 700px;
+  max-width: 760px;
 }
 
+/* Header - dark gradient with route name prominent */
 .route-detail-header {
-  background: #2a0a3a;
-  padding: 20px 24px;
+  background: linear-gradient(135deg, #2d0050, #1a0a2e);
+  padding: 24px 28px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
   flex-wrap: wrap;
+  border-bottom: 1px solid rgba(155, 48, 255, 0.3);
 }
 
 .route-detail-title h2 {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #ffffff;
+  letter-spacing: -0.01em;
 }
 
+/* Date shown as a subtle chip below the name */
 .route-detail-date {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--accent-light);
+  background: rgba(155, 48, 255, 0.15);
+  border: 1px solid rgba(155, 48, 255, 0.3);
+  border-radius: 20px;
+  padding: 3px 10px;
+  margin-top: 8px;
 }
 
 .route-detail-actions {
@@ -173,32 +184,83 @@
 }
 
 .route-detail-body {
-  padding: 20px 24px;
+  padding: 24px 28px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
+}
+
+/* =============================================
+   ORIGIN ROW
+   Sits above the stop list as a labeled start point
+============================================== */
+.route-origin-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(155, 48, 255, 0.06);
+  border: 1px solid rgba(155, 48, 255, 0.2);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+}
+
+.route-origin-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* "Starting From" label + address stacked */
+.route-stop-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 /* =============================================
    STOP LIST (detail view)
+   Each stop is a structured row card
 ============================================== */
 .route-stop-list {
   display: flex;
   flex-direction: column;
+  gap: 6px;
 }
 
+/* Connector arrow between stops - slimmer gap */
+.route-stop-connector {
+  font-size: 0.9rem;
+  color: rgba(155, 48, 255, 0.4);
+  padding-left: 13px;
+  margin: -2px 0;
+  line-height: 1;
+}
+
+/* Each stop is a card row */
 .route-stop-item {
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  padding: 12px 0;
+  background: #1a0a2a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  transition: border-color 0.2s;
 }
 
+.route-stop-item:hover {
+  border-color: rgba(155, 48, 255, 0.4);
+}
+
+/* Purple numbered circle */
 .route-stop-number {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), #6b21a8);
   color: #ffffff;
   font-size: 0.8rem;
   font-weight: 700;
@@ -206,16 +268,10 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-top: 2px;
+  box-shadow: 0 2px 6px rgba(155, 48, 255, 0.4);
 }
 
-.route-stop-info {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-/* Stop name and time badge on the same row */
+/* Stop name and time badge on the same line */
 .route-stop-header {
   display: flex;
   align-items: center;
@@ -229,55 +285,30 @@
   color: #ffffff;
 }
 
-/* Time badge shown next to the stop name in detail view */
+/* Time badge - pill style */
 .route-stop-time {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   color: var(--accent-light);
-  background: rgba(155, 48, 255, 0.15);
-  border: 1px solid var(--accent);
+  background: rgba(155, 48, 255, 0.18);
+  border: 1px solid rgba(155, 48, 255, 0.5);
   border-radius: 20px;
-  padding: 2px 8px;
+  padding: 2px 9px;
   white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
 .route-stop-address {
   font-size: 0.8rem;
   color: var(--text-muted);
+  margin-top: 2px;
 }
 
 .route-stop-no-address {
   font-size: 0.8rem;
-  color: var(--text-muted);
-  font-style: italic;
-}
-
-/* Starting location row - shown above the numbered stops */
-.route-origin-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 12px 0;
-}
-
-.route-origin-dot {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-/* Arrow connector between stops */
-.route-stop-connector {
-  font-size: 1rem;
   color: var(--border);
-  padding-left: 9px;
-  margin: -4px 0;
+  font-style: italic;
+  margin-top: 2px;
 }
 
 /* =============================================
@@ -288,6 +319,8 @@
   gap: 10px;
   flex-wrap: wrap;
   align-items: center;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
 }
 
 .route-maps-note {
@@ -563,4 +596,57 @@
     text-align: center;
     justify-content: center;
   }
+}
+
+/* =============================================
+   PRINT ROUTE SELECTOR (modal checklist)
+============================================== */
+
+/* Group label - "Upcoming" / "Past Routes" */
+.print-check-group-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin: 14px 0 6px;
+}
+.print-check-group-label:first-child { margin-top: 0; }
+
+/* Each route row - checkbox + name + meta */
+.print-route-check-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.print-route-check-row:hover {
+  background: #1f0a2e;
+  border-color: var(--accent);
+}
+.print-route-check-row input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.print-route-check-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.print-route-check-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.print-route-check-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
 }
