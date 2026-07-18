@@ -146,7 +146,10 @@ function renderSchoolsList(countyId) {
   const counties      = getCounties();
   const county        = counties.find(c => c.id === countyId);
   const schools       = getSchools();
-  const countySchools = schools.filter(s => s.countyId === countyId);
+  // Sort schools A-Z within the county view
+  const countySchools = schools
+    .filter(s => s.countyId === countyId)
+    .sort(function(a, b) { return a.name.localeCompare(b.name); });
 
   // Hide the top controls bar (search/add buttons) in this view
   showDirectoryControls(false);
@@ -230,6 +233,21 @@ function renderSchoolDetail(schoolId) {
     'Tertiary':  'priority-tertiary',
   }[school.priority] || '';
 
+  // Compute visit stats for this school
+  const allVisits    = loadData('visits', []);
+  const schoolVisits = allVisits.filter(function(v) { return v.schoolId === school.id; });
+  const visitCount   = schoolVisits.length;
+  const lastVisit    = schoolVisits.slice().sort(function(a, b) { return new Date(b.date) - new Date(a.date); })[0];
+  const lastVisitDate = lastVisit ? new Date(lastVisit.date) : null;
+  const daysSince = lastVisitDate
+    ? Math.floor((Date.now() - new Date(lastVisitDate.getTime() + lastVisitDate.getTimezoneOffset() * 60000)) / 86400000)
+    : null;
+  const lastVisitStr = lastVisitDate
+    ? new Date(lastVisitDate.getTime() + lastVisitDate.getTimezoneOffset() * 60000)
+        .toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' })
+    : 'Never';
+  const overdueClass = daysSince !== null && daysSince > 60 ? 'svs-overdue' : '';
+
   showDirectoryControls(false);
 
   container.innerHTML = `
@@ -250,6 +268,24 @@ function renderSchoolDetail(schoolId) {
           <div class="school-detail-actions">
             <button class="btn btn-ghost" onclick="openEditSchool('${school.id}')">&#9998; Edit School</button>
             <button class="btn btn-danger" onclick="confirmDeleteSchool('${school.id}')">&#128465; Delete</button>
+          </div>
+        </div>
+
+        <!-- Visit stats bar -->
+        <div class="school-visit-stats-bar">
+          <div class="svs-item">
+            <span class="svs-value">${visitCount}</span>
+            <span class="svs-label">Total Visits</span>
+          </div>
+          <div class="svs-divider"></div>
+          <div class="svs-item">
+            <span class="svs-value">${lastVisitStr}</span>
+            <span class="svs-label">Last Visit</span>
+          </div>
+          <div class="svs-divider"></div>
+          <div class="svs-item">
+            <span class="svs-value ${overdueClass}">${daysSince !== null ? daysSince + 'd ago' : '-'}</span>
+            <span class="svs-label">Days Since</span>
           </div>
         </div>
 
@@ -676,6 +712,15 @@ function openAddCounty() {
       <input type="text" id="f-county-name" placeholder="e.g. Hamilton" />
     </div>
     <div class="form-group">
+      <label>Region</label>
+      <select id="f-county-region">
+        <option value="">-- Not assigned --</option>
+        <option value="West TN">West Tennessee</option>
+        <option value="Middle TN">Middle Tennessee</option>
+        <option value="East TN">East Tennessee</option>
+      </select>
+    </div>
+    <div class="form-group">
       <label>Notes (optional)</label>
       <textarea id="f-county-notes" rows="3" placeholder="e.g. Exempt from housing rule..."></textarea>
     </div>
@@ -686,7 +731,12 @@ function openAddCounty() {
     if (!name) { alert('County name is required.'); return; }
 
     const counties = getCounties();
-    counties.push({ id: makeId(), name, notes: document.getElementById('f-county-notes').value.trim() });
+    counties.push({
+      id:     makeId(),
+      name:   name,
+      region: document.getElementById('f-county-region').value,
+      notes:  document.getElementById('f-county-notes').value.trim(),
+    });
     saveCounties(counties);
     closeModal();
     renderDirectory();
@@ -707,6 +757,15 @@ function openEditCounty(countyId) {
       <input type="text" id="f-county-name" value="${county.name}" />
     </div>
     <div class="form-group">
+      <label>Region</label>
+      <select id="f-county-region">
+        <option value=""           ${!county.region                  ? 'selected' : ''}>-- Not assigned --</option>
+        <option value="West TN"   ${county.region === 'West TN'     ? 'selected' : ''}>West Tennessee</option>
+        <option value="Middle TN" ${county.region === 'Middle TN'   ? 'selected' : ''}>Middle Tennessee</option>
+        <option value="East TN"   ${county.region === 'East TN'     ? 'selected' : ''}>East Tennessee</option>
+      </select>
+    </div>
+    <div class="form-group">
       <label>Notes</label>
       <textarea id="f-county-notes" rows="3">${county.notes || ''}</textarea>
     </div>
@@ -717,7 +776,12 @@ function openEditCounty(countyId) {
     if (!name) { alert('County name is required.'); return; }
 
     const idx = counties.findIndex(c => c.id === countyId);
-    counties[idx] = { ...counties[idx], name, notes: document.getElementById('f-county-notes').value.trim() };
+    counties[idx] = {
+      ...counties[idx],
+      name:   name,
+      region: document.getElementById('f-county-region').value,
+      notes:  document.getElementById('f-county-notes').value.trim(),
+    };
     saveCounties(counties);
     closeModal();
     renderDirectory();
@@ -748,6 +812,133 @@ function confirmDeleteCounty(countyId) {
 // =============================================
 function expandAll()   { /* not used in pill view */ }
 function collapseAll() { /* not used in pill view */ }
+
+// =============================================
+// REGION VIEW
+// Groups all schools by TN region (West / Middle / East).
+// Each region section lists schools A-Z with their county name.
+// =============================================
+function showDirectoryRegion() {
+  const content   = document.getElementById('directory-content');
+  const mapWrap   = document.getElementById('directory-map-wrap');
+  const listBtn   = document.getElementById('dir-list-btn');
+  const mapBtn    = document.getElementById('dir-map-btn');
+  const regionBtn = document.getElementById('dir-region-btn');
+
+  if (content)   content.style.display  = '';
+  if (mapWrap)   mapWrap.style.display  = 'none';
+  if (listBtn)   listBtn.classList.remove('active-toggle');
+  if (mapBtn)    mapBtn.classList.remove('active-toggle');
+  if (regionBtn) regionBtn.classList.add('active-toggle');
+
+  renderRegionView();
+}
+
+function renderRegionView() {
+  const container = document.getElementById('directory-content');
+  if (!container) return;
+
+  // Show top controls bar (search/add buttons are not used here, but keeps layout consistent)
+  showDirectoryControls(true);
+
+  const counties = getCounties();
+  const schools  = getSchools();
+
+  const REGIONS = [
+    { key: 'West TN',   label: 'West Tennessee' },
+    { key: 'Middle TN', label: 'Middle Tennessee' },
+    { key: 'East TN',   label: 'East Tennessee' },
+  ];
+
+  let html = '<div class="region-view">';
+
+  REGIONS.forEach(function(region) {
+    // Get all counties tagged to this region
+    const regionCounties = counties.filter(function(c) { return c.region === region.key; });
+    const countyIdSet    = regionCounties.map(function(c) { return c.id; });
+
+    // Get all schools in those counties, sorted A-Z
+    const regionSchools = schools
+      .filter(function(s) { return countyIdSet.indexOf(s.countyId) !== -1; })
+      .sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+    if (regionCounties.length === 0 && regionSchools.length === 0) return;
+
+    const schoolRows = regionSchools.length === 0
+      ? '<p class="empty-state" style="padding:16px;">No schools in this region yet.</p>'
+      : regionSchools.map(function(s) {
+          const county       = counties.find(function(c) { return c.id === s.countyId; });
+          const priorityClass = {
+            'Primary':   'priority-primary',
+            'Secondary': 'priority-secondary',
+            'Tertiary':  'priority-tertiary',
+          }[s.priority] || '';
+          return `
+            <div class="region-school-row" onclick="openSchoolDetail('${s.id}')">
+              <span class="priority-badge ${priorityClass}">${s.priority}</span>
+              <span class="region-school-name">${s.name}</span>
+              <span class="region-school-county">${county ? county.name + ' County' : ''}</span>
+              <span class="region-chevron">&#8250;</span>
+            </div>
+          `;
+        }).join('');
+
+    html += `
+      <div class="region-section">
+        <div class="region-header">
+          <span class="region-title">${region.label}</span>
+          <span class="region-count">${regionSchools.length} school${regionSchools.length !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="region-schools-list">${schoolRows}</div>
+      </div>
+    `;
+  });
+
+  // Show counties with no region assigned
+  const assignedIds     = counties.filter(function(c) { return !!c.region; }).map(function(c) { return c.id; });
+  const unassigned      = schools
+    .filter(function(s) { return assignedIds.indexOf(s.countyId) === -1; })
+    .sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+  if (unassigned.length > 0) {
+    const rows = unassigned.map(function(s) {
+      const county       = counties.find(function(c) { return c.id === s.countyId; });
+      const priorityClass = {
+        'Primary':   'priority-primary',
+        'Secondary': 'priority-secondary',
+        'Tertiary':  'priority-tertiary',
+      }[s.priority] || '';
+      return `
+        <div class="region-school-row" onclick="openSchoolDetail('${s.id}')">
+          <span class="priority-badge ${priorityClass}">${s.priority}</span>
+          <span class="region-school-name">${s.name}</span>
+          <span class="region-school-county">${county ? county.name + ' County' : ''}</span>
+          <span class="region-chevron">&#8250;</span>
+        </div>
+      `;
+    }).join('');
+
+    html += `
+      <div class="region-section region-section-muted">
+        <div class="region-header">
+          <span class="region-title">No Region Assigned</span>
+          <span class="region-count">${unassigned.length} school${unassigned.length !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="region-schools-list">${rows}</div>
+      </div>
+    `;
+  }
+
+  html += '</div>';
+
+  if (counties.length === 0) {
+    html = '<p class="empty-state" style="padding:40px; text-align:center;">No counties yet. Add one to get started.</p>';
+  } else if (schools.length === 0) {
+    html = '<p class="empty-state" style="padding:40px; text-align:center;">No schools yet. Add schools to a county first.</p>';
+  }
+
+  container.innerHTML = html;
+}
 
 // =============================================
 // INIT DIRECTORY

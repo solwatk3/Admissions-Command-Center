@@ -13,6 +13,9 @@ let editingRouteId = null;  // null = new route, otherwise = ID of route being e
 // Kept in memory so re-rendering stop rows doesn't wipe unsaved stops.
 let builderStops = [];
 
+// Pre-fill data for duplicated routes (name + origin only - date is always left blank)
+let builderPreFill = null;
+
 // =============================================
 // DATA HELPERS
 // =============================================
@@ -33,6 +36,7 @@ function initRoutes() {
   activeRouteId  = null;
   editingRouteId = null;
   builderStops   = [];
+  builderPreFill = null;
   renderRoutes();
 }
 
@@ -229,6 +233,7 @@ function renderRouteDetail(routeId) {
         </div>
         <div class="route-detail-actions">
           <button class="btn btn-ghost" onclick="openRouteEditor('${route.id}')">&#9998; Edit</button>
+          <button class="btn btn-ghost" onclick="duplicateRoute('${route.id}')">&#10064; Duplicate</button>
           <button class="btn btn-danger" onclick="confirmDeleteRoute('${route.id}')">&#128465; Delete</button>
         </div>
       </div>
@@ -418,6 +423,25 @@ function openRouteBuilder() {
   routesView     = 'builder';
   editingRouteId = null;
   builderStops   = [];
+  builderPreFill = null;
+  renderRoutes();
+}
+
+// =============================================
+// DUPLICATE ROUTE
+// Clones a route's stops and origin into a new builder session.
+// Date is left blank so the user picks a new one before saving.
+// =============================================
+function duplicateRoute(routeId) {
+  const route = getRoutes().find(function(r) { return r.id === routeId; });
+  if (!route) return;
+
+  routesView     = 'builder';
+  editingRouteId = null;
+  // Clone stops with fresh IDs so they're independent from the original
+  builderStops   = route.stops.map(function(s) { return Object.assign({}, s, { id: makeId() }); });
+  // Store name and origin for the builder to pre-fill (date intentionally left blank)
+  builderPreFill = { name: route.name + ' (Copy)', origin: route.origin || '' };
   renderRoutes();
 }
 
@@ -439,21 +463,31 @@ function renderRouteBuilder() {
   const route     = isEditing ? getRoutes().find(r => r.id === editingRouteId) : null;
   const schools   = getSchools().sort((a, b) => a.name.localeCompare(b.name));
 
+  // Name/origin come from the existing route (edit), a duplicate pre-fill, or blank (new)
+  const nameValue   = route ? escapeHtml(route.name)
+                    : builderPreFill ? escapeHtml(builderPreFill.name)
+                    : '';
+  const originValue = route && route.origin ? escapeHtml(route.origin)
+                    : builderPreFill && builderPreFill.origin ? escapeHtml(builderPreFill.origin)
+                    : '210 Hurt St, Martin, TN 38237';
+  const headingLabel = isEditing ? 'Edit Route' : builderPreFill ? 'Duplicate Route' : 'New Route';
+
   container.innerHTML = `
     <div class="view-header">
       <button class="btn btn-ghost back-btn" onclick="cancelRouteBuilder()">&#8592; Back</button>
     </div>
 
     <div class="route-builder-card">
-      <h2 class="builder-heading">${isEditing ? 'Edit Route' : 'New Route'}</h2>
+      <h2 class="builder-heading">${headingLabel}</h2>
+      ${builderPreFill ? '<p style="font-size:0.82rem; color:var(--text-muted); margin-top:-12px;">Stops copied - pick a new date and save.</p>' : ''}
 
       <!-- Route name -->
       <div class="form-group">
         <label>Route Name <span class="required">*</span></label>
-        <input type="text" id="rb-name" placeholder="e.g. Gibson County Fall Tour" value="${route ? escapeHtml(route.name) : ''}" />
+        <input type="text" id="rb-name" placeholder="e.g. Gibson County Fall Tour" value="${nameValue}" />
       </div>
 
-      <!-- Route date -->
+      <!-- Route date - left blank for duplicates so user must pick a new one -->
       <div class="form-group">
         <label>Date <span class="required">*</span></label>
         <input type="date" id="rb-date" value="${route ? route.date : ''}" />
@@ -462,7 +496,7 @@ function renderRouteBuilder() {
       <!-- Starting location - defaults to Sol's office address -->
       <div class="form-group">
         <label>Starting From</label>
-        <input type="text" id="rb-origin" placeholder="Starting address..." value="${route && route.origin ? escapeHtml(route.origin) : '210 Hurt St, Martin, TN 38237'}" />
+        <input type="text" id="rb-origin" placeholder="Starting address..." value="${originValue}" />
       </div>
 
       <!-- Stop list -->
@@ -733,6 +767,7 @@ function saveRoute() {
 function cancelRouteBuilder() {
   builderStops   = [];
   editingRouteId = null;
+  builderPreFill = null;
   initRoutes();
 }
 

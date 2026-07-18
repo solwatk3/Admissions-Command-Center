@@ -680,3 +680,169 @@
     white-space: normal;
   }
 }
+
+/* =============================================
+   REGION VIEW
+   Groups all schools by West / Middle / East TN.
+   Each school row is clickable to open its detail.
+============================================== */
+.region-view {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* One region block (e.g. "West Tennessee") */
+.region-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* Muted style for the "No Region Assigned" section */
+.region-section-muted .region-header {
+  background: #1a1a1a;
+}
+
+/* The colored header bar showing region name + count */
+.region-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(90deg, #1a0028, #0d0020);
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.region-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent-light);
+  letter-spacing: 0.03em;
+}
+
+.region-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.06);
+  border-radius: 20px;
+  padding: 2px 10px;
+}
+
+/* List of school rows inside a region section */
+.region-schools-list {
+  background: var(--bg);
+}
+
+/* One school row - clickable */
+.region-school-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.region-school-row:last-child {
+  border-bottom: none;
+}
+
+.region-school-row:hover {
+  background: #1a0a2e;
+}
+
+.region-school-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.region-school-county {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.region-chevron {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+@media (max-width: 480px) {
+  .region-school-county {
+    display: none;
+  }
+}
+
+/* =============================================
+   SCHOOL VISIT STATS BAR
+   Shows total visits, last visit date, and days since
+   at the top of the school detail card
+============================================== */
+.school-visit-stats-bar {
+  display: flex;
+  align-items: center;
+  background: #1a0a2a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  gap: 0;
+}
+
+/* Each stat block */
+.svs-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  gap: 2px;
+}
+
+/* The number / date value */
+.svs-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent-light);
+  line-height: 1.2;
+}
+
+/* The label below the value */
+.svs-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Thin vertical divider between stats */
+.svs-divider {
+  width: 1px;
+  height: 36px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* Red color when days-since exceeds 60 */
+.svs-overdue {
+  color: #ff5555;
+}
+
+@media (max-width: 480px) {
+  .school-visit-stats-bar {
+    padding: 12px 12px;
+  }
+  .svs-value {
+    font-size: 1rem;
+  }
+}

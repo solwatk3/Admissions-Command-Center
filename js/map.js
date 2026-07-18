@@ -17,34 +17,41 @@ let mapInitialized  = false;
 // =============================================
 function showDirectoryMap() {
   // Hide the normal directory content, show the map container
-  const content  = document.getElementById('directory-content');
-  const mapWrap  = document.getElementById('directory-map-wrap');
-  const listBtn  = document.getElementById('dir-list-btn');
-  const mapBtn   = document.getElementById('dir-map-btn');
+  const content   = document.getElementById('directory-content');
+  const mapWrap   = document.getElementById('directory-map-wrap');
+  const listBtn   = document.getElementById('dir-list-btn');
+  const mapBtn    = document.getElementById('dir-map-btn');
+  const regionBtn = document.getElementById('dir-region-btn');
 
   if (!content || !mapWrap) return;
 
   content.style.display  = 'none';
   mapWrap.style.display  = 'block';
-  if (listBtn) listBtn.classList.remove('active-toggle');
-  if (mapBtn)  mapBtn.classList.add('active-toggle');
+  if (listBtn)   listBtn.classList.remove('active-toggle');
+  if (mapBtn)    mapBtn.classList.add('active-toggle');
+  if (regionBtn) regionBtn.classList.remove('active-toggle');
 
   // Init or refresh the map
   initSchoolMap();
 }
 
 function showDirectoryList() {
-  const content  = document.getElementById('directory-content');
-  const mapWrap  = document.getElementById('directory-map-wrap');
-  const listBtn  = document.getElementById('dir-list-btn');
-  const mapBtn   = document.getElementById('dir-map-btn');
+  const content   = document.getElementById('directory-content');
+  const mapWrap   = document.getElementById('directory-map-wrap');
+  const listBtn   = document.getElementById('dir-list-btn');
+  const mapBtn    = document.getElementById('dir-map-btn');
+  const regionBtn = document.getElementById('dir-region-btn');
 
   if (!content || !mapWrap) return;
 
   content.style.display  = '';
   mapWrap.style.display  = 'none';
-  if (listBtn) listBtn.classList.add('active-toggle');
-  if (mapBtn)  mapBtn.classList.remove('active-toggle');
+  if (listBtn)   listBtn.classList.add('active-toggle');
+  if (mapBtn)    mapBtn.classList.remove('active-toggle');
+  if (regionBtn) regionBtn.classList.remove('active-toggle');
+
+  // Re-render the county pills list
+  renderDirectory();
 }
 
 // =============================================

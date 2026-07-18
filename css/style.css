@@ -711,3 +711,60 @@ a {
   font-size: 1.3rem;
   line-height: 1;
 }
+
+/* =============================================
+   OVERDUE SCHOOLS DASHBOARD CARD
+   Each row is a Primary school not visited in 60+ days
+============================================== */
+.overdue-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.overdue-row:hover {
+  border-color: #ff5555;
+  background: #1f0a0a;
+}
+
+.overdue-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.overdue-school-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.overdue-county {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Red badge showing days since or "Never visited" */
+.overdue-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #ff5555;
+  background: rgba(255, 85, 85, 0.12);
+  border: 1px solid rgba(255, 85, 85, 0.3);
+  border-radius: 20px;
+  padding: 3px 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 12px;
+}

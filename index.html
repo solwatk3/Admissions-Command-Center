@@ -121,6 +121,18 @@
           </div>
         </div>
 
+        <!-- Overdue primary schools card -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">&#9888;</span>
+            <h2>Overdue Schools</h2>
+            <span class="card-tag">60+ days</span>
+          </div>
+          <div class="card-body" id="dashboard-overdue">
+            <p class="empty-state">Checking...</p>
+          </div>
+        </div>
+
         <!-- Season snapshot card -->
         <div class="card">
           <div class="card-header">
@@ -189,10 +201,11 @@
           <button class="btn btn-primary-solid" onclick="openAddCounty()">+ Add County</button>
           <button class="btn btn-ghost" onclick="expandAll()">&#9660; Expand All</button>
           <button class="btn btn-ghost" onclick="collapseAll()">&#9654; Collapse All</button>
-          <!-- List / Map toggle -->
+          <!-- List / Map / Region toggle -->
           <div class="dir-toggle-row">
             <button class="dir-toggle-btn active-toggle" id="dir-list-btn" onclick="showDirectoryList()">&#9776; List</button>
             <button class="dir-toggle-btn" id="dir-map-btn" onclick="showDirectoryMap()">&#128205; Map</button>
+            <button class="dir-toggle-btn" id="dir-region-btn" onclick="showDirectoryRegion()">&#127758; By Region</button>
           </div>
         </div>
       </div>
