@@ -602,6 +602,35 @@
    PRINT ROUTE SELECTOR (modal checklist)
 ============================================== */
 
+/* ---- Date range picker ---- */
+.print-date-range {
+  background: rgba(155, 48, 255, 0.07);
+  border: 1px solid rgba(155, 48, 255, 0.25);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 18px;
+}
+
+.print-date-range-fields {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.print-date-range-to {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  padding-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.print-date-range-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 10px;
+}
+
 /* Group label - "Upcoming" / "Past Routes" */
 .print-check-group-label {
   font-size: 0.75rem;

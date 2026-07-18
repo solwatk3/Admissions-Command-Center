@@ -751,8 +751,9 @@ function confirmDeleteRoute(routeId) {
 
 // =============================================
 // PRINT ROUTE SELECTOR
-// Opens a modal so the user can pick one or more routes
-// to combine into a single PDF itinerary.
+// Opens a modal with a date range picker and a checklist.
+// Setting a date range auto-checks all routes in that window.
+// Individual routes can still be toggled manually after.
 // =============================================
 function openPrintRoutesSelector() {
   const routes = getRoutes().sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
@@ -762,7 +763,7 @@ function openPrintRoutesSelector() {
     return;
   }
 
-  const now     = new Date();
+  const now      = new Date();
   now.setHours(0, 0, 0, 0);
   const upcoming = routes.filter(function(r) { return new Date(r.date) >= now; });
   const past     = routes.filter(function(r) { return new Date(r.date) < now; });
@@ -773,7 +774,7 @@ function openPrintRoutesSelector() {
       .toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
     return `
       <label class="print-route-check-row">
-        <input type="checkbox" class="print-route-checkbox" value="${r.id}" />
+        <input type="checkbox" class="print-route-checkbox" value="${r.id}" data-date="${r.date}" />
         <span class="print-route-check-info">
           <span class="print-route-check-name">${r.name}</span>
           <span class="print-route-check-meta">${dateStr} &middot; ${r.stops.length} stop${r.stops.length !== 1 ? 's' : ''}</span>
@@ -791,9 +792,24 @@ function openPrintRoutesSelector() {
     : '';
 
   const body = `
-    <p style="font-size:0.86rem; color:var(--text-muted); margin-bottom:14px;">
-      Select the routes to include. They'll print in date order on one document.
-    </p>
+    <!-- Date range picker - auto-selects routes in the window -->
+    <div class="print-date-range">
+      <div class="print-date-range-fields">
+        <div class="form-group" style="flex:1; margin:0;">
+          <label>Start Date</label>
+          <input type="date" id="pr-start-date" />
+        </div>
+        <div class="print-date-range-to">to</div>
+        <div class="form-group" style="flex:1; margin:0;">
+          <label>End Date</label>
+          <input type="date" id="pr-end-date" />
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="applyPrintDateRange()" style="align-self:flex-end;">Select</button>
+      </div>
+      <p class="print-date-range-hint">Set a date range to auto-select all routes in that window, or pick manually below.</p>
+    </div>
+
+    <!-- Manual checklist -->
     <div class="print-route-checklist">
       ${upcomingHtml}
       ${pastHtml}
@@ -814,6 +830,46 @@ function openPrintRoutesSelector() {
   // Relabel the generic Save button
   const saveBtn = document.getElementById('modal-save-btn');
   if (saveBtn) saveBtn.textContent = 'Generate PDF';
+}
+
+// =============================================
+// DATE RANGE AUTO-SELECT
+// Checks all routes whose date falls between the two
+// selected dates, unchecks everything outside the range.
+// =============================================
+function applyPrintDateRange() {
+  const startInput = document.getElementById('pr-start-date');
+  const endInput   = document.getElementById('pr-end-date');
+
+  if (!startInput || !endInput) return;
+
+  const start = startInput.value;
+  const end   = endInput.value;
+
+  if (!start || !end) {
+    alert('Please set both a start and end date.');
+    return;
+  }
+
+  if (end < start) {
+    alert('End date must be on or after the start date.');
+    return;
+  }
+
+  // Check routes in range, uncheck everything outside it
+  document.querySelectorAll('.print-route-checkbox').forEach(function(box) {
+    const routeDate = box.dataset.date;
+    box.checked = routeDate >= start && routeDate <= end;
+  });
+
+  // Show a count of what was selected
+  const count = document.querySelectorAll('.print-route-checkbox:checked').length;
+  const hint  = document.querySelector('.print-date-range-hint');
+  if (hint) {
+    hint.textContent = count > 0
+      ? count + ' route' + (count !== 1 ? 's' : '') + ' selected in that range.'
+      : 'No routes found in that range - try different dates or select manually below.';
+  }
 }
 
 // =============================================
