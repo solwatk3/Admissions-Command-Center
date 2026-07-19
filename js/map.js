@@ -108,8 +108,10 @@ function geocodeAddress(address, delayMs) {
 // Staggers requests by 1.1 seconds each to stay within rate limits.
 // Returns a promise resolving to { school, lat, lng, fallback } objects.
 // fallback:true means the location is approximate - user can drag to correct.
+// onProgress(done, total) is called after each network lookup so the caller
+// can update a live counter - cached hits don't count toward the total.
 // =============================================
-async function geocodeAllSchools(schools) {
+async function geocodeAllSchools(schools, onProgress) {
   const cache   = getGeoCache();
   const results = [];
   let   delay   = 0;
@@ -117,6 +119,13 @@ async function geocodeAllSchools(schools) {
   // Load counties once up front - used for the county-name fallback query.
   // Avoids re-reading localStorage inside the loop for every school.
   const allCounties = getCounties();
+
+  // Count how many schools actually need a network request (not in cache)
+  // so we can show a meaningful "X of Y" counter to the user.
+  const toFetch = schools.filter(function(s) {
+    return s.address && s.address.trim() && !cache[s.address.trim().toLowerCase()];
+  }).length;
+  let fetched = 0;
 
   for (const school of schools) {
     if (!school.address || !school.address.trim()) continue;
@@ -179,6 +188,10 @@ async function geocodeAllSchools(schools) {
       cache[key] = { lat: found.lat, lng: found.lng, fallback: found.fallback };
       results.push({ school: school, lat: found.lat, lng: found.lng, fallback: found.fallback });
     }
+
+    // Report progress after each network lookup (not cache hits)
+    fetched++;
+    if (onProgress) onProgress(fetched, toFetch);
   }
 
   saveGeoCache(cache);
@@ -198,15 +211,23 @@ async function initSchoolMap() {
 
   // Show a loading message while geocoding
   const statusEl = document.getElementById('map-status');
+
+  // Helper that writes a spinning-icon + counter message into the status bar
+  function setStatus(done, total) {
+    if (!statusEl) return;
+    statusEl.innerHTML = '<span class="map-status-spinner">&#8635;</span>'
+      + 'Looking up addresses... (' + done + ' / ' + total + ')';
+    statusEl.classList.add('geocoding-active');
+    statusEl.style.display = 'block';
+  }
+
   if (statusEl) {
-    const needsLookup = schools.filter(s =>
-      s.address && s.address.trim() &&
-      !getGeoCache()[s.address.trim().toLowerCase()]
-    );
+    const needsLookup = schools.filter(function(s) {
+      return s.address && s.address.trim() &&
+             !getGeoCache()[s.address.trim().toLowerCase()];
+    });
     if (needsLookup.length > 0) {
-      statusEl.textContent = 'Looking up ' + needsLookup.length + ' address'
-        + (needsLookup.length !== 1 ? 'es' : '') + '... this takes a moment the first time.';
-      statusEl.style.display = 'block';
+      setStatus(0, needsLookup.length);
     } else {
       statusEl.style.display = 'none';
     }
@@ -248,11 +269,14 @@ async function initSchoolMap() {
   // and shade counties where schools exist
   loadTNCountyBoundaries(schools);
 
-  // Geocode all school addresses and drop pins
-  const plotted = await geocodeAllSchools(schools);
+  // Geocode all school addresses and drop pins - pass the live counter callback
+  const plotted = await geocodeAllSchools(schools, setStatus);
 
-  // Hide the loading message once geocoding is done
-  if (statusEl) statusEl.style.display = 'none';
+  // Hide the loading message and remove the active style once geocoding is done
+  if (statusEl) {
+    statusEl.style.display = 'none';
+    statusEl.classList.remove('geocoding-active');
+  }
 
   if (plotted.length === 0) {
     if (statusEl) {
@@ -439,9 +463,16 @@ async function initSchoolDetailMap(address) {
 // then re-runs the full geocode + map init pass.
 // Called from the Resync button in the map view.
 // =============================================
-function resyncMap() {
-  const cache    = getGeoCache();
-  const cleaned  = {};
+async function resyncMap() {
+  // Disable the button so the user can't double-trigger while geocoding runs
+  const btn = document.getElementById('resync-btn');
+  if (btn) {
+    btn.disabled    = true;
+    btn.textContent = 'Resyncing...';
+  }
+
+  const cache   = getGeoCache();
+  const cleaned = {};
 
   // Keep only entries the user manually corrected by dragging the pin
   Object.keys(cache).forEach(function(key) {
@@ -452,15 +483,14 @@ function resyncMap() {
 
   saveGeoCache(cleaned);
 
-  // Show a brief status message so the user knows it's working
-  const statusEl = document.getElementById('map-status');
-  if (statusEl) {
-    statusEl.textContent = 'Resyncing all addresses...';
-    statusEl.style.display = 'block';
-  }
+  // Re-init the map with a clean cache - awaiting so we restore the button after
+  await initSchoolMap();
 
-  // Re-init the map with a clean cache
-  initSchoolMap();
+  // Restore the button once the map is fully loaded
+  if (btn) {
+    btn.disabled    = false;
+    btn.textContent = '↻ Resync Map';
+  }
 }
 
 // =============================================

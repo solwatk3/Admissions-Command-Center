@@ -36,6 +36,24 @@
   font-style: italic;
 }
 
+/* Spinning icon inside the status message - signals active work */
+@keyframes acc-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.map-status-spinner {
+  display: inline-block;
+  animation: acc-spin 0.9s linear infinite;
+  margin-right: 5px;
+  font-style: normal;
+}
+
+/* Status text turns accent purple while actively geocoding */
+#map-status.geocoding-active {
+  color: var(--accent);
+}
+
 /* County name tooltip on hover */
 .map-county-tooltip {
   background: #2a0a3a;
