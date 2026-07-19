@@ -130,7 +130,7 @@ function buildReminderBanner(routes) {
       <div class="route-reminder-banner" id="reminder-${r.id}">
         <span class="reminder-icon">&#9200;</span>
         <div class="reminder-text">
-          <strong>${r.name}</strong> is coming up on ${dateStr} &mdash;
+          <strong>${escapeHtml(r.name)}</strong> is coming up on ${dateStr} &mdash;
           ${r.stops.length} stop${r.stops.length !== 1 ? 's' : ''}.
         </div>
         <div class="reminder-actions">
@@ -167,8 +167,8 @@ function renderRouteCard(route) {
   now.setHours(0, 0, 0, 0);
   const isPast = d < now;
 
-  // Show stop names as a preview arrow chain
-  const preview = route.stops.map(s => s.name).join(' → ');
+  // Show stop names as a preview arrow chain (escaped - names are user-entered)
+  const preview = route.stops.map(s => escapeHtml(s.name)).join(' → ');
 
   // Show overall time range if any stops have times
   const timed       = route.stops.filter(s => s.startTime);
@@ -180,7 +180,7 @@ function renderRouteCard(route) {
   return `
     <div class="route-card ${isPast ? 'route-card-past' : ''}" onclick="openRouteDetail('${route.id}')">
       <div class="route-card-info">
-        <h3 class="route-card-name">${route.name}</h3>
+        <h3 class="route-card-name">${escapeHtml(route.name)}</h3>
         <p class="route-card-meta">${dateStr} &nbsp;|&nbsp; ${route.stops.length} stop${route.stops.length !== 1 ? 's' : ''}${timeRangeStr}</p>
         <p class="route-card-preview">${preview}</p>
       </div>
@@ -228,7 +228,7 @@ function renderRouteDetail(routeId) {
     <div class="route-detail-card">
       <div class="route-detail-header">
         <div class="route-detail-title">
-          <h2>${route.name}</h2>
+          <h2>${escapeHtml(route.name)}</h2>
           <p class="route-detail-date">&#128197; ${dateStr}</p>
         </div>
         <div class="route-detail-actions">
@@ -245,7 +245,7 @@ function renderRouteDetail(routeId) {
           <div class="route-origin-dot"></div>
           <div class="route-stop-info">
             <span style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Starting From</span>
-            <span style="font-size:0.9rem; color:#ffffff; font-weight:500;">${escapeHtml(route.origin || '210 Hurt St, Martin, TN 38237')}</span>
+            <span style="font-size:0.9rem; color:#ffffff; font-weight:500;">${escapeHtml(route.origin || DEFAULT_ORIGIN)}</span>
           </div>
         </div>
 
@@ -260,11 +260,11 @@ function renderRouteDetail(routeId) {
               <div class="route-stop-number">${i + 1}</div>
               <div class="route-stop-info">
                 <div class="route-stop-header">
-                  <span class="route-stop-name">${stop.name}</span>
+                  <span class="route-stop-name">${escapeHtml(stop.name)}</span>
                   ${timeRange ? `<span class="route-stop-time">${timeRange}</span>` : ''}
                 </div>
                 ${stop.address
-                  ? `<span class="route-stop-address">${stop.address}</span>`
+                  ? `<span class="route-stop-address">${escapeHtml(stop.address)}</span>`
                   : `<span class="route-stop-no-address">No address on file</span>`
                 }
               </div>
@@ -321,7 +321,7 @@ function buildMapsUrl(stops, origin) {
   if (addressed.length < 1) return null;
 
   // Start from the route's saved origin (defaults to Sol's office if blank)
-  const start = (origin && origin.trim()) ? origin.trim() : '210 Hurt St, Martin, TN 38237';
+  const start = (origin && origin.trim()) ? origin.trim() : DEFAULT_ORIGIN;
   const parts = [start, ...addressed.map(s => s.address.trim())].map(encodeURIComponent);
   return 'https://www.google.com/maps/dir/' + parts.join('/');
 }
@@ -336,7 +336,7 @@ function buildAppleMapsUrl(stops, origin) {
   const addressed = stops.filter(s => s.address && s.address.trim());
   if (addressed.length < 1) return null;
 
-  const start = (origin && origin.trim()) ? origin.trim() : '210 Hurt St, Martin, TN 38237';
+  const start = (origin && origin.trim()) ? origin.trim() : DEFAULT_ORIGIN;
 
   // First stop is the primary daddr; additional stops chain with "+to:"
   const destinations = addressed.map(s => s.address.trim());
@@ -367,7 +367,7 @@ function emailRouteReminder(routeId) {
   });
 
   const mapsUrl = buildMapsUrl(route.stops, route.origin);
-  const origin  = route.origin || '210 Hurt St, Martin, TN 38237';
+  const origin  = route.origin || DEFAULT_ORIGIN;
 
   const subject = `Route Reminder: ${route.name} - ${dateStr}`;
 
@@ -469,7 +469,7 @@ function renderRouteBuilder() {
                     : '';
   const originValue = route && route.origin ? escapeHtml(route.origin)
                     : builderPreFill && builderPreFill.origin ? escapeHtml(builderPreFill.origin)
-                    : '210 Hurt St, Martin, TN 38237';
+                    : DEFAULT_ORIGIN;
   const headingLabel = isEditing ? 'Edit Route' : builderPreFill ? 'Duplicate Route' : 'New Route';
 
   container.innerHTML = `
@@ -712,7 +712,7 @@ function updateStopEndTime(stopId, time) {
 function saveRoute() {
   const name   = document.getElementById('rb-name')?.value.trim();
   const date   = document.getElementById('rb-date')?.value;
-  const origin = document.getElementById('rb-origin')?.value.trim() || '210 Hurt St, Martin, TN 38237';
+  const origin = document.getElementById('rb-origin')?.value.trim() || DEFAULT_ORIGIN;
 
   if (!name)              { alert('Please enter a route name.'); return; }
   if (!date)              { alert('Please choose a date for this route.'); return; }
@@ -757,8 +757,12 @@ function saveRoute() {
 
   saveRoutes(routes);
 
-  // Sync the saved route to Google Calendar if connected
-  const savedRoute = routes.find(r => r.id === (editingRouteId || routes[routes.length - 1].id));
+  // Sync the saved route to Google Calendar if connected.
+  // Edits: look up by the ID we were editing.
+  // New routes: the route we just pushed is the last item in the array.
+  const savedRoute = editingRouteId
+    ? routes.find(r => r.id === editingRouteId)
+    : routes[routes.length - 1];
   if (savedRoute) syncRouteToCalendar(savedRoute);
 
   initRoutes(); // go back to the list view
@@ -811,7 +815,7 @@ function openPrintRoutesSelector() {
       <label class="print-route-check-row">
         <input type="checkbox" class="print-route-checkbox" value="${r.id}" data-date="${r.date}" />
         <span class="print-route-check-info">
-          <span class="print-route-check-name">${r.name}</span>
+          <span class="print-route-check-name">${escapeHtml(r.name)}</span>
           <span class="print-route-check-meta">${dateStr} &middot; ${r.stops.length} stop${r.stops.length !== 1 ? 's' : ''}</span>
         </span>
       </label>
@@ -949,7 +953,7 @@ function printSelectedRoutes(routeIds) {
     const d      = new Date(route.date);
     const dayStr = new Date(d.getTime() + d.getTimezoneOffset() * 60000)
       .toLocaleDateString('default', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-    const origin = route.origin || '210 Hurt St, Martin, TN 38237';
+    const origin = route.origin || DEFAULT_ORIGIN;
 
     const stopRows = route.stops.map(function(stop, i) {
       const timeRange = stop.startTime
@@ -959,9 +963,9 @@ function printSelectedRoutes(routeIds) {
       return `
         <tr class="${rowClass}">
           <td class="stop-num">${i + 1}</td>
-          <td class="stop-name">${stop.name}</td>
+          <td class="stop-name">${escapeHtml(stop.name)}</td>
           <td class="stop-time">${timeRange || '-'}</td>
-          <td class="stop-address">${stop.address || '-'}</td>
+          <td class="stop-address">${stop.address ? escapeHtml(stop.address) : '-'}</td>
         </tr>
       `;
     }).join('');
@@ -974,14 +978,14 @@ function printSelectedRoutes(routeIds) {
         <div class="day-header">
           <div class="day-header-left">
             <div class="day-label">${dayStr}</div>
-            <div class="route-title">${route.name}</div>
+            <div class="route-title">${escapeHtml(route.name)}</div>
           </div>
           <div class="stop-count-badge">${route.stops.length} stop${route.stops.length !== 1 ? 's' : ''}</div>
         </div>
 
         <div class="origin-row">
           <span class="origin-label">Starting from</span>
-          <span class="origin-value">${origin}</span>
+          <span class="origin-value">${escapeHtml(origin)}</span>
         </div>
 
         <table>

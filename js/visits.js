@@ -23,16 +23,24 @@ function saveVisits(visits) {
 // INIT VISITS
 // Called when navigating to the Visit Log page
 // =============================================
-function initVisits() {
-  visitsView    = 'list';
-  activeVisitId = null;
-  // Clear search and all filter controls every time we land on the Visit Log page
+
+// Shared helper - blanks out the search box and every filter control.
+// Used by initVisits() and backToVisitList() so the reset logic lives in one place.
+// Does NOT re-render; callers decide when to render.
+function resetVisitFilterControls() {
   var searchEl = document.getElementById('visit-search');  if (searchEl) searchEl.value = '';
   var sel = document.getElementById('vf-school');          if (sel) sel.value = '';
   var moodEl = document.getElementById('vf-mood');         if (moodEl) moodEl.value = '';
   var dfEl = document.getElementById('vf-date-from');      if (dfEl) dfEl.value = '';
   var dtEl = document.getElementById('vf-date-to');        if (dtEl) dtEl.value = '';
   var roEl = document.getElementById('vf-return-only');    if (roEl) roEl.checked = false;
+}
+
+function initVisits() {
+  visitsView    = 'list';
+  activeVisitId = null;
+  // Clear search and all filter controls every time we land on the Visit Log page
+  resetVisitFilterControls();
   // Reset school dropdown so it repopulates on next open
   var schSel = document.getElementById('vf-school');       if (schSel) delete schSel.dataset.populated;
   renderVisits();
@@ -224,8 +232,8 @@ function renderVisitCard(visit, schools) {
       <div class="visit-card-left">
         <div class="visit-mood-icon">${moodIcon}</div>
         <div class="visit-card-info">
-          <h3 class="visit-school-name">${visit.title || schoolName}</h3>
-          ${visit.title ? `<p class="visit-card-school">${schoolName}</p>` : ''}
+          <h3 class="visit-school-name">${escapeHtml(visit.title || schoolName)}</h3>
+          ${visit.title ? `<p class="visit-card-school">${escapeHtml(schoolName)}</p>` : ''}
           <p class="visit-meta">${dateStr} &nbsp;|&nbsp; ~${visit.studentCount || 0} students</p>
         </div>
       </div>
@@ -272,8 +280,8 @@ function renderVisitDetail(visitId) {
     <div class="visit-detail-card">
       <div class="visit-detail-header">
         <div class="visit-detail-title">
-          <h2>${visit.title || schoolName}</h2>
-          ${visit.title ? `<p class="visit-detail-school-sub">${schoolName}</p>` : ''}
+          <h2>${escapeHtml(visit.title || schoolName)}</h2>
+          ${visit.title ? `<p class="visit-detail-school-sub">${escapeHtml(schoolName)}</p>` : ''}
           <p class="visit-detail-date">${dateStr}</p>
         </div>
         <div class="visit-detail-actions">
@@ -314,19 +322,19 @@ function renderVisitDetail(visitId) {
         ${visit.commonQuestions ? `
         <div class="visit-section">
           <h4 class="visit-section-title">&#128172; Most Asked Questions</h4>
-          <p class="visit-section-text">${visit.commonQuestions}</p>
+          <p class="visit-section-text">${escapeHtml(visit.commonQuestions)}</p>
         </div>` : ''}
 
         ${visit.newQuestions ? `
         <div class="visit-section">
           <h4 class="visit-section-title">&#10024; New Questions (Never Heard Before)</h4>
-          <p class="visit-section-text">${visit.newQuestions}</p>
+          <p class="visit-section-text">${escapeHtml(visit.newQuestions)}</p>
         </div>` : ''}
 
         ${visit.nextTimeNotes ? `
         <div class="visit-section">
           <h4 class="visit-section-title">&#128203; Notes for Next Time</h4>
-          <p class="visit-section-text">${visit.nextTimeNotes}</p>
+          <p class="visit-section-text">${escapeHtml(visit.nextTimeNotes)}</p>
         </div>` : ''}
 
       </div>
@@ -337,15 +345,8 @@ function renderVisitDetail(visitId) {
 function backToVisitList() {
   visitsView    = 'list';
   activeVisitId = null;
-  // Clear search and filters, then re-render the full list
-  var searchEl = document.getElementById('visit-search');
-  if (searchEl) searchEl.value = '';
-  // Reset filter controls without triggering another render
-  var sel = document.getElementById('vf-school');        if (sel) sel.value = '';
-  var moodEl = document.getElementById('vf-mood');       if (moodEl) moodEl.value = '';
-  var dfEl = document.getElementById('vf-date-from');    if (dfEl) dfEl.value = '';
-  var dtEl = document.getElementById('vf-date-to');      if (dtEl) dtEl.value = '';
-  var roEl = document.getElementById('vf-return-only');  if (roEl) roEl.checked = false;
+  // Clear search and filters (shared helper), then re-render the full list
+  resetVisitFilterControls();
   renderVisits();
 }
 
@@ -364,7 +365,7 @@ function openLogVisit(preselectedSchoolId) {
     <div class="form-group">
       <label>School <span class="required">*</span></label>
       <div class="school-dropdown-wrapper">
-        <input type="text" id="f-school-name" placeholder="Type to search schools..." value="${preselectedName}" autocomplete="off" />
+        <input type="text" id="f-school-name" placeholder="Type to search schools..." value="${escapeHtml(preselectedName)}" autocomplete="off" />
         <ul class="school-dropdown-list hidden" id="school-dd-list"></ul>
       </div>
     </div>
@@ -474,13 +475,13 @@ function openEditVisit(visitId) {
     <div class="form-group">
       <label>School <span class="required">*</span></label>
       <div class="school-dropdown-wrapper">
-        <input type="text" id="f-school-name" placeholder="Type to search schools..." value="${currentName}" autocomplete="off" />
+        <input type="text" id="f-school-name" placeholder="Type to search schools..." value="${escapeHtml(currentName)}" autocomplete="off" />
         <ul class="school-dropdown-list hidden" id="school-dd-list"></ul>
       </div>
     </div>
     <div class="form-group">
       <label>Visit Title (optional)</label>
-      <input type="text" id="f-title" placeholder="e.g. Fall Visit, College Fair..." value="${visit.title || ''}" />
+      <input type="text" id="f-title" placeholder="e.g. Fall Visit, College Fair..." value="${escapeHtml(visit.title || '')}" />
     </div>
     <div class="form-group">
       <label>Visit Date <span class="required">*</span></label>
@@ -504,21 +505,21 @@ function openEditVisit(visitId) {
         <label>Most asked questions</label>
         <button type="button" class="btn-mic" id="mic-f-common-q" onclick="startVoiceMemo('f-common-q', this)" title="Tap to dictate">&#127908;</button>
       </div>
-      <textarea id="f-common-q" rows="3">${visit.commonQuestions || ''}</textarea>
+      <textarea id="f-common-q" rows="3">${escapeHtml(visit.commonQuestions || '')}</textarea>
     </div>
     <div class="form-group">
       <div class="label-with-mic">
         <label>New questions (never heard before)</label>
         <button type="button" class="btn-mic" id="mic-f-new-q" onclick="startVoiceMemo('f-new-q', this)" title="Tap to dictate">&#127908;</button>
       </div>
-      <textarea id="f-new-q" rows="3">${visit.newQuestions || ''}</textarea>
+      <textarea id="f-new-q" rows="3">${escapeHtml(visit.newQuestions || '')}</textarea>
     </div>
     <div class="form-group">
       <div class="label-with-mic">
         <label>Notes for next time</label>
         <button type="button" class="btn-mic" id="mic-f-next-notes" onclick="startVoiceMemo('f-next-notes', this)" title="Tap to dictate">&#127908;</button>
       </div>
-      <textarea id="f-next-notes" rows="3">${visit.nextTimeNotes || ''}</textarea>
+      <textarea id="f-next-notes" rows="3">${escapeHtml(visit.nextTimeNotes || '')}</textarea>
     </div>
     <div class="form-group">
       <label>Promo materials handed out (optional)</label>
@@ -614,13 +615,16 @@ function initSchoolDropdown(inputId, listId, schools) {
   });
 }
 
-// Escapes special HTML characters so school names are safe to inject into innerHTML
+// Escapes special HTML characters so user-entered text (names, notes, titles)
+// is safe to inject into innerHTML. Covers & < > " and ' so it works in both
+// element text and inside value="..." attributes.
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 // =============================================

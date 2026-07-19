@@ -149,7 +149,7 @@ function routeToCalendarEvent(route) {
   const stops = route.stops || [];
 
   // Build a plain-text description with all stops and times
-  let description = 'Starting from: ' + (route.origin || '210 Hurt St, Martin, TN 38237') + '\n\n';
+  let description = 'Starting from: ' + (route.origin || DEFAULT_ORIGIN) + '\n\n';
   stops.forEach(function(s, i) {
     const timeStr = s.startTime
       ? ' (' + formatTime(s.startTime) + (s.endTime ? ' - ' + formatTime(s.endTime) : '') + ')'

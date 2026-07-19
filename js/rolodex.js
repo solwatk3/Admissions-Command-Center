@@ -79,14 +79,14 @@ function renderColleagueCard(c) {
 
   return `
     <div class="colleague-card" id="colleague-${c.id}">
-      <div class="colleague-avatar">${initials}</div>
-      <span class="colleague-name">${c.name}</span>
+      <div class="colleague-avatar">${escapeHtml(initials)}</div>
+      <span class="colleague-name">${escapeHtml(c.name)}</span>
 
       <!-- Hover popup with contact details and action buttons -->
       <div class="colleague-popup">
-        <p class="popup-institution">${c.institution}</p>
-        ${c.email ? `<span class="popup-link popup-copy" onclick="copyToClipboard('${c.email}', this)" title="Click to copy">&#9993; ${c.email}</span>` : ''}
-        ${c.phone ? `<span class="popup-link popup-copy" onclick="copyToClipboard('${c.phone}', this)" title="Click to copy">&#128222; ${c.phone}</span>` : ''}
+        <p class="popup-institution">${escapeHtml(c.institution)}</p>
+        ${c.email ? `<span class="popup-link popup-copy" onclick="copyToClipboard('${escapeHtml(c.email)}', this)" title="Click to copy">&#9993; ${escapeHtml(c.email)}</span>` : ''}
+        ${c.phone ? `<span class="popup-link popup-copy" onclick="copyToClipboard('${escapeHtml(c.phone)}', this)" title="Click to copy">&#128222; ${escapeHtml(c.phone)}</span>` : ''}
         <div class="colleague-actions">
           <button class="btn-icon" onclick="openEditColleague('${c.id}')">&#9998; Edit</button>
           <button class="btn-icon btn-icon-danger" onclick="confirmDeleteColleague('${c.id}')">&#128465; Delete</button>
@@ -107,7 +107,7 @@ function buildInstitutionDatalist() {
   const institutions = [...new Set(colleagues.map(c => c.institution).filter(Boolean))].sort();
   return `
     <datalist id="institution-list">
-      ${institutions.map(i => `<option value="${i}">`).join('')}
+      ${institutions.map(i => `<option value="${escapeHtml(i)}">`).join('')}
     </datalist>
   `;
 }
@@ -175,23 +175,23 @@ function openEditColleague(id) {
     ${buildInstitutionDatalist()}
     <div class="form-group">
       <label>Full Name <span class="required">*</span></label>
-      <input type="text" id="f-name" value="${c.name}" />
+      <input type="text" id="f-name" value="${escapeHtml(c.name)}" />
     </div>
     <div class="form-group">
       <label>Institution <span class="required">*</span></label>
-      <input type="text" id="f-institution" value="${c.institution}" list="institution-list" autocomplete="off" />
+      <input type="text" id="f-institution" value="${escapeHtml(c.institution)}" list="institution-list" autocomplete="off" />
     </div>
     <div class="form-group">
       <label>Email</label>
-      <input type="email" id="f-email" value="${c.email || ''}" />
+      <input type="email" id="f-email" value="${escapeHtml(c.email || '')}" />
     </div>
     <div class="form-group">
       <label>Phone</label>
-      <input type="tel" id="f-phone" value="${c.phone || ''}" />
+      <input type="tel" id="f-phone" value="${escapeHtml(c.phone || '')}" />
     </div>
     <div class="form-group">
       <label>Notes</label>
-      <textarea id="f-notes" rows="3">${c.notes || ''}</textarea>
+      <textarea id="f-notes" rows="3">${escapeHtml(c.notes || '')}</textarea>
     </div>
   `;
 
@@ -258,6 +258,12 @@ function initRolodex() {
 function initRolodexTapPopups() {
   const container = document.getElementById('rolodex-content');
   if (!container) return;
+
+  // Only wire up listeners ONCE. initRolodex() runs every time the user
+  // navigates to this page, and without this guard a new copy of each
+  // click listener would stack up on every visit.
+  if (container.dataset.tapPopupsWired) return;
+  container.dataset.tapPopupsWired = 'yes';
 
   // Delegate to the container so it works even after re-renders
   container.addEventListener('click', function(e) {

@@ -3,6 +3,12 @@
 // Main app logic - navigation and shared state
 // =============================================
 
+// --- Shared constants ---
+// Sol's office address - the default starting point for routes.
+// Defined once here so an office move only needs one edit.
+// Used by routes.js and calendar.js (app.js loads first, so it is always available).
+const DEFAULT_ORIGIN = '210 Hurt St, Martin, TN 38237';
+
 // --- Page and navigation config ---
 // Maps page IDs to their display names shown in the top bar
 const PAGE_TITLES = {
@@ -161,7 +167,7 @@ function renderUpcomingVisits() {
       <div class="upcoming-route-row" onclick="navigateTo('routes')">
         <div class="upcoming-route-icon">&#128205;</div>
         <div class="upcoming-route-info">
-          <span class="upcoming-route-name">${r.name}</span>
+          <span class="upcoming-route-name">${escapeHtml(r.name)}</span>
           <span class="upcoming-route-meta">${dateStr} &nbsp;&middot;&nbsp; ${stops}</span>
         </div>
       </div>
@@ -197,8 +203,8 @@ function renderPrimarySchools(schools) {
       const countyName = county ? county.name + ' County' : '';
       return `
         <div class="primary-school-chip" onclick="navigateTo('directory'); openSchoolDetail('${s.id}')">
-          <span>${s.name}</span>
-          <span class="chip-county">${countyName}</span>
+          <span>${escapeHtml(s.name)}</span>
+          <span class="chip-county">${escapeHtml(countyName)}</span>
         </div>
       `;
     }).join('') +
@@ -228,7 +234,7 @@ function renderReturnVisits() {
     const school = schools.find(s => s.id === v.schoolId);
     const name   = school ? school.name : v.schoolName || 'Unknown';
     const date   = new Date(v.date).toLocaleDateString('default', { month: 'short', day: 'numeric' });
-    return `<div class="return-visit-row"><span>&#128260; ${name}</span><span class="return-visit-date">${date}</span></div>`;
+    return `<div class="return-visit-row"><span>&#128260; ${escapeHtml(name)}</span><span class="return-visit-date">${date}</span></div>`;
   }).join('');
 }
 
@@ -259,21 +265,30 @@ function renderOverdueSchools() {
   // Only care about Primary schools
   const primaries = schools.filter(function(s) { return s.priority === 'Primary'; });
 
+  // Build a lookup of the most recent visit date per school in ONE pass.
+  // Faster than re-filtering and re-sorting the whole visit list for every school.
+  const lastVisitDate = {};
+  visits.forEach(function(v) {
+    const current = lastVisitDate[v.schoolId];
+    // Keep whichever date is newer (dates are YYYY-MM-DD so string compare works)
+    if (!current || v.date > current) lastVisitDate[v.schoolId] = v.date;
+  });
+
   // Build overdue list with days-since already computed
   const overdue = [];
   primaries.forEach(function(school) {
-    const schoolVisits = visits.filter(function(v) { return v.schoolId === school.id; });
+    const last = lastVisitDate[school.id];
     let daysSince = null;
     let daysSinceStr = 'Never visited';
 
-    if (schoolVisits.length > 0) {
-      const lastDate = new Date(
-        schoolVisits.slice().sort(function(a, b) { return new Date(b.date) - new Date(a.date); })[0].date
-      );
+    if (last) {
+      const lastDate = new Date(last);
+      // Offset fix - date strings parse as UTC midnight, shift to local time
       daysSince = Math.floor((today - new Date(lastDate.getTime() + lastDate.getTimezoneOffset() * 60000)) / 86400000);
       daysSinceStr = daysSince + ' days ago';
     }
 
+    // Overdue means never visited, or last visit was more than 60 days ago
     if (daysSince === null || daysSince > 60) {
       overdue.push({ school: school, daysSinceStr: daysSinceStr });
     }
@@ -308,7 +323,7 @@ function renderOverdueSchools() {
     const schoolRows = items.map(function(item) {
       return `
         <div class="overdue-row" onclick="navigateTo('directory'); openSchoolDetail('${item.school.id}')">
-          <span class="overdue-school-name">${item.school.name}</span>
+          <span class="overdue-school-name">${escapeHtml(item.school.name)}</span>
           <span class="overdue-badge">${item.daysSinceStr}</span>
         </div>
       `;
@@ -319,7 +334,7 @@ function renderOverdueSchools() {
         <div class="overdue-county-header" onclick="toggleOverdueCounty('${cId}')">
           <div class="overdue-county-header-left">
             <span class="overdue-county-arrow">${arrow}</span>
-            <span class="overdue-county-name">${label}</span>
+            <span class="overdue-county-name">${escapeHtml(label)}</span>
           </div>
           <span class="overdue-county-badge">${items.length} school${items.length !== 1 ? 's' : ''}</span>
         </div>
@@ -408,7 +423,7 @@ function openViewArchives() {
     return `
       <div class="archive-row">
         <div class="archive-row-info">
-          <span class="archive-row-name">${arc.name}</span>
+          <span class="archive-row-name">${escapeHtml(arc.name)}</span>
           <span class="archive-row-meta">
             Archived ${arc.archivedOn} &nbsp;-&nbsp;
             ${arc.visits ? arc.visits.length : 0} visit${arc.visits && arc.visits.length !== 1 ? 's' : ''}
@@ -424,21 +439,29 @@ function openViewArchives() {
   openModal('Past Seasons', `<div class="archive-list">${rows}</div>`, null);
 }
 
+// Shared helper - downloads any object as a nicely formatted JSON file.
+// Used by both the season archive download and the full data export,
+// so the temporary-link download trick only lives in one place.
+function downloadJsonFile(obj, filename) {
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  // Create an invisible link, click it to trigger the download, then clean up
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // Downloads one archived season as a JSON file
 function downloadArchive(archiveId) {
   const archives = loadData('archives', []);
   const arc = archives.find(function(a) { return a.id === archiveId; });
   if (!arc) return;
 
-  const blob = new Blob([JSON.stringify(arc, null, 2)], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = 'acc-season-' + arc.name.replace(/\s+/g, '-') + '.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  downloadJsonFile(arc, 'acc-season-' + arc.name.replace(/\s+/g, '-') + '.json');
 }
 
 // =============================================
@@ -464,18 +487,9 @@ function exportAllData() {
 
   // Build a filename with today's date so exports are easy to tell apart
   const dateStr = new Date().toISOString().split('T')[0];
-  const filename = 'acc-backup-' + dateStr + '.json';
 
-  // Create a temporary download link and click it programmatically
-  const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // Hand off to the shared JSON download helper
+  downloadJsonFile(snapshot, 'acc-backup-' + dateStr + '.json');
 }
 
 // =============================================
@@ -654,7 +668,8 @@ function runGlobalSearch(q) {
   var totalHits = schoolHits.length + visitHits.length + colleagueHits.length;
 
   if (totalHits === 0) {
-    resultsEl.innerHTML = '<p class="gs-no-results">No results for "' + q + '"</p>';
+    // Escape the query so typed quotes or angle brackets cannot break the page
+    resultsEl.innerHTML = '<p class="gs-no-results">No results for "' + escapeHtml(q) + '"</p>';
     return;
   }
 
@@ -670,8 +685,8 @@ function runGlobalSearch(q) {
         <div class="gs-result" onclick="closeGlobalSearch(); navigateTo('directory'); openSchoolDetail('${s.id}')">
           <span class="gs-result-icon">&#127968;</span>
           <div class="gs-result-text">
-            <span class="gs-result-name">${s.name}</span>
-            ${sub ? `<span class="gs-result-sub">${sub}</span>` : ''}
+            <span class="gs-result-name">${escapeHtml(s.name)}</span>
+            ${sub ? `<span class="gs-result-sub">${escapeHtml(sub)}</span>` : ''}
           </div>
           <span class="gs-result-tag">${s.priority || ''}</span>
         </div>
@@ -691,8 +706,8 @@ function runGlobalSearch(q) {
         <div class="gs-result" onclick="closeGlobalSearch(); navigateTo('visits'); openVisitDetail('${v.id}')">
           <span class="gs-result-icon">&#128203;</span>
           <div class="gs-result-text">
-            <span class="gs-result-name">${v.title || schoolName}</span>
-            <span class="gs-result-sub">${v.title ? schoolName + ' - ' : ''}${dateStr}</span>
+            <span class="gs-result-name">${escapeHtml(v.title || schoolName)}</span>
+            <span class="gs-result-sub">${v.title ? escapeHtml(schoolName) + ' - ' : ''}${dateStr}</span>
           </div>
         </div>
       `;
@@ -707,8 +722,8 @@ function runGlobalSearch(q) {
         <div class="gs-result" onclick="closeGlobalSearch(); navigateTo('rolodex')">
           <span class="gs-result-icon">&#128100;</span>
           <div class="gs-result-text">
-            <span class="gs-result-name">${c.name || 'Unnamed'}</span>
-            ${c.institution ? `<span class="gs-result-sub">${c.institution}</span>` : ''}
+            <span class="gs-result-name">${escapeHtml(c.name || 'Unnamed')}</span>
+            ${c.institution ? `<span class="gs-result-sub">${escapeHtml(c.institution)}</span>` : ''}
           </div>
         </div>
       `;

@@ -6,10 +6,9 @@
 // is only looked up once.
 // =============================================
 
-// Track whether the map has been initialized so we don't
-// create duplicate Leaflet instances on re-renders
-let mapInstance     = null;
-let mapInitialized  = false;
+// Holds the current Leaflet map so we can remove it before
+// creating a fresh one - prevents duplicate map instances
+let mapInstance = null;
 
 // =============================================
 // TOGGLE BETWEEN LIST AND MAP VIEW
@@ -115,6 +114,10 @@ async function geocodeAllSchools(schools) {
   const results = [];
   let   delay   = 0;
 
+  // Load counties once up front - used for the county-name fallback query.
+  // Avoids re-reading localStorage inside the loop for every school.
+  const allCounties = getCounties();
+
   for (const school of schools) {
     if (!school.address || !school.address.trim()) continue;
 
@@ -136,7 +139,7 @@ async function geocodeAllSchools(schools) {
     const city    = parts[1] || '';
     const lastPart = parts[parts.length - 1] || '';
     const zip     = lastPart.replace(/^TN\s*/i, '').trim();
-    const county  = getCounties().find(function(c) { return c.id === school.countyId; });
+    const county  = allCounties.find(function(c) { return c.id === school.countyId; });
 
     // Note: geocodeAddress() already appends ", Tennessee, USA" - do not add it here
     const attempts = [
@@ -212,8 +215,7 @@ async function initSchoolMap() {
   // If the map already exists, just remove and recreate to avoid stale tiles
   if (mapInstance) {
     mapInstance.remove();
-    mapInstance     = null;
-    mapInitialized  = false;
+    mapInstance = null;
   }
 
   // Center on Tennessee, zoom level 7 shows the whole state
@@ -242,8 +244,6 @@ async function initSchoolMap() {
     { position: 'topright', collapsed: false }
   ).addTo(mapInstance);
 
-  mapInitialized = true;
-
   // Load Tennessee county boundaries from a public GeoJSON file
   // and shade counties where schools exist
   loadTNCountyBoundaries(schools);
@@ -262,17 +262,22 @@ async function initSchoolMap() {
     return;
   }
 
-  // Priority colors for marker icons
+  // Priority colors for marker icons.
+  // Matches the app's priority levels; anything unknown falls back to grey.
   const priorityColor = {
     'Primary':   '#9b30ff',
     'Secondary': '#5c6bc0',
-    'Low':       '#546e7a',
+    'Tertiary':  '#546e7a',
   };
+
+  // Load counties ONCE before the loop instead of re-reading
+  // localStorage for every single marker
+  const allCounties = getCounties();
 
   // Drop a circle marker for each geocoded school
   plotted.forEach(function(item) {
     const color  = priorityColor[item.school.priority] || '#546e7a';
-    const county = getCounties().find(c => c.id === item.school.countyId);
+    const county = allCounties.find(c => c.id === item.school.countyId);
 
     // Fallback pins use a dashed orange border so they're visually distinct
     const markerColor   = item.fallback ? '#ff9800' : color;
@@ -287,11 +292,11 @@ async function initSchoolMap() {
     // Build the popup content shown when a marker is clicked
     const popupHtml = `
       <div style="font-family:inherit; min-width:160px;">
-        <strong style="color:#1a0a2e; font-size:0.95rem;">${item.school.name}</strong>
+        <strong style="color:#1a0a2e; font-size:0.95rem;">${escapeHtml(item.school.name)}</strong>
         <br/>
-        <span style="font-size:0.8rem; color:#555;">${county ? county.name + ' County' : ''}</span>
+        <span style="font-size:0.8rem; color:#555;">${county ? escapeHtml(county.name) + ' County' : ''}</span>
         ${item.school.priority ? `<br/><span style="font-size:0.78rem; color:${color}; font-weight:600;">${item.school.priority}</span>` : ''}
-        ${item.school.address ? `<br/><span style="font-size:0.75rem; color:#777;">${item.school.address}</span>` : ''}
+        ${item.school.address ? `<br/><span style="font-size:0.75rem; color:#777;">${escapeHtml(item.school.address)}</span>` : ''}
         ${fallbackNote}
         <br/><br/>
         <a href="#" onclick="showDirectoryList(); openSchoolDetail('${item.school.id}'); return false;"

@@ -52,8 +52,9 @@ function makeId() {
 // Always uses TN as the state since Sol only works in Tennessee.
 // Returns an empty string if no fields are filled in.
 function buildAddress(street, city, zip) {
-  const parts = [street, city ? city + ', TN' : '', zip].filter(Boolean);
+  // Nothing filled in means no address at all
   if (!street && !city && !zip) return '';
+  // Join the filled-in parts with commas, then fix "TN, ZIP" to read "TN ZIP"
   return [street, city, 'TN', zip].filter(Boolean).join(', ').replace(', TN,', ', TN');
 }
 
@@ -116,16 +117,16 @@ function renderCountyPills() {
 
       const primaryPopup = primarySchools.length > 0
         ? primarySchools.map(function(s) {
-            return `<span class="popup-primary-school" onclick="event.stopPropagation(); openSchoolDetail('${s.id}')">&#11088; ${s.name}</span>`;
+            return `<span class="popup-primary-school" onclick="event.stopPropagation(); openSchoolDetail('${s.id}')">&#11088; ${escapeHtml(s.name)}</span>`;
           }).join('')
         : '<span class="popup-no-primary">No primary schools yet</span>';
 
       return `
-        <div class="county-pill" id="county-pill-${county.id}" data-county-name="${county.name.toLowerCase()}">
+        <div class="county-pill" id="county-pill-${county.id}" data-county-name="${escapeHtml(county.name.toLowerCase())}">
           <div class="county-pill-inner" onclick="openCountyView('${county.id}')">
             <div class="county-avatar">${initials}</div>
             <div class="county-pill-label-stack">
-              <span class="county-pill-name">${county.name}</span>
+              <span class="county-pill-name">${escapeHtml(county.name)}</span>
               ${regionTag ? `<span class="county-pill-region-tag">${regionTag}</span>` : ''}
             </div>
             <span class="county-pill-count">${countySchools.length}</span>
@@ -176,14 +177,14 @@ function renderSchoolsList(countyId) {
     <div class="view-header">
       <button class="btn btn-ghost back-btn" onclick="backToCounties()">&#8592; Back to Counties</button>
       <div class="view-title-row">
-        <h2 class="view-county-title">${county ? county.name + ' County' : 'County'}</h2>
+        <h2 class="view-county-title">${county ? escapeHtml(county.name) + ' County' : 'County'}</h2>
         <button class="btn btn-accent" onclick="openAddSchool('${countyId}')">+ Add School</button>
         ${county && county.notes ? `<button class="btn btn-ghost" onclick="toggleInlineNotes('county-inline-notes')">&#128221; Notes</button>` : ''}
         <button class="btn btn-ghost" onclick="openEditCounty('${countyId}')">&#9998; Edit County</button>
       </div>
       ${county && county.notes ? `
         <div id="county-inline-notes" class="inline-notes" style="display:none;">
-          <strong>County Notes:</strong> ${county.notes}
+          <strong>County Notes:</strong> ${escapeHtml(county.notes)}
         </div>` : ''}
     </div>
 
@@ -208,7 +209,7 @@ function renderSchoolPill(school) {
   return `
     <div class="school-pill">
       <span class="priority-badge ${priorityClass}">${school.priority}</span>
-      <span class="school-pill-name" onclick="openSchoolDetail('${school.id}')">${school.name}</span>
+      <span class="school-pill-name" onclick="openSchoolDetail('${school.id}')">${escapeHtml(school.name)}</span>
       <div class="school-pill-actions">
         <button class="btn-icon" onclick="openEditSchool('${school.id}')">&#9998;</button>
         <button class="btn-icon btn-icon-danger" onclick="confirmDeleteSchool('${school.id}')">&#128465;</button>
@@ -269,7 +270,7 @@ function renderSchoolDetail(schoolId) {
 
   container.innerHTML = `
     <div class="view-header">
-      <button class="btn btn-ghost back-btn" onclick="backToSchools()">&#8592; Back to ${county ? county.name : 'County'}</button>
+      <button class="btn btn-ghost back-btn" onclick="backToSchools()">&#8592; Back to ${county ? escapeHtml(county.name) : 'County'}</button>
     </div>
 
     <!-- Outer row: info card on the left, map panel on the right -->
@@ -279,8 +280,8 @@ function renderSchoolDetail(schoolId) {
         <div class="school-detail-header">
           <div>
             <span class="priority-badge ${priorityClass}" style="margin-bottom:8px; display:inline-block;">${school.priority}</span>
-            <h2 class="school-detail-name">${school.name}</h2>
-            <p class="school-detail-county">${county ? county.name + ' County' : ''}</p>
+            <h2 class="school-detail-name">${escapeHtml(school.name)}</h2>
+            <p class="school-detail-county">${county ? escapeHtml(county.name) + ' County' : ''}</p>
           </div>
           <div class="school-detail-actions">
             <button class="btn btn-ghost" onclick="openEditSchool('${school.id}')">&#9998; Edit School</button>
@@ -309,17 +310,17 @@ function renderSchoolDetail(schoolId) {
         <div class="detail-fields">
           <div class="detail-field">
             <span class="detail-label">Address</span>
-            <span class="detail-value">${school.address || 'Not on file'}</span>
+            <span class="detail-value">${school.address ? escapeHtml(school.address) : 'Not on file'}</span>
           </div>
           <div class="detail-field">
             <span class="detail-label">Contact Name</span>
-            <span class="detail-value">${school.contact || 'Not on file'}</span>
+            <span class="detail-value">${school.contact ? escapeHtml(school.contact) : 'Not on file'}</span>
           </div>
           <div class="detail-field">
             <span class="detail-label">Contact Email</span>
             <span class="detail-value">
               ${school.contactEmail
-                ? `<span class="copy-value" onclick="copyToClipboard('${school.contactEmail}', this)">&#9993; ${school.contactEmail}</span>`
+                ? `<span class="copy-value" onclick="copyToClipboard('${escapeHtml(school.contactEmail)}', this)">&#9993; ${escapeHtml(school.contactEmail)}</span>`
                 : 'Not on file'}
             </span>
           </div>
@@ -327,7 +328,7 @@ function renderSchoolDetail(schoolId) {
             <span class="detail-label">Contact Phone</span>
             <span class="detail-value">
               ${school.contactPhone
-                ? `<span class="copy-value" onclick="copyToClipboard('${school.contactPhone}', this)">&#128222; ${school.contactPhone}</span>`
+                ? `<span class="copy-value" onclick="copyToClipboard('${escapeHtml(school.contactPhone)}', this)">&#128222; ${escapeHtml(school.contactPhone)}</span>`
                 : 'Not on file'}
             </span>
           </div>
@@ -344,7 +345,7 @@ function renderSchoolDetail(schoolId) {
       ${school.address ? `
         <div class="school-detail-map-wrap">
           <div id="school-detail-map"></div>
-          <p class="school-detail-map-note">&#128205; ${school.address} &nbsp;&middot;&nbsp; <span style="opacity:0.6;">Drag pin to correct position</span></p>
+          <p class="school-detail-map-note">&#128205; ${escapeHtml(school.address)} &nbsp;&middot;&nbsp; <span style="opacity:0.6;">Drag pin to correct position</span></p>
         </div>
       ` : ''}
 
@@ -395,7 +396,7 @@ function renderSchoolVisitHistory(schoolId) {
         <div class="school-visit-card-left">
           <span class="visit-mood-icon">${moodIcon}</span>
           <div class="school-visit-card-info">
-            <span class="school-visit-card-title">${v.title || dateStr}</span>
+            <span class="school-visit-card-title">${v.title ? escapeHtml(v.title) : dateStr}</span>
             ${v.title ? `<span class="school-visit-card-date">${dateStr}</span>` : ''}
             <span class="school-visit-card-meta">~${v.studentCount || 0} students talked to</span>
           </div>
@@ -569,12 +570,12 @@ function openAddSchool(countyId) {
   const county   = countyId ? counties.find(c => c.id === countyId) : null;
 
   const countyField = county
-    ? `<p class="form-note">Adding to: <strong>${county.name} County</strong></p>`
+    ? `<p class="form-note">Adding to: <strong>${escapeHtml(county.name)} County</strong></p>`
     : `<div class="form-group">
         <label>County <span class="required">*</span></label>
         <select id="f-county">
           <option value="">-- Select a county --</option>
-          ${counties.map(c => `<option value="${c.id}">${c.name} County</option>`).join('')}
+          ${counties.map(c => `<option value="${c.id}">${escapeHtml(c.name)} County</option>`).join('')}
         </select>
        </div>`;
 
@@ -680,16 +681,16 @@ function openEditSchool(schoolId) {
   const body = `
     <div class="form-group">
       <label>School Name <span class="required">*</span></label>
-      <input type="text" id="f-name" value="${school.name}" />
+      <input type="text" id="f-name" value="${escapeHtml(school.name)}" />
     </div>
     <div class="form-group">
       <label>Street Address</label>
-      <input type="text" id="f-street" value="${parsedAddr.street}" placeholder="e.g. 130 Trenton Hwy" />
+      <input type="text" id="f-street" value="${escapeHtml(parsedAddr.street)}" placeholder="e.g. 130 Trenton Hwy" />
     </div>
     <div class="address-city-zip-row">
       <div class="form-group" style="flex:1;">
         <label>City</label>
-        <input type="text" id="f-city" value="${parsedAddr.city}" placeholder="e.g. Dyer" />
+        <input type="text" id="f-city" value="${escapeHtml(parsedAddr.city)}" placeholder="e.g. Dyer" />
       </div>
       <div class="form-group address-state-box">
         <label>State</label>
@@ -697,7 +698,7 @@ function openEditSchool(schoolId) {
       </div>
       <div class="form-group" style="flex:0 0 90px;">
         <label>ZIP</label>
-        <input type="text" id="f-zip" value="${parsedAddr.zip}" placeholder="38330" maxlength="5" />
+        <input type="text" id="f-zip" value="${escapeHtml(parsedAddr.zip)}" placeholder="38330" maxlength="5" />
       </div>
     </div>
     <div class="form-group">
@@ -710,19 +711,19 @@ function openEditSchool(schoolId) {
     </div>
     <div class="form-group">
       <label>School Contact Name</label>
-      <input type="text" id="f-contact" value="${school.contact || ''}" />
+      <input type="text" id="f-contact" value="${escapeHtml(school.contact || '')}" />
     </div>
     <div class="form-group">
       <label>Contact Email</label>
-      <input type="email" id="f-contact-email" value="${school.contactEmail || ''}" />
+      <input type="email" id="f-contact-email" value="${escapeHtml(school.contactEmail || '')}" />
     </div>
     <div class="form-group">
       <label>Contact Phone</label>
-      <input type="tel" id="f-contact-phone" value="${school.contactPhone || ''}" />
+      <input type="tel" id="f-contact-phone" value="${escapeHtml(school.contactPhone || '')}" />
     </div>
     <div class="form-group">
       <label>Notes</label>
-      <textarea id="f-notes" rows="3">${school.notes || ''}</textarea>
+      <textarea id="f-notes" rows="3">${escapeHtml(school.notes || '')}</textarea>
     </div>
   `;
 
@@ -730,9 +731,10 @@ function openEditSchool(schoolId) {
     const name = document.getElementById('f-name').value.trim();
     if (!name) { alert('School name is required.'); return; }
 
-    // Block renaming to match another school in the same county
+    // Block renaming to match another school in the same county.
+    // Uses school.countyId captured above instead of re-searching the list each pass.
     const duplicate = schools.find(function(s) {
-      return s.id !== schoolId && s.countyId === schools.find(function(x) { return x.id === schoolId; }).countyId && s.name.toLowerCase() === name.toLowerCase();
+      return s.id !== schoolId && s.countyId === school.countyId && s.name.toLowerCase() === name.toLowerCase();
     });
     if (duplicate) { alert('"' + name + '" already exists in this county.'); return; }
 
@@ -834,7 +836,7 @@ function openEditCounty(countyId) {
   const body = `
     <div class="form-group">
       <label>County Name <span class="required">*</span></label>
-      <input type="text" id="f-county-name" value="${county.name}" />
+      <input type="text" id="f-county-name" value="${escapeHtml(county.name)}" />
     </div>
     <div class="form-group">
       <label>Region</label>
@@ -847,7 +849,7 @@ function openEditCounty(countyId) {
     </div>
     <div class="form-group">
       <label>Notes</label>
-      <textarea id="f-county-notes" rows="3">${county.notes || ''}</textarea>
+      <textarea id="f-county-notes" rows="3">${escapeHtml(county.notes || '')}</textarea>
     </div>
   `;
 
@@ -1032,7 +1034,7 @@ function renderRegionView(q) {
               return `
                 <div class="region-school-chip" onclick="openSchoolDetail('${s.id}')">
                   <span class="priority-badge ${priorityClass}">${s.priority}</span>
-                  <span class="region-chip-name">${s.name}</span>
+                  <span class="region-chip-name">${escapeHtml(s.name)}</span>
                 </div>
               `;
             }).join('') +
@@ -1042,7 +1044,7 @@ function renderRegionView(q) {
           <div class="region-county-chip-wrap">
             <div class="county-pill-inner region-county-pill" onclick="toggleCounty('${county.id}')">
               <div class="county-avatar">${initials}</div>
-              <span class="county-pill-name">${county.name}</span>
+              <span class="county-pill-name">${escapeHtml(county.name)}</span>
               <span class="county-pill-count">${countySchools.length}</span>
               <span class="region-county-arrow">${countyArrow}</span>
             </div>
@@ -1113,7 +1115,7 @@ function renderRegionView(q) {
   html += '</div>';
 
   if (!html.includes('region-section')) {
-    html = '<p class="empty-state" style="padding:40px; text-align:center;">No results for "' + q + '".</p>';
+    html = '<p class="empty-state" style="padding:40px; text-align:center;">No results for "' + escapeHtml(q) + '".</p>';
   }
 
   container.innerHTML = html;
