@@ -262,6 +262,21 @@ async function initSchoolMap() {
     mapInstance.once('zoomend', function() { _zooming = false; });
   }, { passive: false });
 
+  // Short-click the map background = zoom in one level.
+  // Right-click the map background = zoom out one level.
+  // _markerJustClicked is set by each school dot's click handler so that
+  // clicking a dot opens its popup instead of also triggering a zoom.
+  let _markerJustClicked = false;
+
+  mapInstance.on('click', function() {
+    if (_markerJustClicked) { _markerJustClicked = false; return; }
+    mapInstance.zoomIn(1);
+  });
+
+  mapInstance.on('contextmenu', function() {
+    mapInstance.zoomOut(1);
+  });
+
   // County boundary pane - sits below the default overlayPane (z-index 400)
   // so county polygons never block hover events on circle markers.
   mapInstance.createPane('countyPane');
@@ -373,7 +388,11 @@ async function initSchoolMap() {
       offset:     [0, -8],
       className:  'map-county-tooltip',
     })
-    .bindPopup(popupHtml);
+    .bindPopup(popupHtml)
+    .on('click', function() {
+      // Signal the map click handler to skip zooming - this is a dot click
+      _markerJustClicked = true;
+    });
   });
 
   // Fit the map to show all markers with some padding
