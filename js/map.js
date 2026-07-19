@@ -245,17 +245,21 @@ async function initSchoolMap() {
   mapInstance = L.map('school-map', { scrollWheelZoom: false }).setView([35.85, -86.35], 7);
 
   // Custom scroll handler: zoom exactly 1 level per wheel event.
-  // The 200ms debounce ignores follow-on events from the same physical tick.
-  let _scrollTimer = null;
+  // _zooming stays true until Leaflet fires zoomend, so all wheel events
+  // that arrive during the animation are ignored - no matter how fast
+  // the mouse sends them.
+  let _zooming = false;
   mapInstance.getContainer().addEventListener('wheel', function(e) {
     e.preventDefault();
-    if (_scrollTimer) return;
-    _scrollTimer = setTimeout(function() { _scrollTimer = null; }, 200);
+    if (_zooming) return;
+    _zooming = true;
     if (e.deltaY < 0) {
       mapInstance.zoomIn(1);
     } else {
       mapInstance.zoomOut(1);
     }
+    // Unlock only after the zoom animation fully completes
+    mapInstance.once('zoomend', function() { _zooming = false; });
   }, { passive: false });
 
   // County boundary pane - sits below the default overlayPane (z-index 400)
