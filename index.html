@@ -199,11 +199,10 @@
         <div class="directory-btn-row">
           <button class="btn btn-accent" onclick="openAddSchoolGlobal()">+ Add School</button>
           <button class="btn btn-primary-solid" onclick="openAddCounty()">+ Add County</button>
-          <button class="btn btn-ghost" onclick="expandAll()">&#9660; Expand All</button>
-          <button class="btn btn-ghost" onclick="collapseAll()">&#9654; Collapse All</button>
-          <!-- List / Map / Region toggle -->
+          <!-- List / A-Z / Map / Region toggle -->
           <div class="dir-toggle-row">
             <button class="dir-toggle-btn active-toggle" id="dir-list-btn" onclick="showDirectoryList()">&#9776; List</button>
+            <button class="dir-toggle-btn" id="dir-alpha-btn" onclick="showDirectoryAlpha()">A-Z Counties</button>
             <button class="dir-toggle-btn" id="dir-map-btn" onclick="showDirectoryMap()">&#128205; Map</button>
             <button class="dir-toggle-btn" id="dir-region-btn" onclick="showDirectoryRegion()">&#127758; By Region</button>
           </div>

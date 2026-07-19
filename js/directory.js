@@ -427,11 +427,15 @@ function showDirectoryControls(visible) {
     if (mapWrap) mapWrap.style.display = 'none';
     if (content) content.style.display = '';
 
-    // Reset toggle button states
-    const listBtn = document.getElementById('dir-list-btn');
-    const mapBtn  = document.getElementById('dir-map-btn');
-    if (listBtn) listBtn.classList.add('active-toggle');
-    if (mapBtn)  mapBtn.classList.remove('active-toggle');
+    // Reset toggle button states - list is active, all others off
+    const listBtn   = document.getElementById('dir-list-btn');
+    const alphaBtn  = document.getElementById('dir-alpha-btn');
+    const mapBtn    = document.getElementById('dir-map-btn');
+    const regionBtn = document.getElementById('dir-region-btn');
+    if (listBtn)   listBtn.classList.add('active-toggle');
+    if (alphaBtn)  alphaBtn.classList.remove('active-toggle');
+    if (mapBtn)    mapBtn.classList.remove('active-toggle');
+    if (regionBtn) regionBtn.classList.remove('active-toggle');
   }
 }
 
@@ -807,11 +811,66 @@ function confirmDeleteCounty(countyId) {
 }
 
 // =============================================
-// EXPAND / COLLAPSE ALL - no longer needed
-// Kept as stubs so old buttons don't break
+// A-Z COUNTY VIEW
+// Shows all counties sorted alphabetically as a
+// clean list with school count and region badge.
+// Click any row to open that county's schools.
 // =============================================
-function expandAll()   { /* not used in pill view */ }
-function collapseAll() { /* not used in pill view */ }
+function showDirectoryAlpha() {
+  const content   = document.getElementById('directory-content');
+  const mapWrap   = document.getElementById('directory-map-wrap');
+  const listBtn   = document.getElementById('dir-list-btn');
+  const alphaBtn  = document.getElementById('dir-alpha-btn');
+  const mapBtn    = document.getElementById('dir-map-btn');
+  const regionBtn = document.getElementById('dir-region-btn');
+
+  if (content)   content.style.display = '';
+  if (mapWrap)   mapWrap.style.display = 'none';
+  if (listBtn)   listBtn.classList.remove('active-toggle');
+  if (alphaBtn)  alphaBtn.classList.add('active-toggle');
+  if (mapBtn)    mapBtn.classList.remove('active-toggle');
+  if (regionBtn) regionBtn.classList.remove('active-toggle');
+
+  renderAlphaCountyView();
+}
+
+function renderAlphaCountyView() {
+  const container = document.getElementById('directory-content');
+  if (!container) return;
+
+  showDirectoryControls(true);
+
+  const counties = getCounties()
+    .slice()
+    .sort(function(a, b) { return a.name.localeCompare(b.name); });
+  const schools = getSchools();
+
+  if (counties.length === 0) {
+    container.innerHTML = '<p class="empty-state" style="padding:40px; text-align:center;">No counties yet. Add one to get started.</p>';
+    return;
+  }
+
+  const REGION_LABELS = { 'West TN': 'West TN', 'Middle TN': 'Middle TN', 'East TN': 'East TN' };
+
+  container.innerHTML = '<div class="alpha-county-list">' +
+    counties.map(function(county) {
+      const countySchools = schools.filter(function(s) { return s.countyId === county.id; });
+      const regionLabel   = REGION_LABELS[county.region] || '';
+      return `
+        <div class="alpha-county-row" onclick="openCountyView('${county.id}')">
+          <div class="alpha-county-info">
+            <span class="alpha-county-name">${county.name} County</span>
+            ${regionLabel ? `<span class="alpha-county-region">${regionLabel}</span>` : ''}
+          </div>
+          <div class="alpha-county-right">
+            <span class="alpha-county-count">${countySchools.length} school${countySchools.length !== 1 ? 's' : ''}</span>
+            <span class="alpha-chevron">&#8250;</span>
+          </div>
+        </div>
+      `;
+    }).join('') +
+  '</div>';
+}
 
 // =============================================
 // REGION VIEW

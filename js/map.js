@@ -20,6 +20,7 @@ function showDirectoryMap() {
   const content   = document.getElementById('directory-content');
   const mapWrap   = document.getElementById('directory-map-wrap');
   const listBtn   = document.getElementById('dir-list-btn');
+  const alphaBtn  = document.getElementById('dir-alpha-btn');
   const mapBtn    = document.getElementById('dir-map-btn');
   const regionBtn = document.getElementById('dir-region-btn');
 
@@ -28,6 +29,7 @@ function showDirectoryMap() {
   content.style.display  = 'none';
   mapWrap.style.display  = 'block';
   if (listBtn)   listBtn.classList.remove('active-toggle');
+  if (alphaBtn)  alphaBtn.classList.remove('active-toggle');
   if (mapBtn)    mapBtn.classList.add('active-toggle');
   if (regionBtn) regionBtn.classList.remove('active-toggle');
 
@@ -39,6 +41,7 @@ function showDirectoryList() {
   const content   = document.getElementById('directory-content');
   const mapWrap   = document.getElementById('directory-map-wrap');
   const listBtn   = document.getElementById('dir-list-btn');
+  const alphaBtn  = document.getElementById('dir-alpha-btn');
   const mapBtn    = document.getElementById('dir-map-btn');
   const regionBtn = document.getElementById('dir-region-btn');
 
@@ -47,6 +50,7 @@ function showDirectoryList() {
   content.style.display  = '';
   mapWrap.style.display  = 'none';
   if (listBtn)   listBtn.classList.add('active-toggle');
+  if (alphaBtn)  alphaBtn.classList.remove('active-toggle');
   if (mapBtn)    mapBtn.classList.remove('active-toggle');
   if (regionBtn) regionBtn.classList.remove('active-toggle');
 

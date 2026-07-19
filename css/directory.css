@@ -682,6 +682,82 @@
 }
 
 /* =============================================
+   A-Z COUNTY LIST VIEW
+   Alphabetical list of all counties, each row
+   shows county name, region badge, and school count.
+============================================== */
+.alpha-county-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* One county row */
+.alpha-county-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.alpha-county-row:last-child {
+  border-bottom: none;
+}
+
+.alpha-county-row:hover {
+  background: #1a0a2e;
+}
+
+.alpha-county-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.alpha-county-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Small pill showing West TN / Middle TN / East TN */
+.alpha-county-region {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--accent-light);
+  background: rgba(155, 48, 255, 0.12);
+  border: 1px solid rgba(155, 48, 255, 0.25);
+  border-radius: 20px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.alpha-county-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.alpha-county-count {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.alpha-chevron {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+}
+
+/* =============================================
    REGION VIEW
    Groups all schools by West / Middle / East TN.
    Each school row is clickable to open its detail.
