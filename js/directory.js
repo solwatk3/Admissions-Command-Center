@@ -768,6 +768,13 @@ function openAddCounty() {
     if (!name) { alert('County name is required.'); return; }
 
     const counties = getCounties();
+
+    // Block duplicate county names (case-insensitive)
+    const duplicate = counties.find(function(c) {
+      return c.name.toLowerCase() === name.toLowerCase();
+    });
+    if (duplicate) { alert('"' + name + '" county already exists.'); return; }
+
     counties.push({
       id:     makeId(),
       name:   name,
@@ -811,6 +818,12 @@ function openEditCounty(countyId) {
   openModal('Edit County', body, function() {
     const name = document.getElementById('f-county-name').value.trim();
     if (!name) { alert('County name is required.'); return; }
+
+    // Block renaming to a name that already belongs to a different county
+    const duplicate = counties.find(function(c) {
+      return c.id !== countyId && c.name.toLowerCase() === name.toLowerCase();
+    });
+    if (duplicate) { alert('"' + name + '" county already exists.'); return; }
 
     const idx = counties.findIndex(c => c.id === countyId);
     counties[idx] = {
