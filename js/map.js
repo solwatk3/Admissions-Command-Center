@@ -240,9 +240,28 @@ async function initSchoolMap() {
   }
 
   // Center on Tennessee, zoom level 7 shows the whole state.
-  // wheelPxPerZoomLevel: 120 means one scroll notch = one zoom level.
-  // The Leaflet default (60) causes 2-3 levels per notch on most mice.
-  mapInstance = L.map('school-map', { wheelPxPerZoomLevel: 120 }).setView([35.85, -86.35], 7);
+  // scrollWheelZoom: false - we handle scroll ourselves below so we get
+  // exactly 1 zoom level per tick regardless of mouse/trackpad sensitivity.
+  mapInstance = L.map('school-map', { scrollWheelZoom: false }).setView([35.85, -86.35], 7);
+
+  // Custom scroll handler: zoom exactly 1 level per wheel event.
+  // The 200ms debounce ignores follow-on events from the same physical tick.
+  let _scrollTimer = null;
+  mapInstance.getContainer().addEventListener('wheel', function(e) {
+    e.preventDefault();
+    if (_scrollTimer) return;
+    _scrollTimer = setTimeout(function() { _scrollTimer = null; }, 200);
+    if (e.deltaY < 0) {
+      mapInstance.zoomIn(1);
+    } else {
+      mapInstance.zoomOut(1);
+    }
+  }, { passive: false });
+
+  // County boundary pane - sits below the default overlayPane (z-index 400)
+  // so county polygons never block hover events on circle markers.
+  mapInstance.createPane('countyPane');
+  mapInstance.getPane('countyPane').style.zIndex = 350;
 
   // Street view tile layer - OpenStreetMap
   const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -525,6 +544,9 @@ function loadTNCountyBoundaries(schools) {
       );
 
       L.geoJSON({ type: 'FeatureCollection', features: tnFeatures }, {
+        // Render into the countyPane so polygons sit below circle markers,
+        // preventing county tooltips from blocking school name tooltips on hover.
+        pane: 'countyPane',
         style: function(feature) {
           const name      = (feature.properties.NAME || '').toLowerCase();
           const hasSchools = userCountyNames.has(name) || userCountyNames.has(name + ' county');
