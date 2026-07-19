@@ -70,7 +70,7 @@ function renderRolodex(filterTerm) {
 
 // =============================================
 // RENDER COLLEAGUE CARD
-// One card per colleague contact
+// Clickable chip - clicking opens the full detail modal
 // =============================================
 function renderColleagueCard(c) {
   // Build initials for the avatar circle
@@ -78,12 +78,15 @@ function renderColleagueCard(c) {
     .map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
   return `
-    <div class="colleague-card" id="colleague-${c.id}">
+    <div class="colleague-card" id="colleague-${c.id}" onclick="openColleagueDetail('${c.id}')">
       <div class="colleague-avatar">${escapeHtml(initials)}</div>
-      <span class="colleague-name">${escapeHtml(c.name)}</span>
+      <div class="colleague-card-text">
+        <span class="colleague-name">${escapeHtml(c.name)}</span>
+        <span class="colleague-institution">${escapeHtml(c.institution)}</span>
+      </div>
 
-      <!-- Hover popup with contact details and action buttons -->
-      <div class="colleague-popup">
+      <!-- Hover popup - stopPropagation on all items so they don't also fire the card's detail opener -->
+      <div class="colleague-popup" onclick="event.stopPropagation()">
         <p class="popup-institution">${escapeHtml(c.institution)}</p>
         ${c.email ? `<span class="popup-link popup-copy" onclick="copyToClipboard('${escapeHtml(c.email)}', this)" title="Click to copy">&#9993; ${escapeHtml(c.email)}</span>` : ''}
         ${c.phone ? `<span class="popup-link popup-copy" onclick="copyToClipboard('${escapeHtml(c.phone)}', this)" title="Click to copy">&#128222; ${escapeHtml(c.phone)}</span>` : ''}
@@ -95,6 +98,55 @@ function renderColleagueCard(c) {
 
     </div>
   `;
+}
+
+// =============================================
+// COLLEAGUE DETAIL MODAL
+// Opens a view-only modal with all contact info
+// and Edit / Delete action buttons
+// =============================================
+function openColleagueDetail(id) {
+  const c = getColleagues().find(function(x) { return x.id === id; });
+  if (!c) return;
+
+  const body = `
+    <div class="colleague-detail-view">
+      <div class="colleague-detail-row">
+        <span class="detail-label">Institution</span>
+        <span class="detail-value">${escapeHtml(c.institution)}</span>
+      </div>
+      ${c.email ? `
+      <div class="colleague-detail-row">
+        <span class="detail-label">Email</span>
+        <span class="detail-value">
+          <span class="copy-value" onclick="copyToClipboard('${escapeHtml(c.email)}', this)" title="Click to copy">
+            &#9993; ${escapeHtml(c.email)}
+          </span>
+        </span>
+      </div>` : ''}
+      ${c.phone ? `
+      <div class="colleague-detail-row">
+        <span class="detail-label">Phone</span>
+        <span class="detail-value">
+          <span class="copy-value" onclick="copyToClipboard('${escapeHtml(c.phone)}', this)" title="Click to copy">
+            &#128222; ${escapeHtml(c.phone)}
+          </span>
+        </span>
+      </div>` : ''}
+      ${c.notes ? `
+      <div class="colleague-detail-row">
+        <span class="detail-label">Notes</span>
+        <span class="detail-value">${escapeHtml(c.notes)}</span>
+      </div>` : ''}
+      <div class="colleague-detail-actions">
+        <button class="btn btn-secondary" onclick="closeModal(); openEditColleague('${c.id}')">&#9998; Edit</button>
+        <button class="btn btn-danger"    onclick="closeModal(); confirmDeleteColleague('${c.id}')">&#128465; Delete</button>
+      </div>
+    </div>
+  `;
+
+  // null as onSave hides the Save button - this is a view/action modal
+  openModal(escapeHtml(c.name), body, null);
 }
 
 // =============================================
@@ -152,7 +204,7 @@ function openAddColleague() {
       name:        name,
       institution: institution,
       email:       document.getElementById('f-email').value.trim(),
-      phone:       document.getElementById('f-phone').value.trim(),
+      phone:       formatPhone(document.getElementById('f-phone').value.trim()),
       notes:       document.getElementById('f-notes').value.trim(),
     });
 
@@ -207,7 +259,7 @@ function openEditColleague(id) {
       name:        name,
       institution: institution,
       email:       document.getElementById('f-email').value.trim(),
-      phone:       document.getElementById('f-phone').value.trim(),
+      phone:       formatPhone(document.getElementById('f-phone').value.trim()),
       notes:       document.getElementById('f-notes').value.trim(),
     };
 
@@ -241,65 +293,4 @@ function initRolodex() {
   const search = document.getElementById('rolodex-search');
   if (search) search.value = '';
   renderRolodex();
-
-  // Attach tap-to-show popup behavior for touch devices.
-  // On desktop, CSS :hover already handles this.
-  // On mobile, :hover doesn't fire reliably, so we toggle a
-  // .popup-open class on the card when the user taps it.
-  initRolodexTapPopups();
-}
-
-// =============================================
-// TAP-TO-SHOW POPUPS (mobile)
-// Adds click listeners to colleague cards so tapping
-// one toggles the detail popup open/closed.
-// Tapping anywhere else on the page closes all popups.
-// =============================================
-function initRolodexTapPopups() {
-  const container = document.getElementById('rolodex-content');
-  if (!container) return;
-
-  // Only wire up listeners ONCE. initRolodex() runs every time the user
-  // navigates to this page, and without this guard a new copy of each
-  // click listener would stack up on every visit.
-  if (container.dataset.tapPopupsWired) return;
-  container.dataset.tapPopupsWired = 'yes';
-
-  // Delegate to the container so it works even after re-renders
-  container.addEventListener('click', function(e) {
-    const card = e.target.closest('.colleague-card');
-
-    // If a button inside the popup was clicked, let it do its thing
-    // and don't toggle the card - the popup should stay as-is
-    if (e.target.closest('.colleague-popup button, .colleague-popup a, .colleague-popup .popup-copy')) {
-      return;
-    }
-
-    if (!card) {
-      // Tap was outside any card - close all popups
-      closeAllColleaguePopups();
-      return;
-    }
-
-    // Toggle this card's popup; close any other open popup first
-    const isOpen = card.classList.contains('popup-open');
-    closeAllColleaguePopups();
-    if (!isOpen) {
-      card.classList.add('popup-open');
-    }
-  });
-
-  // Also close all popups if the user taps the main content area outside the rolodex
-  document.addEventListener('click', function(e) {
-    if (!e.target.closest('#rolodex-content')) {
-      closeAllColleaguePopups();
-    }
-  });
-}
-
-// Close every open colleague popup
-function closeAllColleaguePopups() {
-  document.querySelectorAll('.colleague-card.popup-open').forEach(function(card) {
-    card.classList.remove('popup-open');
-  });
 }

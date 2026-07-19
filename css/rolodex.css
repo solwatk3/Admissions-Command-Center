@@ -80,7 +80,7 @@
   gap: 8px;
   position: relative;
   transition: border-color 0.2s, background 0.2s;
-  cursor: default;
+  cursor: pointer;
 }
 
 .colleague-card:hover {
@@ -108,6 +108,57 @@
   font-weight: 600;
   color: #ffffff;
   white-space: nowrap;
+}
+
+/* Wrapper that stacks name + institution vertically inside the chip */
+.colleague-card-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Institution shown below the name inside the chip */
+.colleague-institution {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Detail view inside the modal */
+.colleague-detail-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.colleague-detail-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.colleague-detail-row .detail-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  min-width: 90px;
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+
+.colleague-detail-row .detail-value {
+  font-size: 0.9rem;
+  color: #ffffff;
+  line-height: 1.4;
+}
+
+.colleague-detail-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
 }
 
 /* Hover popup - uses opacity/visibility so we can add a hide delay */

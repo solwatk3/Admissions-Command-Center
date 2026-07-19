@@ -656,7 +656,7 @@ function openAddSchool(countyId) {
       priority:     document.getElementById('f-priority').value,
       contact:      document.getElementById('f-contact').value.trim(),
       contactEmail: document.getElementById('f-contact-email').value.trim(),
-      contactPhone: document.getElementById('f-contact-phone').value.trim(),
+      contactPhone: formatPhone(document.getElementById('f-contact-phone').value.trim()),
       notes:        document.getElementById('f-notes').value.trim(),
     });
 
@@ -750,7 +750,7 @@ function openEditSchool(schoolId) {
       priority:     document.getElementById('f-priority').value,
       contact:      document.getElementById('f-contact').value.trim(),
       contactEmail: document.getElementById('f-contact-email').value.trim(),
-      contactPhone: document.getElementById('f-contact-phone').value.trim(),
+      contactPhone: formatPhone(document.getElementById('f-contact-phone').value.trim()),
       notes:        document.getElementById('f-notes').value.trim(),
     };
 

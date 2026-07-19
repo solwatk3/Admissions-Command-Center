@@ -592,6 +592,26 @@ function importAllData(event) {
 }
 
 // =============================================
+// FORMAT PHONE NUMBER
+// Strips non-digits and returns (###)-###-#### for 10-digit US numbers.
+// Also handles 11-digit numbers starting with 1 (country code).
+// Returns the original string unchanged if it can't be formatted,
+// so partial or international numbers are never silently mangled.
+// =============================================
+function formatPhone(raw) {
+  if (!raw) return raw;
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 10) {
+    return '(' + digits.slice(0, 3) + ')-' + digits.slice(3, 6) + '-' + digits.slice(6);
+  }
+  // Strip leading country code 1 and format the remaining 10 digits
+  if (digits.length === 11 && digits[0] === '1') {
+    return '(' + digits.slice(1, 4) + ')-' + digits.slice(4, 7) + '-' + digits.slice(7);
+  }
+  return raw;
+}
+
+// =============================================
 // COPY TO CLIPBOARD
 // Copies a value and briefly shows "Copied!" confirmation
 // el is the element that was clicked - used to show feedback
