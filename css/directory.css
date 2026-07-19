@@ -682,6 +682,99 @@
 }
 
 /* =============================================
+   A-Z PILL EXTRAS
+   Additional elements inside A-Z county pills.
+============================================== */
+
+/* Stacks county name and region tag vertically inside the pill */
+.alpha-pill-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* Small region tag under the county name in A-Z pills */
+.alpha-region-tag {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--accent-light);
+  opacity: 0.75;
+  letter-spacing: 0.03em;
+}
+
+/* =============================================
+   REGION VIEW - CHIP GRID
+   Counties render as pill chips within each
+   region section; schools render as smaller chips.
+============================================== */
+
+/* Flex-wrap grid of county chips inside a region section */
+.region-county-chip-grid {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg);
+}
+
+/* Wrapper for one county chip + its expanded school list */
+.region-county-chip-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* County pill in the region view - same base as List view pill
+   but full-width so the school list lines up cleanly below it */
+.region-county-pill {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+/* Expand/collapse arrow at the far right of the county pill */
+.region-county-pill .region-county-arrow {
+  margin-left: auto;
+  font-size: 0.65rem;
+  color: var(--accent-light);
+  opacity: 0.7;
+}
+
+/* Flex-wrap grid of school chips inside an expanded county */
+.region-school-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-left: 8px;
+}
+
+/* Individual school chip */
+.region-school-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  padding: 5px 14px 5px 6px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.region-school-chip:hover {
+  border-color: var(--accent);
+  background: #1f0a2e;
+}
+
+.region-chip-name {
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* =============================================
    A-Z COUNTY LIST VIEW
    Alphabetical list of all counties, each row
    shows county name, region badge, and school count.

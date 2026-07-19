@@ -889,20 +889,20 @@ function renderAlphaCountyView(q) {
 
   const REGION_LABELS = { 'West TN': 'West TN', 'Middle TN': 'Middle TN', 'East TN': 'East TN' };
 
-  container.innerHTML = '<div class="alpha-county-list">' +
+  // Render as the same pill grid used in the List view
+  container.innerHTML = '<div class="county-pill-grid">' +
     counties.map(function(county) {
       const countySchools = schools.filter(function(s) { return s.countyId === county.id; });
       const regionLabel   = REGION_LABELS[county.region] || '';
+      const initials      = county.name.trim().split(' ').map(function(w) { return w[0]; }).join('').toUpperCase().slice(0, 2);
       return `
-        <div class="alpha-county-row" onclick="openCountyView('${county.id}')">
-          <div class="alpha-county-info">
-            <span class="alpha-county-name">${county.name} County</span>
-            ${regionLabel ? `<span class="alpha-county-region">${regionLabel}</span>` : ''}
+        <div class="county-pill-inner" onclick="openCountyView('${county.id}')">
+          <div class="county-avatar">${initials}</div>
+          <div class="alpha-pill-label">
+            <span class="county-pill-name">${county.name}</span>
+            ${regionLabel ? `<span class="alpha-region-tag">${regionLabel}</span>` : ''}
           </div>
-          <div class="alpha-county-right">
-            <span class="alpha-county-count">${countySchools.length} school${countySchools.length !== 1 ? 's' : ''}</span>
-            <span class="alpha-chevron">&#8250;</span>
-          </div>
+          <span class="county-pill-count">${countySchools.length}</span>
         </div>
       `;
     }).join('') +
@@ -1000,32 +1000,35 @@ function renderRegionView(q) {
         // County is open if filtering (auto-expand) OR the user opened it
         const countyOpen  = isFiltering || !!countyOpenState[county.id];
         const countyArrow = countyOpen ? '&#9660;' : '&#9654;';
+        const initials    = county.name.trim().split(' ').map(function(w) { return w[0]; }).join('').toUpperCase().slice(0, 2);
 
-        const schoolRows = countySchools.length === 0
-          ? '<p class="empty-state" style="padding:10px 16px; font-size:0.82rem;">No schools yet.</p>'
-          : countySchools.map(function(s) {
+        const schoolChips = countySchools.length === 0
+          ? '<p class="empty-state" style="padding:12px 16px; font-size:0.82rem;">No schools yet.</p>'
+          : '<div class="region-school-chips">' +
+            countySchools.map(function(s) {
               const priorityClass = {
                 'Primary':   'priority-primary',
                 'Secondary': 'priority-secondary',
                 'Tertiary':  'priority-tertiary',
               }[s.priority] || '';
               return `
-                <div class="region-school-row" onclick="openSchoolDetail('${s.id}')">
+                <div class="region-school-chip" onclick="openSchoolDetail('${s.id}')">
                   <span class="priority-badge ${priorityClass}">${s.priority}</span>
-                  <span class="region-school-name">${s.name}</span>
-                  <span class="region-chevron">&#8250;</span>
+                  <span class="region-chip-name">${s.name}</span>
                 </div>
               `;
-            }).join('');
+            }).join('') +
+            '</div>';
 
         countyBlocksHtml += `
-          <div class="region-county-block">
-            <div class="region-county-subheader" onclick="toggleCounty('${county.id}')">
+          <div class="region-county-chip-wrap">
+            <div class="county-pill-inner region-county-pill" onclick="toggleCounty('${county.id}')">
+              <div class="county-avatar">${initials}</div>
+              <span class="county-pill-name">${county.name}</span>
+              <span class="county-pill-count">${countySchools.length}</span>
               <span class="region-county-arrow">${countyArrow}</span>
-              <span class="region-county-name">${county.name} County</span>
-              <span class="region-county-count">${countySchools.length} school${countySchools.length !== 1 ? 's' : ''}</span>
             </div>
-            ${countyOpen ? `<div class="region-county-schools">${schoolRows}</div>` : ''}
+            ${countyOpen ? `<div class="region-county-schools">${schoolChips}</div>` : ''}
           </div>
         `;
       });
@@ -1059,7 +1062,7 @@ function renderRegionView(q) {
           </div>
           <span class="region-count">${countySummary} &middot; ${schoolSummary}</span>
         </div>
-        ${regionOpen ? `<div class="region-counties">${result.html}</div>` : ''}
+        ${regionOpen ? `<div class="region-county-chip-grid">${result.html}</div>` : ''}
       </div>
     `;
   });
@@ -1083,7 +1086,7 @@ function renderRegionView(q) {
             </div>
             <span class="region-count">${countySummary} &middot; ${schoolSummary}</span>
           </div>
-          ${regionOpen ? `<div class="region-counties">${result.html}</div>` : ''}
+          ${regionOpen ? `<div class="region-county-chip-grid">${result.html}</div>` : ''}
         </div>
       `;
     }
