@@ -239,8 +239,10 @@ async function initSchoolMap() {
     mapInstance = null;
   }
 
-  // Center on Tennessee, zoom level 7 shows the whole state
-  mapInstance = L.map('school-map').setView([35.85, -86.35], 7);
+  // Center on Tennessee, zoom level 7 shows the whole state.
+  // wheelPxPerZoomLevel: 120 means one scroll notch = one zoom level.
+  // The Leaflet default (60) causes 2-3 levels per notch on most mice.
+  mapInstance = L.map('school-map', { wheelPxPerZoomLevel: 120 }).setView([35.85, -86.35], 7);
 
   // Street view tile layer - OpenStreetMap
   const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -341,6 +343,13 @@ async function initSchoolMap() {
       dashArray:   item.fallback ? '4 3' : null,
     })
     .addTo(mapInstance)
+    .bindTooltip(escapeHtml(item.school.name), {
+      // Show school name on hover, styled to match the app
+      permanent:  false,
+      direction:  'top',
+      offset:     [0, -8],
+      className:  'map-county-tooltip',
+    })
     .bindPopup(popupHtml);
   });
 
