@@ -448,16 +448,34 @@ function toggleInlineNotes(id) {
 }
 
 // =============================================
-// SEARCH FILTER (county pills view only)
+// SEARCH FILTER
+// Works across all four directory tabs.
+// Detects which tab is active and delegates accordingly.
 // =============================================
 function filterDirectory(term) {
-  const q     = term.trim().toLowerCase();
-  const pills = document.querySelectorAll('.county-pill');
-  pills.forEach(pill => {
-    const name  = pill.dataset.countyName || '';
-    const match = !q || name.includes(q);
-    pill.style.display = match ? '' : 'none';
-  });
+  const q = term.trim().toLowerCase();
+
+  const alphaBtn  = document.getElementById('dir-alpha-btn');
+  const regionBtn = document.getElementById('dir-region-btn');
+  const mapBtn    = document.getElementById('dir-map-btn');
+
+  if (alphaBtn && alphaBtn.classList.contains('active-toggle')) {
+    // A-Z tab - re-render with filter
+    renderAlphaCountyView(q);
+  } else if (regionBtn && regionBtn.classList.contains('active-toggle')) {
+    // By Region tab - re-render with filter
+    renderRegionView(q);
+  } else if (mapBtn && mapBtn.classList.contains('active-toggle')) {
+    // Map tab - search doesn't apply to the Leaflet map; no-op
+  } else {
+    // List tab (county pills) - show/hide pills by county name
+    const pills = document.querySelectorAll('.county-pill');
+    pills.forEach(function(pill) {
+      const name  = pill.dataset.countyName || '';
+      const match = !q || name.includes(q);
+      pill.style.display = match ? '' : 'none';
+    });
+  }
 }
 
 // =============================================
@@ -834,19 +852,32 @@ function showDirectoryAlpha() {
   renderAlphaCountyView();
 }
 
-function renderAlphaCountyView() {
+function renderAlphaCountyView(q) {
   const container = document.getElementById('directory-content');
   if (!container) return;
 
   showDirectoryControls(true);
 
-  const counties = getCounties()
+  const filterTerm = (q || '').toLowerCase();
+
+  const allCounties = getCounties()
     .slice()
     .sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+  // Filter by county name if a search term is present
+  const counties = filterTerm
+    ? allCounties.filter(function(c) { return c.name.toLowerCase().includes(filterTerm); })
+    : allCounties;
+
   const schools = getSchools();
 
-  if (counties.length === 0) {
+  if (allCounties.length === 0) {
     container.innerHTML = '<p class="empty-state" style="padding:40px; text-align:center;">No counties yet. Add one to get started.</p>';
+    return;
+  }
+
+  if (counties.length === 0) {
+    container.innerHTML = '<p class="empty-state" style="padding:40px; text-align:center;">No counties match "' + q + '".</p>';
     return;
   }
 
@@ -893,15 +924,20 @@ function showDirectoryRegion() {
   renderRegionView();
 }
 
-function renderRegionView() {
+function renderRegionView(q) {
   const container = document.getElementById('directory-content');
   if (!container) return;
 
-  // Show top controls bar (search/add buttons are not used here, but keeps layout consistent)
   showDirectoryControls(true);
 
-  const counties = getCounties();
-  const schools  = getSchools();
+  const filterTerm = (q || '').toLowerCase();
+  const counties   = getCounties();
+  const schools    = getSchools();
+
+  if (counties.length === 0) {
+    container.innerHTML = '<p class="empty-state" style="padding:40px; text-align:center;">No counties yet. Add one to get started.</p>';
+    return;
+  }
 
   const REGIONS = [
     { key: 'West TN',   label: 'West Tennessee' },
@@ -909,91 +945,113 @@ function renderRegionView() {
     { key: 'East TN',   label: 'East Tennessee' },
   ];
 
+  // Helper: builds county sub-blocks for one slice of counties.
+  // Returns { html, schoolCount, countyCount } for the region summary line.
+  function buildCountyBlocks(regionCounties) {
+    let countyBlocksHtml = '';
+    let totalSchools     = 0;
+    let visibleCounties  = 0;
+
+    regionCounties
+      .slice()
+      .sort(function(a, b) { return a.name.localeCompare(b.name); })
+      .forEach(function(county) {
+        // Decide which schools to show:
+        // - If county name matches the filter, show ALL schools in that county
+        // - Otherwise, filter schools by name
+        const countyNameMatches = filterTerm && county.name.toLowerCase().includes(filterTerm);
+        let countySchools = schools
+          .filter(function(s) { return s.countyId === county.id; })
+          .sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+        if (filterTerm && !countyNameMatches) {
+          countySchools = countySchools.filter(function(s) {
+            return s.name.toLowerCase().includes(filterTerm);
+          });
+          if (countySchools.length === 0) return; // skip - no matches
+        }
+
+        visibleCounties++;
+        totalSchools += countySchools.length;
+
+        const schoolRows = countySchools.length === 0
+          ? '<p class="empty-state" style="padding:10px 16px; font-size:0.82rem;">No schools yet.</p>'
+          : countySchools.map(function(s) {
+              const priorityClass = {
+                'Primary':   'priority-primary',
+                'Secondary': 'priority-secondary',
+                'Tertiary':  'priority-tertiary',
+              }[s.priority] || '';
+              return `
+                <div class="region-school-row" onclick="openSchoolDetail('${s.id}')">
+                  <span class="priority-badge ${priorityClass}">${s.priority}</span>
+                  <span class="region-school-name">${s.name}</span>
+                  <span class="region-chevron">&#8250;</span>
+                </div>
+              `;
+            }).join('');
+
+        countyBlocksHtml += `
+          <div class="region-county-block">
+            <div class="region-county-subheader" onclick="openCountyView('${county.id}')">
+              <span class="region-county-name">${county.name} County</span>
+              <span class="region-county-count">${countySchools.length} school${countySchools.length !== 1 ? 's' : ''} &#8250;</span>
+            </div>
+            <div class="region-county-schools">${schoolRows}</div>
+          </div>
+        `;
+      });
+
+    return { html: countyBlocksHtml, schoolCount: totalSchools, countyCount: visibleCounties };
+  }
+
   let html = '<div class="region-view">';
 
   REGIONS.forEach(function(region) {
-    // Get all counties tagged to this region
     const regionCounties = counties.filter(function(c) { return c.region === region.key; });
-    const countyIdSet    = regionCounties.map(function(c) { return c.id; });
+    if (regionCounties.length === 0) return;
 
-    // Get all schools in those counties, sorted A-Z
-    const regionSchools = schools
-      .filter(function(s) { return countyIdSet.indexOf(s.countyId) !== -1; })
-      .sort(function(a, b) { return a.name.localeCompare(b.name); });
+    const result = buildCountyBlocks(regionCounties);
+    if (filterTerm && result.countyCount === 0) return; // nothing matched - skip region
 
-    if (regionCounties.length === 0 && regionSchools.length === 0) return;
-
-    const schoolRows = regionSchools.length === 0
-      ? '<p class="empty-state" style="padding:16px;">No schools in this region yet.</p>'
-      : regionSchools.map(function(s) {
-          const county       = counties.find(function(c) { return c.id === s.countyId; });
-          const priorityClass = {
-            'Primary':   'priority-primary',
-            'Secondary': 'priority-secondary',
-            'Tertiary':  'priority-tertiary',
-          }[s.priority] || '';
-          return `
-            <div class="region-school-row" onclick="openSchoolDetail('${s.id}')">
-              <span class="priority-badge ${priorityClass}">${s.priority}</span>
-              <span class="region-school-name">${s.name}</span>
-              <span class="region-school-county">${county ? county.name + ' County' : ''}</span>
-              <span class="region-chevron">&#8250;</span>
-            </div>
-          `;
-        }).join('');
+    const countySummary = result.countyCount + ' count' + (result.countyCount !== 1 ? 'ies' : 'y');
+    const schoolSummary = result.schoolCount + ' school' + (result.schoolCount !== 1 ? 's' : '');
 
     html += `
       <div class="region-section">
         <div class="region-header">
           <span class="region-title">${region.label}</span>
-          <span class="region-count">${regionSchools.length} school${regionSchools.length !== 1 ? 's' : ''}</span>
+          <span class="region-count">${countySummary} &middot; ${schoolSummary}</span>
         </div>
-        <div class="region-schools-list">${schoolRows}</div>
+        <div class="region-counties">${result.html || '<p class="empty-state" style="padding:16px;">No counties assigned to this region yet.</p>'}</div>
       </div>
     `;
   });
 
-  // Show counties with no region assigned
-  const assignedIds     = counties.filter(function(c) { return !!c.region; }).map(function(c) { return c.id; });
-  const unassigned      = schools
-    .filter(function(s) { return assignedIds.indexOf(s.countyId) === -1; })
-    .sort(function(a, b) { return a.name.localeCompare(b.name); });
-
-  if (unassigned.length > 0) {
-    const rows = unassigned.map(function(s) {
-      const county       = counties.find(function(c) { return c.id === s.countyId; });
-      const priorityClass = {
-        'Primary':   'priority-primary',
-        'Secondary': 'priority-secondary',
-        'Tertiary':  'priority-tertiary',
-      }[s.priority] || '';
-      return `
-        <div class="region-school-row" onclick="openSchoolDetail('${s.id}')">
-          <span class="priority-badge ${priorityClass}">${s.priority}</span>
-          <span class="region-school-name">${s.name}</span>
-          <span class="region-school-county">${county ? county.name + ' County' : ''}</span>
-          <span class="region-chevron">&#8250;</span>
+  // Counties with no region assigned
+  const unassignedCounties = counties.filter(function(c) { return !c.region; });
+  if (unassignedCounties.length > 0) {
+    const result = buildCountyBlocks(unassignedCounties);
+    if (!filterTerm || result.countyCount > 0) {
+      const countySummary = result.countyCount + ' count' + (result.countyCount !== 1 ? 'ies' : 'y');
+      const schoolSummary = result.schoolCount + ' school' + (result.schoolCount !== 1 ? 's' : '');
+      html += `
+        <div class="region-section region-section-muted">
+          <div class="region-header">
+            <span class="region-title">No Region Assigned</span>
+            <span class="region-count">${countySummary} &middot; ${schoolSummary}</span>
+          </div>
+          <div class="region-counties">${result.html}</div>
         </div>
       `;
-    }).join('');
-
-    html += `
-      <div class="region-section region-section-muted">
-        <div class="region-header">
-          <span class="region-title">No Region Assigned</span>
-          <span class="region-count">${unassigned.length} school${unassigned.length !== 1 ? 's' : ''}</span>
-        </div>
-        <div class="region-schools-list">${rows}</div>
-      </div>
-    `;
+    }
   }
 
   html += '</div>';
 
-  if (counties.length === 0) {
-    html = '<p class="empty-state" style="padding:40px; text-align:center;">No counties yet. Add one to get started.</p>';
-  } else if (schools.length === 0) {
-    html = '<p class="empty-state" style="padding:40px; text-align:center;">No schools yet. Add schools to a county first.</p>';
+  // If nothing rendered at all (filtered everything out)
+  if (!html.includes('region-section')) {
+    html = '<p class="empty-state" style="padding:40px; text-align:center;">No results for "' + q + '".</p>';
   }
 
   container.innerHTML = html;
