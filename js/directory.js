@@ -102,21 +102,32 @@ function renderCountyPills() {
     return;
   }
 
+  const REGION_LABELS = { 'West TN': 'West TN', 'Middle TN': 'Middle TN', 'East TN': 'East TN' };
+
+  // Always sort A-Z so the grid is predictable
+  const sorted = counties.slice().sort(function(a, b) { return a.name.localeCompare(b.name); });
+
   container.innerHTML = '<div class="county-pill-grid">' +
-    counties.map(county => {
-      const countySchools   = schools.filter(s => s.countyId === county.id);
-      const primarySchools  = countySchools.filter(s => s.priority === 'Primary');
-      const initials        = county.name.trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    sorted.map(function(county) {
+      const countySchools  = schools.filter(function(s) { return s.countyId === county.id; });
+      const primarySchools = countySchools.filter(function(s) { return s.priority === 'Primary'; });
+      const initials       = county.name.trim().split(' ').map(function(w) { return w[0]; }).join('').toUpperCase().slice(0, 2);
+      const regionTag      = REGION_LABELS[county.region] || '';
 
       const primaryPopup = primarySchools.length > 0
-        ? primarySchools.map(s => `<span class="popup-primary-school" onclick="event.stopPropagation(); openSchoolDetail('${s.id}')">&#11088; ${s.name}</span>`).join('')
+        ? primarySchools.map(function(s) {
+            return `<span class="popup-primary-school" onclick="event.stopPropagation(); openSchoolDetail('${s.id}')">&#11088; ${s.name}</span>`;
+          }).join('')
         : '<span class="popup-no-primary">No primary schools yet</span>';
 
       return `
         <div class="county-pill" id="county-pill-${county.id}" data-county-name="${county.name.toLowerCase()}">
           <div class="county-pill-inner" onclick="openCountyView('${county.id}')">
             <div class="county-avatar">${initials}</div>
-            <span class="county-pill-name">${county.name}</span>
+            <div class="county-pill-label-stack">
+              <span class="county-pill-name">${county.name}</span>
+              ${regionTag ? `<span class="county-pill-region-tag">${regionTag}</span>` : ''}
+            </div>
             <span class="county-pill-count">${countySchools.length}</span>
           </div>
 
@@ -433,13 +444,11 @@ function showDirectoryControls(visible) {
     if (mapWrap) mapWrap.style.display = 'none';
     if (content) content.style.display = '';
 
-    // Reset toggle button states - list is active, all others off
-    const listBtn   = document.getElementById('dir-list-btn');
+    // Reset toggle button states - A-Z is the default, all others off
     const alphaBtn  = document.getElementById('dir-alpha-btn');
     const mapBtn    = document.getElementById('dir-map-btn');
     const regionBtn = document.getElementById('dir-region-btn');
-    if (listBtn)   listBtn.classList.add('active-toggle');
-    if (alphaBtn)  alphaBtn.classList.remove('active-toggle');
+    if (alphaBtn)  alphaBtn.classList.add('active-toggle');
     if (mapBtn)    mapBtn.classList.remove('active-toggle');
     if (regionBtn) regionBtn.classList.remove('active-toggle');
   }
@@ -843,70 +852,30 @@ function confirmDeleteCounty(countyId) {
 function showDirectoryAlpha() {
   const content   = document.getElementById('directory-content');
   const mapWrap   = document.getElementById('directory-map-wrap');
-  const listBtn   = document.getElementById('dir-list-btn');
   const alphaBtn  = document.getElementById('dir-alpha-btn');
   const mapBtn    = document.getElementById('dir-map-btn');
   const regionBtn = document.getElementById('dir-region-btn');
 
   if (content)   content.style.display = '';
   if (mapWrap)   mapWrap.style.display = 'none';
-  if (listBtn)   listBtn.classList.remove('active-toggle');
   if (alphaBtn)  alphaBtn.classList.add('active-toggle');
   if (mapBtn)    mapBtn.classList.remove('active-toggle');
   if (regionBtn) regionBtn.classList.remove('active-toggle');
 
-  renderAlphaCountyView();
+  // renderCountyPills is now always A-Z sorted - A-Z tab IS the county pills view
+  renderCountyPills();
 }
 
 function renderAlphaCountyView(q) {
-  const container = document.getElementById('directory-content');
-  if (!container) return;
-
-  showDirectoryControls(true);
-
-  const filterTerm = (q || '').toLowerCase();
-
-  const allCounties = getCounties()
-    .slice()
-    .sort(function(a, b) { return a.name.localeCompare(b.name); });
-
-  // Filter by county name if a search term is present
-  const counties = filterTerm
-    ? allCounties.filter(function(c) { return c.name.toLowerCase().includes(filterTerm); })
-    : allCounties;
-
-  const schools = getSchools();
-
-  if (allCounties.length === 0) {
-    container.innerHTML = '<p class="empty-state" style="padding:40px; text-align:center;">No counties yet. Add one to get started.</p>';
-    return;
+  // The county pills view IS now the A-Z view (renderCountyPills sorts A-Z).
+  // Re-render pills fresh then apply the search filter via DOM show/hide.
+  renderCountyPills();
+  if (q) {
+    document.querySelectorAll('.county-pill').forEach(function(pill) {
+      const name  = pill.dataset.countyName || '';
+      pill.style.display = name.includes(q) ? '' : 'none';
+    });
   }
-
-  if (counties.length === 0) {
-    container.innerHTML = '<p class="empty-state" style="padding:40px; text-align:center;">No counties match "' + q + '".</p>';
-    return;
-  }
-
-  const REGION_LABELS = { 'West TN': 'West TN', 'Middle TN': 'Middle TN', 'East TN': 'East TN' };
-
-  // Render as the same pill grid used in the List view
-  container.innerHTML = '<div class="county-pill-grid">' +
-    counties.map(function(county) {
-      const countySchools = schools.filter(function(s) { return s.countyId === county.id; });
-      const regionLabel   = REGION_LABELS[county.region] || '';
-      const initials      = county.name.trim().split(' ').map(function(w) { return w[0]; }).join('').toUpperCase().slice(0, 2);
-      return `
-        <div class="county-pill-inner" onclick="openCountyView('${county.id}')">
-          <div class="county-avatar">${initials}</div>
-          <div class="alpha-pill-label">
-            <span class="county-pill-name">${county.name}</span>
-            ${regionLabel ? `<span class="alpha-region-tag">${regionLabel}</span>` : ''}
-          </div>
-          <span class="county-pill-count">${countySchools.length}</span>
-        </div>
-      `;
-    }).join('') +
-  '</div>';
 }
 
 // =============================================

@@ -133,6 +133,23 @@
   white-space: nowrap;
 }
 
+/* Stacks county name and region tag vertically inside the pill */
+.county-pill-label-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* Small region label shown below the county name in each pill */
+.county-pill-region-tag {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--accent-light);
+  opacity: 0.7;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
 /* School count badge */
 .county-pill-count {
   background: var(--accent);
