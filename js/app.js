@@ -237,27 +237,46 @@ function renderReturnVisits() {
 // Flags Primary schools that haven't been visited in 60+ days.
 // Shown on the dashboard to prevent schools from slipping through.
 // =============================================
+// Tracks which county sections are open in the overdue card.
+// Keyed by countyId - true = expanded, missing/false = collapsed.
+var overdueCountyOpen = {};
+
+// Toggle a county open/closed and re-render the overdue card
+function toggleOverdueCounty(countyId) {
+  overdueCountyOpen[countyId] = !overdueCountyOpen[countyId];
+  renderOverdueSchools();
+}
+
 function renderOverdueSchools() {
   const container = document.getElementById('dashboard-overdue');
   if (!container) return;
 
   const schools = loadData('schools',  []);
   const visits  = loadData('visits',   []);
+  const counties = loadData('counties', []);
   const today   = Date.now();
 
   // Only care about Primary schools
   const primaries = schools.filter(function(s) { return s.priority === 'Primary'; });
 
-  const overdue = primaries.filter(function(school) {
-    // Find the most recent visit for this school
+  // Build overdue list with days-since already computed
+  const overdue = [];
+  primaries.forEach(function(school) {
     const schoolVisits = visits.filter(function(v) { return v.schoolId === school.id; });
-    if (schoolVisits.length === 0) return true; // never visited = overdue
+    let daysSince = null;
+    let daysSinceStr = 'Never visited';
 
-    const lastDate = new Date(
-      schoolVisits.sort(function(a, b) { return new Date(b.date) - new Date(a.date); })[0].date
-    );
-    const daysSince = Math.floor((today - new Date(lastDate.getTime() + lastDate.getTimezoneOffset() * 60000)) / 86400000);
-    return daysSince > 60;
+    if (schoolVisits.length > 0) {
+      const lastDate = new Date(
+        schoolVisits.slice().sort(function(a, b) { return new Date(b.date) - new Date(a.date); })[0].date
+      );
+      daysSince = Math.floor((today - new Date(lastDate.getTime() + lastDate.getTimezoneOffset() * 60000)) / 86400000);
+      daysSinceStr = daysSince + ' days ago';
+    }
+
+    if (daysSince === null || daysSince > 60) {
+      overdue.push({ school: school, daysSinceStr: daysSinceStr });
+    }
   });
 
   if (overdue.length === 0) {
@@ -265,30 +284,46 @@ function renderOverdueSchools() {
     return;
   }
 
-  const counties = loadData('counties', []);
+  // Group overdue schools by county, sorted by county name
+  const grouped = {};
+  overdue.forEach(function(item) {
+    const cId = item.school.countyId || 'none';
+    if (!grouped[cId]) grouped[cId] = [];
+    grouped[cId].push(item);
+  });
 
-  container.innerHTML = overdue.map(function(school) {
-    const schoolVisits = visits.filter(function(v) { return v.schoolId === school.id; });
-    const county       = counties.find(function(c) { return c.id === school.countyId; });
+  const sortedCountyIds = Object.keys(grouped).sort(function(a, b) {
+    const ca = counties.find(function(c) { return c.id === a; });
+    const cb = counties.find(function(c) { return c.id === b; });
+    return (ca ? ca.name : 'zzz').localeCompare(cb ? cb.name : 'zzz');
+  });
 
-    let daysSinceStr;
-    if (schoolVisits.length === 0) {
-      daysSinceStr = 'Never visited';
-    } else {
-      const lastDate  = new Date(
-        schoolVisits.sort(function(a, b) { return new Date(b.date) - new Date(a.date); })[0].date
-      );
-      const days = Math.floor((today - new Date(lastDate.getTime() + lastDate.getTimezoneOffset() * 60000)) / 86400000);
-      daysSinceStr = days + ' days ago';
-    }
+  container.innerHTML = sortedCountyIds.map(function(cId) {
+    const county   = counties.find(function(c) { return c.id === cId; });
+    const items    = grouped[cId];
+    const isOpen   = !!overdueCountyOpen[cId];
+    const arrow    = isOpen ? '&#9660;' : '&#9654;';
+    const label    = county ? county.name + ' County' : 'Unknown County';
+
+    const schoolRows = items.map(function(item) {
+      return `
+        <div class="overdue-row" onclick="navigateTo('directory'); openSchoolDetail('${item.school.id}')">
+          <span class="overdue-school-name">${item.school.name}</span>
+          <span class="overdue-badge">${item.daysSinceStr}</span>
+        </div>
+      `;
+    }).join('');
 
     return `
-      <div class="overdue-row" onclick="navigateTo('directory'); openSchoolDetail('${school.id}')">
-        <div class="overdue-row-info">
-          <span class="overdue-school-name">${school.name}</span>
-          <span class="overdue-county">${county ? county.name + ' County' : ''}</span>
+      <div class="overdue-county-group">
+        <div class="overdue-county-header" onclick="toggleOverdueCounty('${cId}')">
+          <div class="overdue-county-header-left">
+            <span class="overdue-county-arrow">${arrow}</span>
+            <span class="overdue-county-name">${label}</span>
+          </div>
+          <span class="overdue-county-badge">${items.length} school${items.length !== 1 ? 's' : ''}</span>
         </div>
-        <span class="overdue-badge">${daysSinceStr}</span>
+        ${isOpen ? `<div class="overdue-county-schools">${schoolRows}</div>` : ''}
       </div>
     `;
   }).join('');

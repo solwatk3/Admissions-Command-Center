@@ -714,45 +714,97 @@ a {
 
 /* =============================================
    OVERDUE SCHOOLS DASHBOARD CARD
-   Each row is a Primary school not visited in 60+ days
+   Grouped by county with collapsible sections.
 ============================================== */
+
+/* One county group */
+.overdue-county-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+/* County header - click to expand/collapse */
+.overdue-county-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #1a0a28;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.overdue-county-header:hover {
+  background: #240f38;
+}
+
+.overdue-county-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.overdue-county-arrow {
+  font-size: 0.65rem;
+  color: var(--accent-light);
+  opacity: 0.7;
+  width: 10px;
+  flex-shrink: 0;
+}
+
+.overdue-county-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Count badge on county header (e.g. "3 schools") */
+.overdue-county-badge {
+  font-size: 0.72rem;
+  color: #ff5555;
+  background: rgba(255, 85, 85, 0.12);
+  border: 1px solid rgba(255, 85, 85, 0.3);
+  border-radius: 20px;
+  padding: 2px 9px;
+  white-space: nowrap;
+}
+
+/* Schools list inside an expanded county */
+.overdue-county-schools {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+
+/* Individual school row inside an expanded county */
 .overdue-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 10px 14px;
-  margin-bottom: 8px;
+  padding: 9px 14px 9px 22px;
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  transition: background 0.15s;
+}
+
+.overdue-row:last-child {
+  border-bottom: none;
 }
 
 .overdue-row:hover {
-  border-color: #ff5555;
   background: #1f0a0a;
 }
 
-.overdue-row-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
 .overdue-school-name {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.87rem;
+  font-weight: 500;
   color: var(--text);
-  white-space: nowrap;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.overdue-county {
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 /* Red badge showing days since or "Never visited" */
