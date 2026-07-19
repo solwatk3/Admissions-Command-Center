@@ -1186,6 +1186,17 @@ function printSelectedRoutes(routeIds) {
   }
   win.document.write(html);
   win.document.close();
-  win.onload = function() { win.print(); };
-  setTimeout(function() { if (win && !win.closed) win.print(); }, 400);
+
+  // Trigger the print dialog exactly once.
+  // onload is the normal path; the timeout is a fallback for browsers
+  // where onload does not fire on document.write windows. The flag
+  // stops the dialog from opening twice when both paths run.
+  let printTriggered = false;
+  const triggerPrint = function() {
+    if (printTriggered || !win || win.closed) return;
+    printTriggered = true;
+    win.print();
+  };
+  win.onload = triggerPrint;
+  setTimeout(triggerPrint, 400);
 }

@@ -1,6 +1,8 @@
 # ACC - Admissions Command Center
 ## Project Memory
 
+Last updated: 2026-07-18
+
 ---
 
 ## What This App Is
@@ -64,7 +66,8 @@ ACC/
 - Overdue Schools card - Primary schools not visited in 60+ days, grouped by county with collapsible dropdowns, max-height scroll, "View School Directory" footer link
 - Season Snapshot card - live counts of schools, visits, colleagues
 - Primary Schools quick-access section - auto-populated from Directory
-- Export Data / Import Data buttons - full JSON backup/restore
+- Export Data / Import Data buttons - full JSON backup/restore; import only restores keys starting with `acc_`
+- Last-backup nudge next to the export buttons - shows days since last export, turns orange after 14 days or if no backup exists
 - Archive Season button - saves visits + routes under a named season label, clears them for a fresh start
 - Past Seasons button - lists archived seasons with download links
 
@@ -85,7 +88,7 @@ Three tabs: A-Z Counties (default), Map, By Region
 - Collapse state persists during a session (`regionOpenState`, `countyOpenState`)
 
 **Map tab**
-- Leaflet map with colored markers by priority (Primary=purple, Secondary=indigo, Low=gray)
+- Leaflet map with colored markers by priority (Primary=purple, Secondary=indigo, Tertiary=gray)
 - Approximate locations shown in orange
 - Resync Map button re-geocodes all addresses
 
@@ -116,12 +119,16 @@ Three tabs: A-Z Counties (default), Map, By Region
 - Search by name or institution
 
 ### Route Planner
-- Build routes with multiple school stops
-- Each stop has a start time and end time
-- Stops sorted by start time on save
-- Generate Google Maps directions link
-- Print routes
+- Build routes with multiple school stops or custom stops (hotel, lunch, fair venue)
+- Each stop has an editable address, start time, and end time
+- Stops sorted by start time on save; reorder and remove in the builder
+- Duplicate route - clones stops and origin, leaves date blank
+- Generate Google Maps directions link (Apple Maps on iPhone/iPad)
+- Starting point defaults to DEFAULT_ORIGIN (Sol's office, defined once in app.js)
+- Print one or many routes as a styled itinerary with a date-range picker
 - Email routes via EmailJS (Sol's public key configured)
+- 48-hour reminder banner on the route list, dismissible per route
+- Saved routes sync to Google Calendar when connected
 
 ### Global Search (top bar)
 - Magnifier button in top bar opens a slide-down search panel
@@ -145,8 +152,14 @@ Three tabs: A-Z Counties (default), Map, By Region
 | `acc_schools` | `[{id, countyId, name, address, priority, contact, contactEmail, contactPhone, notes}]` |
 | `acc_visits` | `[{id, schoolId, schoolName, title, date, mood, studentCount, commonQuestions, newQuestions, nextTimeNotes, promoCount, returnVisit}]` |
 | `acc_colleagues` | `[{id, name, institution, email, phone, notes}]` |
-| `acc_routes` | `[{id, name, stops, ...}]` |
+| `acc_routes` | `[{id, name, date, origin, stops, reminderDismissed, createdAt}]` - stop: `{id, type, schoolId?, name, address, startTime?, endTime?}` |
 | `acc_archives` | `[{id, name, archivedOn, visits, routes}]` - season archive snapshots |
+| `acc_geo_cache` | Address -> `{lat, lng, fallback?, manual?}` geocode cache (manual = user dragged the pin) |
+| `acc_gcal_connected` | Whether Google Calendar was connected |
+| `acc_gcal_calendar_id` | ID of the "Admissions Work" calendar |
+| `acc_gcal_event_map` | Route ID -> Calendar event ID |
+| `acc_gcal_last_sync` | ISO timestamp of last calendar sync |
+| `acc_last_backup` | ISO timestamp of last data export (powers the backup nudge) |
 
 ---
 
@@ -172,7 +185,15 @@ closeModal()
 
 **HTML escaping** (visits.js)
 ```js
-escapeHtml(str)
+escapeHtml(str)  // covers & < > " and '
+```
+Rule: ALL user-entered text (names, notes, titles, addresses, contacts) must pass
+through escapeHtml before being placed in innerHTML or value="" attributes.
+Exception: plain-text contexts (alert, confirm, email bodies) stay unescaped.
+
+**Shared constants** (app.js - loads first, so available everywhere)
+```js
+DEFAULT_ORIGIN  // Sol's office address, default route starting point
 ```
 
 **Date offset fix** - localStorage dates are UTC midnight strings; always offset when computing days:
@@ -193,6 +214,8 @@ new Date(d.getTime() + d.getTimezoneOffset() * 60000)
 - One contact person per school
 - Colleague Rolodex is separate from School Directory
 - Season archive clears visits and routes but keeps school directory and colleagues
+- Import only restores `acc_` keys - unexpected keys in a backup file are ignored
+- localStorage is per-device - Export/Import is the bridge between devices
 
 ---
 

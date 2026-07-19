@@ -109,6 +109,8 @@
           </div>
           <!-- Data backup and season archive buttons -->
           <div class="data-sync-row">
+            <!-- Last-backup nudge - rendered by renderBackupStatus() in app.js -->
+            <span id="backup-status" class="backup-status"></span>
             <button class="btn btn-ghost btn-sm" onclick="exportAllData()" title="Download all your data as a backup file">&#8659; Export Data</button>
             <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-file-input').click()" title="Restore data from a backup file">&#8657; Import Data</button>
             <button class="btn btn-ghost btn-sm" onclick="openArchiveSeason()" title="Archive this season's visits and start fresh">&#128230; Archive Season</button>

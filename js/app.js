@@ -133,6 +133,9 @@ function updateDashboardStats() {
 
   // Render overdue school alerts
   renderOverdueSchools();
+
+  // Refresh the last-backup note next to the export buttons
+  renderBackupStatus();
 }
 
 // =============================================
@@ -490,6 +493,40 @@ function exportAllData() {
 
   // Hand off to the shared JSON download helper
   downloadJsonFile(snapshot, 'acc-backup-' + dateStr + '.json');
+
+  // Record when this backup was made so the dashboard nudge stays accurate
+  saveData('last_backup', new Date().toISOString());
+  renderBackupStatus();
+}
+
+// =============================================
+// BACKUP STATUS NUDGE
+// Shows how long it has been since the last export.
+// Turns orange after 14 days (or if no backup exists yet)
+// because all data lives in this browser's localStorage -
+// a browser reset without a backup means the data is gone.
+// =============================================
+function renderBackupStatus() {
+  const el = document.getElementById('backup-status');
+  if (!el) return;
+
+  const last = loadData('last_backup', null);
+
+  // Never backed up - always show the warning state
+  if (!last) {
+    el.textContent = 'No backup yet';
+    el.classList.add('backup-overdue');
+    return;
+  }
+
+  // Work out whole days since the last backup
+  const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
+  el.textContent = days === 0
+    ? 'Last backup: today'
+    : 'Last backup: ' + days + ' day' + (days !== 1 ? 's' : '') + ' ago';
+
+  // Warning color once the backup is more than 14 days old
+  el.classList.toggle('backup-overdue', days > 14);
 }
 
 // =============================================
@@ -512,9 +549,14 @@ function importAllData(event) {
         return;
       }
 
-      // Write each key back to localStorage with the acc_ prefix
+      // Write each key back to localStorage.
+      // Only keys starting with acc_ are restored - anything else in the
+      // file is ignored so a wrong or tampered file cannot write junk
+      // into browser storage.
       Object.keys(snapshot).forEach(function(key) {
-        localStorage.setItem(key, JSON.stringify(snapshot[key]));
+        if (key.startsWith('acc_')) {
+          localStorage.setItem(key, JSON.stringify(snapshot[key]));
+        }
       });
 
       // Reset the file input so the same file can be imported again if needed
@@ -742,9 +784,10 @@ function init() {
   initHoverSidebar();
   initCalendar();
 
-  // Ctrl+K opens global search from anywhere
+  // Ctrl+K opens global search from anywhere.
+  // toLowerCase makes it work even when Caps Lock is on.
   document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && e.key === 'k') {
+    if (e.ctrlKey && e.key.toLowerCase() === 'k') {
       e.preventDefault();
       openGlobalSearch();
     }

@@ -415,6 +415,19 @@ a {
   flex-shrink: 0;
 }
 
+/* Last-backup status note next to the export/import buttons */
+.backup-status {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Warning state - backup missing or more than 14 days old */
+.backup-status.backup-overdue {
+  color: #ff9800;
+  font-weight: 600;
+}
+
 /* =============================================
    CARDS
 ============================================== */
