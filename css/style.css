@@ -772,6 +772,28 @@ a {
   white-space: nowrap;
 }
 
+/* Scrollable container for the overdue card body */
+#dashboard-overdue {
+  max-height: 320px;
+  overflow-y: auto;
+  /* Custom scrollbar to match the dark theme */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+#dashboard-overdue::-webkit-scrollbar {
+  width: 5px;
+}
+
+#dashboard-overdue::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#dashboard-overdue::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
+
 /* Schools list inside an expanded county */
 .overdue-county-schools {
   background: var(--bg);
