@@ -97,6 +97,161 @@ a {
   background: rgba(255,255,255,0.15);
 }
 
+/* Global search toggle button in the top bar */
+.global-search-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius);
+  transition: background 0.2s;
+  margin-left: 12px;
+}
+
+.global-search-btn:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+/* The drop-down panel that appears under the top bar */
+.global-search-panel {
+  position: fixed;
+  top: var(--topbar-height);
+  left: 0;
+  right: 0;
+  z-index: 250;
+  background: #1a001a;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+  padding: 12px 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.global-search-panel.hidden {
+  display: none;
+}
+
+/* Row that holds the text input and close button */
+.global-search-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+/* The actual text input inside the panel */
+.global-search-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 1rem;
+  padding: 10px 14px;
+  outline: none;
+}
+
+.global-search-input:focus {
+  border-color: var(--accent);
+}
+
+/* X button to close the panel */
+.global-search-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: var(--radius);
+}
+
+.global-search-close:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--text);
+}
+
+/* Results container */
+.global-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Section headers - "Schools", "Visits", etc. */
+.gs-section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 10px 0 4px 4px;
+}
+
+/* One clickable search result row */
+.gs-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.gs-result:hover {
+  background: rgba(155,48,255,0.12);
+}
+
+/* Small emoji icon for the result type */
+.gs-result-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* Text column inside each result */
+.gs-result-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.gs-result-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gs-result-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Tiny badge on the right edge showing school priority */
+.gs-result-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-light);
+  flex-shrink: 0;
+}
+
+/* Message shown when no results match */
+.gs-no-results {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  padding: 8px 4px;
+}
+
 /* =============================================
    SIDEBAR
 ============================================== */
@@ -841,4 +996,53 @@ a {
   white-space: nowrap;
   flex-shrink: 0;
   margin-left: 12px;
+}
+
+/* Footer link at the bottom of the overdue card */
+.overdue-footer {
+  border-top: 1px solid var(--border);
+  margin-top: 10px;
+  padding-top: 10px;
+  text-align: center;
+}
+
+/* =============================================
+   SEASON ARCHIVE MODAL
+============================================== */
+
+/* List of past season entries in the Past Seasons modal */
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Single row for one archived season */
+.archive-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* Left side - season name + metadata */
+.archive-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.archive-row-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.archive-row-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
 }

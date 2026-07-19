@@ -392,6 +392,20 @@
   border-bottom: none;
 }
 
+/* Notes field can wrap to multiple lines - align label to top */
+.detail-field-notes {
+  align-items: flex-start;
+}
+
+.detail-field-notes .detail-label {
+  padding-top: 2px;
+}
+
+.detail-field-notes .detail-value {
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
 .detail-label {
   font-size: 0.82rem;
   font-weight: 600;

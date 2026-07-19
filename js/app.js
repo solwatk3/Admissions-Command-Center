@@ -298,7 +298,7 @@ function renderOverdueSchools() {
     return (ca ? ca.name : 'zzz').localeCompare(cb ? cb.name : 'zzz');
   });
 
-  container.innerHTML = sortedCountyIds.map(function(cId) {
+  const groupsHtml = sortedCountyIds.map(function(cId) {
     const county   = counties.find(function(c) { return c.id === cId; });
     const items    = grouped[cId];
     const isOpen   = !!overdueCountyOpen[cId];
@@ -327,6 +327,118 @@ function renderOverdueSchools() {
       </div>
     `;
   }).join('');
+
+  // Footer link - opens the School Directory so the user can take action
+  const footerHtml = `
+    <div class="overdue-footer">
+      <button class="btn btn-ghost btn-sm" onclick="navigateTo('directory')">
+        View School Directory &#8594;
+      </button>
+    </div>
+  `;
+
+  container.innerHTML = groupsHtml + footerHtml;
+}
+
+// =============================================
+// SEASON ARCHIVE
+// Saves visits and routes under a named season label,
+// then clears them so you start fresh.
+// Schools and counties are kept - they carry forward each year.
+// =============================================
+
+// Opens a modal to confirm and name the archive
+function openArchiveSeason() {
+  const visits = loadData('visits', []);
+  const routes = loadData('routes', []);
+
+  const body = `
+    <div class="form-group">
+      <label>Season Name <span class="required">*</span></label>
+      <input type="text" id="f-season-name" placeholder="e.g. 2024-2025" />
+    </div>
+    <p style="color:var(--text-muted); font-size:0.875rem; margin-top:8px;">
+      This will archive <strong>${visits.length} visit${visits.length !== 1 ? 's' : ''}</strong>
+      and <strong>${routes.length} route${routes.length !== 1 ? 's' : ''}</strong>,
+      then clear them for the new season.<br /><br />
+      Your school directory and colleagues will stay intact.
+    </p>
+  `;
+
+  openModal('Archive This Season', body, function() {
+    const name = document.getElementById('f-season-name').value.trim();
+    if (!name) { alert('Please enter a season name.'); return; }
+
+    // Load existing archives (array of past seasons)
+    const archives = loadData('archives', []);
+
+    // Build the archive entry
+    archives.push({
+      id:       makeId(),
+      name:     name,
+      archivedOn: new Date().toISOString().split('T')[0],
+      visits:   visits,
+      routes:   routes,
+    });
+
+    // Save archive, then clear current visits and routes
+    saveData('archives', archives);
+    saveData('visits',   []);
+    saveData('routes',   []);
+
+    closeModal();
+    updateDashboardStats();
+    alert('"' + name + '" season archived. Visit log and routes cleared for the new season.');
+  });
+}
+
+// Opens a modal listing all past archived seasons
+function openViewArchives() {
+  const archives = loadData('archives', []);
+
+  if (archives.length === 0) {
+    openModal('Past Seasons', '<p style="color:var(--text-muted);">No seasons archived yet.</p>', null);
+    return;
+  }
+
+  // List archives newest first
+  const sorted = [...archives].sort(function(a, b) { return b.archivedOn.localeCompare(a.archivedOn); });
+
+  const rows = sorted.map(function(arc) {
+    return `
+      <div class="archive-row">
+        <div class="archive-row-info">
+          <span class="archive-row-name">${arc.name}</span>
+          <span class="archive-row-meta">
+            Archived ${arc.archivedOn} &nbsp;-&nbsp;
+            ${arc.visits ? arc.visits.length : 0} visit${arc.visits && arc.visits.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="downloadArchive('${arc.id}')">
+          &#8659; Download
+        </button>
+      </div>
+    `;
+  }).join('');
+
+  openModal('Past Seasons', `<div class="archive-list">${rows}</div>`, null);
+}
+
+// Downloads one archived season as a JSON file
+function downloadArchive(archiveId) {
+  const archives = loadData('archives', []);
+  const arc = archives.find(function(a) { return a.id === archiveId; });
+  if (!arc) return;
+
+  const blob = new Blob([JSON.stringify(arc, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'acc-season-' + arc.name.replace(/\s+/g, '-') + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // =============================================
@@ -457,6 +569,156 @@ function initHoverSidebar() {
 }
 
 // =============================================
+// GLOBAL SEARCH
+// Searches schools, visits, and colleagues in one box.
+// Toggled by the magnifier button in the top bar,
+// or by pressing Ctrl+K anywhere in the app.
+// =============================================
+
+// Open the global search panel and focus the input
+function toggleGlobalSearch() {
+  var panel = document.getElementById('global-search-panel');
+  if (!panel) return;
+  if (panel.classList.contains('hidden')) {
+    openGlobalSearch();
+  } else {
+    closeGlobalSearch();
+  }
+}
+
+function openGlobalSearch() {
+  var panel = document.getElementById('global-search-panel');
+  var input = document.getElementById('global-search-input');
+  if (!panel || !input) return;
+  panel.classList.remove('hidden');
+  input.focus();
+  input.select();
+}
+
+function closeGlobalSearch() {
+  var panel = document.getElementById('global-search-panel');
+  var input = document.getElementById('global-search-input');
+  var results = document.getElementById('global-search-results');
+  if (panel)   panel.classList.add('hidden');
+  if (input)   input.value = '';
+  if (results) results.innerHTML = '';
+}
+
+// Run the search and render results
+function runGlobalSearch(q) {
+  var resultsEl = document.getElementById('global-search-results');
+  if (!resultsEl) return;
+
+  var query = (q || '').trim().toLowerCase();
+  if (!query) { resultsEl.innerHTML = ''; return; }
+
+  var schools    = loadData('schools',    []);
+  var visits     = loadData('visits',     []);
+  var colleagues = loadData('colleagues', []);
+  var counties   = loadData('counties',   []);
+
+  // --- Search schools ---
+  var schoolHits = schools.filter(function(s) {
+    return (
+      s.name.toLowerCase().includes(query) ||
+      (s.address        || '').toLowerCase().includes(query) ||
+      (s.contact        || '').toLowerCase().includes(query) ||
+      (s.contactEmail   || '').toLowerCase().includes(query) ||
+      (s.notes          || '').toLowerCase().includes(query)
+    );
+  });
+
+  // --- Search visits ---
+  var visitHits = visits.filter(function(v) {
+    var school = schools.find(function(s) { return s.id === v.schoolId; });
+    var schoolName = school ? school.name : (v.schoolName || '');
+    return (
+      schoolName.toLowerCase().includes(query) ||
+      (v.title            || '').toLowerCase().includes(query) ||
+      (v.commonQuestions  || '').toLowerCase().includes(query) ||
+      (v.newQuestions     || '').toLowerCase().includes(query) ||
+      (v.nextTimeNotes    || '').toLowerCase().includes(query)
+    );
+  });
+
+  // --- Search colleagues ---
+  var colleagueHits = colleagues.filter(function(c) {
+    return (
+      (c.name        || '').toLowerCase().includes(query) ||
+      (c.institution || '').toLowerCase().includes(query) ||
+      (c.email       || '').toLowerCase().includes(query) ||
+      (c.notes       || '').toLowerCase().includes(query)
+    );
+  });
+
+  var totalHits = schoolHits.length + visitHits.length + colleagueHits.length;
+
+  if (totalHits === 0) {
+    resultsEl.innerHTML = '<p class="gs-no-results">No results for "' + q + '"</p>';
+    return;
+  }
+
+  var html = '';
+
+  // School results
+  if (schoolHits.length > 0) {
+    html += '<div class="gs-section-label">Schools</div>';
+    html += schoolHits.map(function(s) {
+      var county = counties.find(function(c) { return c.id === s.countyId; });
+      var sub = county ? county.name + ' County' : '';
+      return `
+        <div class="gs-result" onclick="closeGlobalSearch(); navigateTo('directory'); openSchoolDetail('${s.id}')">
+          <span class="gs-result-icon">&#127968;</span>
+          <div class="gs-result-text">
+            <span class="gs-result-name">${s.name}</span>
+            ${sub ? `<span class="gs-result-sub">${sub}</span>` : ''}
+          </div>
+          <span class="gs-result-tag">${s.priority || ''}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Visit results
+  if (visitHits.length > 0) {
+    html += '<div class="gs-section-label">Visits</div>';
+    html += visitHits.slice().sort(function(a, b) { return new Date(b.date) - new Date(a.date); }).map(function(v) {
+      var school = schools.find(function(s) { return s.id === v.schoolId; });
+      var schoolName = school ? school.name : (v.schoolName || 'Unknown School');
+      var d = new Date(v.date);
+      var dateStr = d.toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' });
+      return `
+        <div class="gs-result" onclick="closeGlobalSearch(); navigateTo('visits'); openVisitDetail('${v.id}')">
+          <span class="gs-result-icon">&#128203;</span>
+          <div class="gs-result-text">
+            <span class="gs-result-name">${v.title || schoolName}</span>
+            <span class="gs-result-sub">${v.title ? schoolName + ' - ' : ''}${dateStr}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Colleague results
+  if (colleagueHits.length > 0) {
+    html += '<div class="gs-section-label">Colleagues</div>';
+    html += colleagueHits.map(function(c) {
+      return `
+        <div class="gs-result" onclick="closeGlobalSearch(); navigateTo('rolodex')">
+          <span class="gs-result-icon">&#128100;</span>
+          <div class="gs-result-text">
+            <span class="gs-result-name">${c.name || 'Unnamed'}</span>
+            ${c.institution ? `<span class="gs-result-sub">${c.institution}</span>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  resultsEl.innerHTML = html;
+}
+
+// =============================================
 // APP INIT
 // Runs once when the page loads
 // =============================================
@@ -464,6 +726,14 @@ function init() {
   navigateTo('dashboard');
   initHoverSidebar();
   initCalendar();
+
+  // Ctrl+K opens global search from anywhere
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'k') {
+      e.preventDefault();
+      openGlobalSearch();
+    }
+  });
 }
 
 // Start the app when the DOM is ready

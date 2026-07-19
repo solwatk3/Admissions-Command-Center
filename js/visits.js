@@ -26,6 +26,15 @@ function saveVisits(visits) {
 function initVisits() {
   visitsView    = 'list';
   activeVisitId = null;
+  // Clear search and all filter controls every time we land on the Visit Log page
+  var searchEl = document.getElementById('visit-search');  if (searchEl) searchEl.value = '';
+  var sel = document.getElementById('vf-school');          if (sel) sel.value = '';
+  var moodEl = document.getElementById('vf-mood');         if (moodEl) moodEl.value = '';
+  var dfEl = document.getElementById('vf-date-from');      if (dfEl) dfEl.value = '';
+  var dtEl = document.getElementById('vf-date-to');        if (dtEl) dtEl.value = '';
+  var roEl = document.getElementById('vf-return-only');    if (roEl) roEl.checked = false;
+  // Reset school dropdown so it repopulates on next open
+  var schSel = document.getElementById('vf-school');       if (schSel) delete schSel.dataset.populated;
   renderVisits();
 }
 
@@ -39,44 +48,160 @@ function renderVisits() {
 
 // =============================================
 // VIEW 1 - VISIT LIST
-// Shows all visits, most recent first
+// Shows all visits, most recent first.
+// query    - text search string (optional)
+// filters  - object with { schoolId, mood, dateFrom, dateTo, returnOnly }
 // =============================================
-function renderVisitList() {
+function renderVisitList(query, filters) {
   const container = document.getElementById('visits-content');
   if (!container) return;
 
   const visits  = getVisits();
   const schools = getSchools();
+  const f       = filters || {};
 
   // Sort most recent first
-  const sorted = [...visits].sort((a, b) => new Date(b.date) - new Date(a.date));
+  let sorted = [...visits].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  // Apply text search
+  if (query && query.trim()) {
+    const q = query.trim().toLowerCase();
+    sorted = sorted.filter(function(v) {
+      const school = schools.find(function(s) { return s.id === v.schoolId; });
+      const schoolName = (school ? school.name : v.schoolName || '').toLowerCase();
+      return (
+        schoolName.includes(q) ||
+        (v.title            || '').toLowerCase().includes(q) ||
+        (v.commonQuestions  || '').toLowerCase().includes(q) ||
+        (v.newQuestions     || '').toLowerCase().includes(q) ||
+        (v.nextTimeNotes    || '').toLowerCase().includes(q)
+      );
+    });
+  }
+
+  // School filter
+  if (f.schoolId) {
+    sorted = sorted.filter(function(v) { return v.schoolId === f.schoolId; });
+  }
+
+  // Mood filter
+  if (f.mood) {
+    sorted = sorted.filter(function(v) { return v.mood === f.mood; });
+  }
+
+  // Date range filters - compare date strings directly (they're ISO YYYY-MM-DD)
+  if (f.dateFrom) {
+    sorted = sorted.filter(function(v) { return v.date >= f.dateFrom; });
+  }
+  if (f.dateTo) {
+    sorted = sorted.filter(function(v) { return v.date <= f.dateTo; });
+  }
+
+  // Return-flagged only filter
+  if (f.returnOnly) {
+    sorted = sorted.filter(function(v) { return !!v.returnVisit; });
+  }
+
+  if (sorted.length === 0) {
+    const isFiltering = (query && query.trim()) || f.schoolId || f.mood || f.dateFrom || f.dateTo || f.returnOnly;
+    const msg = isFiltering
+      ? 'No visits match your search or filters.'
+      : 'No visits logged yet. Hit "+ Log Visit" to add your first one.';
+    container.innerHTML = `<div class="visits-empty"><p>${msg}</p></div>`;
+    return;
+  }
 
   // Group visits by month for easy scanning
   const groups = {};
-  sorted.forEach(v => {
+  sorted.forEach(function(v) {
     const d     = new Date(v.date);
     const label = d.toLocaleString('default', { month: 'long', year: 'numeric' });
     if (!groups[label]) groups[label] = [];
     groups[label].push(v);
   });
 
-  if (sorted.length === 0) {
-    container.innerHTML = `
-      <div class="visits-empty">
-        <p>No visits logged yet. Hit "+ Log Visit" to add your first one.</p>
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = Object.keys(groups).map(month => `
+  container.innerHTML = Object.keys(groups).map(function(month) {
+    return `
     <div class="visit-group">
       <div class="visit-month-label">${month}</div>
       <div class="visit-cards">
-        ${groups[month].map(v => renderVisitCard(v, schools)).join('')}
+        ${groups[month].map(function(v) { return renderVisitCard(v, schools); }).join('')}
       </div>
     </div>
-  `).join('');
+    `;
+  }).join('');
+}
+
+// =============================================
+// VISIT FILTERS
+// The search box and filter panel all funnel into
+// applyVisitFilters(), which reads every control
+// and passes the combined query to renderVisitList().
+// =============================================
+
+// Toggles the filter panel open or closed
+function toggleVisitFilters() {
+  var panel = document.getElementById('visit-filter-panel');
+  var btn   = document.getElementById('visit-filter-btn');
+  if (!panel) return;
+  var isHidden = panel.classList.contains('hidden');
+  panel.classList.toggle('hidden', !isHidden);
+  if (btn) btn.classList.toggle('active-toggle', isHidden);
+
+  // Populate the school dropdown the first time the panel opens
+  if (isHidden) populateVisitSchoolFilter();
+}
+
+// Fills the school dropdown in the filter panel with all schools that have visits
+function populateVisitSchoolFilter() {
+  var sel = document.getElementById('vf-school');
+  if (!sel || sel.dataset.populated) return;
+
+  var schools = getSchools().sort(function(a, b) { return a.name.localeCompare(b.name); });
+  var visits  = getVisits();
+  var usedIds = new Set(visits.map(function(v) { return v.schoolId; }));
+
+  var options = schools
+    .filter(function(s) { return usedIds.has(s.id); })
+    .map(function(s) { return '<option value="' + s.id + '">' + escapeHtml(s.name) + '</option>'; });
+
+  sel.innerHTML = '<option value="">All schools</option>' + options.join('');
+  sel.dataset.populated = 'yes';
+}
+
+// Reads all filter controls and re-renders the visit list
+function applyVisitFilters() {
+  if (visitsView !== 'list') return;
+
+  var q          = (document.getElementById('visit-search')   || {}).value  || '';
+  var schoolId   = (document.getElementById('vf-school')      || {}).value  || '';
+  var mood       = (document.getElementById('vf-mood')        || {}).value  || '';
+  var dateFrom   = (document.getElementById('vf-date-from')   || {}).value  || '';
+  var dateTo     = (document.getElementById('vf-date-to')     || {}).value  || '';
+  var returnOnly = document.getElementById('vf-return-only') ? document.getElementById('vf-return-only').checked : false;
+
+  renderVisitList(q, { schoolId: schoolId, mood: mood, dateFrom: dateFrom, dateTo: dateTo, returnOnly: returnOnly });
+}
+
+// Resets all filter controls and re-renders unfiltered
+function clearVisitFilters() {
+  var sel = document.getElementById('vf-school');
+  if (sel) sel.value = '';
+  var mood = document.getElementById('vf-mood');
+  if (mood) mood.value = '';
+  var dateFrom = document.getElementById('vf-date-from');
+  if (dateFrom) dateFrom.value = '';
+  var dateTo = document.getElementById('vf-date-to');
+  if (dateTo) dateTo.value = '';
+  var returnOnly = document.getElementById('vf-return-only');
+  if (returnOnly) returnOnly.checked = false;
+  applyVisitFilters();
+}
+
+// Legacy alias - kept in case anything still calls filterVisits(q)
+function filterVisits(q) {
+  if (visitsView !== 'list') return;
+  renderVisitList(q);
 }
 
 // =============================================
@@ -212,6 +337,15 @@ function renderVisitDetail(visitId) {
 function backToVisitList() {
   visitsView    = 'list';
   activeVisitId = null;
+  // Clear search and filters, then re-render the full list
+  var searchEl = document.getElementById('visit-search');
+  if (searchEl) searchEl.value = '';
+  // Reset filter controls without triggering another render
+  var sel = document.getElementById('vf-school');        if (sel) sel.value = '';
+  var moodEl = document.getElementById('vf-mood');       if (moodEl) moodEl.value = '';
+  var dfEl = document.getElementById('vf-date-from');    if (dfEl) dfEl.value = '';
+  var dtEl = document.getElementById('vf-date-to');      if (dtEl) dtEl.value = '';
+  var roEl = document.getElementById('vf-return-only');  if (roEl) roEl.checked = false;
   renderVisits();
 }
 

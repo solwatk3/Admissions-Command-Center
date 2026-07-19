@@ -3,6 +3,93 @@
 ============================================== */
 
 /* =============================================
+   VISIT CONTROLS - search bar and filter panel
+============================================== */
+.visit-controls {
+  margin-bottom: 16px;
+}
+
+/* Row that holds the search box and Filters button side by side */
+.visit-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.visit-search-row .directory-search {
+  flex: 1;
+  max-width: 400px;
+}
+
+/* The collapsible filter panel */
+.visit-filter-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.visit-filter-panel.hidden {
+  display: none;
+}
+
+/* Horizontal row of filter controls */
+.visit-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+/* Each labelled filter control */
+.visit-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.visit-filter-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.visit-filter-group select,
+.visit-filter-group input[type="date"] {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.875rem;
+  padding: 6px 10px;
+}
+
+/* Checkbox row aligned to the bottom */
+.visit-filter-check {
+  justify-content: flex-end;
+  padding-bottom: 4px;
+}
+
+.visit-filter-check label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text);
+  font-weight: 400;
+  cursor: pointer;
+}
+
+/* =============================================
    VOICE MEMO MIC BUTTON
 ============================================== */
 

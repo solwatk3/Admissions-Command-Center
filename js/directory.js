@@ -331,6 +331,12 @@ function renderSchoolDetail(schoolId) {
                 : 'Not on file'}
             </span>
           </div>
+          ${school.notes ? `
+          <div class="detail-field detail-field-notes">
+            <span class="detail-label">Notes</span>
+            <span class="detail-value">${escapeHtml(school.notes)}</span>
+          </div>
+          ` : ''}
         </div>
       </div>
 
@@ -520,10 +526,17 @@ function openModal(title, bodyHtml, onSave) {
   `;
 
   document.body.appendChild(modal);
-  document.getElementById('modal-save-btn').addEventListener('click', onSave);
+
+  // If no save handler is provided, hide the Save button (view-only modal)
+  const saveBtn = document.getElementById('modal-save-btn');
+  if (onSave) {
+    saveBtn.addEventListener('click', onSave);
+  } else {
+    saveBtn.style.display = 'none';
+  }
 
   modal._ctrlEnterHandler = function(e) {
-    if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); onSave(); }
+    if (e.key === 'Enter' && e.ctrlKey && onSave) { e.preventDefault(); onSave(); }
   };
   document.addEventListener('keydown', modal._ctrlEnterHandler);
 
@@ -609,6 +622,10 @@ function openAddSchool(countyId) {
       <label>Contact Phone</label>
       <input type="tel" id="f-contact-phone" placeholder="(555) 000-0000" />
     </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="f-notes" rows="3" placeholder="e.g. Park in back lot, contact prefers email..."></textarea>
+    </div>
   `;
 
   openModal('Add School', body, function() {
@@ -619,6 +636,13 @@ function openAddSchool(countyId) {
     if (!selectedCountyId) { alert('Please select a county.'); return; }
 
     const schools = getSchools();
+
+    // Block duplicate school names within the same county
+    const duplicate = schools.find(function(s) {
+      return s.countyId === selectedCountyId && s.name.toLowerCase() === name.toLowerCase();
+    });
+    if (duplicate) { alert('"' + name + '" already exists in this county.'); return; }
+
     schools.push({
       id:           makeId(),
       countyId:     selectedCountyId,
@@ -632,6 +656,7 @@ function openAddSchool(countyId) {
       contact:      document.getElementById('f-contact').value.trim(),
       contactEmail: document.getElementById('f-contact-email').value.trim(),
       contactPhone: document.getElementById('f-contact-phone').value.trim(),
+      notes:        document.getElementById('f-notes').value.trim(),
     });
 
     saveSchools(schools);
@@ -695,11 +720,21 @@ function openEditSchool(schoolId) {
       <label>Contact Phone</label>
       <input type="tel" id="f-contact-phone" value="${school.contactPhone || ''}" />
     </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="f-notes" rows="3">${school.notes || ''}</textarea>
+    </div>
   `;
 
   openModal('Edit School', body, function() {
     const name = document.getElementById('f-name').value.trim();
     if (!name) { alert('School name is required.'); return; }
+
+    // Block renaming to match another school in the same county
+    const duplicate = schools.find(function(s) {
+      return s.id !== schoolId && s.countyId === schools.find(function(x) { return x.id === schoolId; }).countyId && s.name.toLowerCase() === name.toLowerCase();
+    });
+    if (duplicate) { alert('"' + name + '" already exists in this county.'); return; }
 
     const idx = schools.findIndex(s => s.id === schoolId);
     schools[idx] = {
@@ -714,6 +749,7 @@ function openEditSchool(schoolId) {
       contact:      document.getElementById('f-contact').value.trim(),
       contactEmail: document.getElementById('f-contact-email').value.trim(),
       contactPhone: document.getElementById('f-contact-phone').value.trim(),
+      notes:        document.getElementById('f-notes').value.trim(),
     };
 
     saveSchools(schools);
