@@ -790,6 +790,41 @@
   border-bottom: 1px solid var(--border);
 }
 
+/* Clickable variant - pointer cursor and hover effect */
+.region-header-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+
+.region-header-toggle:hover {
+  background: linear-gradient(90deg, #240038, #150028);
+}
+
+/* Left side of region header - arrow + title together */
+.region-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Collapse/expand arrow on region headers */
+.region-arrow {
+  font-size: 0.7rem;
+  color: var(--accent-light);
+  opacity: 0.7;
+  width: 12px;
+  flex-shrink: 0;
+}
+
+/* Collapse/expand arrow on county subheaders */
+.region-county-arrow {
+  font-size: 0.65rem;
+  color: var(--accent-light);
+  opacity: 0.6;
+  width: 10px;
+  flex-shrink: 0;
+}
+
 .region-title {
   font-size: 0.95rem;
   font-weight: 700;
@@ -819,15 +854,17 @@
   border-bottom: none;
 }
 
-/* County name bar - clickable, opens that county's school list */
+/* County name bar - click to collapse/expand schools */
 .region-county-subheader {
   display: flex;
   align-items: center;
+  gap: 8px;
   justify-content: space-between;
   padding: 10px 18px 10px 20px;
   background: #130020;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
+  user-select: none;
   transition: background 0.15s;
 }
 
@@ -840,11 +877,13 @@
   font-weight: 600;
   color: var(--accent-light);
   opacity: 0.85;
+  flex: 1;
 }
 
 .region-county-count {
   font-size: 0.72rem;
   color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 /* Schools list inside a county block */

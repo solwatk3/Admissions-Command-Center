@@ -8,6 +8,12 @@ let dirView        = 'counties';
 let activeCountyId = null;   // county being viewed in schools view
 let activeSchoolId = null;   // school being viewed in detail view
 
+// Collapse state for the By Region view.
+// Keyed by region key or county id - true = expanded, false/missing = collapsed.
+// Persists while the session is open so toggling survives a search re-render.
+let regionOpenState = {};
+let countyOpenState = {};
+
 // =============================================
 // DATA HELPERS
 // =============================================
@@ -904,9 +910,26 @@ function renderAlphaCountyView(q) {
 }
 
 // =============================================
+// REGION VIEW COLLAPSE TOGGLES
+// Each click flips the open/closed state and re-renders.
+// The search input value is preserved across re-renders.
+// =============================================
+function toggleRegion(regionKey) {
+  regionOpenState[regionKey] = !regionOpenState[regionKey];
+  const q = (document.getElementById('directory-search') || {}).value || '';
+  renderRegionView(q.trim().toLowerCase());
+}
+
+function toggleCounty(countyId) {
+  countyOpenState[countyId] = !countyOpenState[countyId];
+  const q = (document.getElementById('directory-search') || {}).value || '';
+  renderRegionView(q.trim().toLowerCase());
+}
+
+// =============================================
 // REGION VIEW
-// Groups all schools by TN region (West / Middle / East).
-// Each region section lists schools A-Z with their county name.
+// Groups schools by TN region with collapsible regions and counties.
+// Regions default collapsed; search auto-expands matching items.
 // =============================================
 function showDirectoryRegion() {
   const content   = document.getElementById('directory-content');
@@ -930,9 +953,10 @@ function renderRegionView(q) {
 
   showDirectoryControls(true);
 
-  const filterTerm = (q || '').toLowerCase();
-  const counties   = getCounties();
-  const schools    = getSchools();
+  const filterTerm  = (q || '').toLowerCase();
+  const isFiltering = !!filterTerm;
+  const counties    = getCounties();
+  const schools     = getSchools();
 
   if (counties.length === 0) {
     container.innerHTML = '<p class="empty-state" style="padding:40px; text-align:center;">No counties yet. Add one to get started.</p>';
@@ -945,8 +969,8 @@ function renderRegionView(q) {
     { key: 'East TN',   label: 'East Tennessee' },
   ];
 
-  // Helper: builds county sub-blocks for one slice of counties.
-  // Returns { html, schoolCount, countyCount } for the region summary line.
+  // Helper: builds the county blocks for a slice of counties.
+  // Returns { html, schoolCount, countyCount }.
   function buildCountyBlocks(regionCounties) {
     let countyBlocksHtml = '';
     let totalSchools     = 0;
@@ -956,23 +980,26 @@ function renderRegionView(q) {
       .slice()
       .sort(function(a, b) { return a.name.localeCompare(b.name); })
       .forEach(function(county) {
-        // Decide which schools to show:
-        // - If county name matches the filter, show ALL schools in that county
-        // - Otherwise, filter schools by name
-        const countyNameMatches = filterTerm && county.name.toLowerCase().includes(filterTerm);
+        const countyNameMatches = isFiltering && county.name.toLowerCase().includes(filterTerm);
         let countySchools = schools
           .filter(function(s) { return s.countyId === county.id; })
           .sort(function(a, b) { return a.name.localeCompare(b.name); });
 
-        if (filterTerm && !countyNameMatches) {
+        // When filtering: if county name matches, show all its schools;
+        // otherwise only show schools whose names match.
+        if (isFiltering && !countyNameMatches) {
           countySchools = countySchools.filter(function(s) {
             return s.name.toLowerCase().includes(filterTerm);
           });
-          if (countySchools.length === 0) return; // skip - no matches
+          if (countySchools.length === 0) return; // skip - nothing matches
         }
 
         visibleCounties++;
         totalSchools += countySchools.length;
+
+        // County is open if filtering (auto-expand) OR the user opened it
+        const countyOpen  = isFiltering || !!countyOpenState[county.id];
+        const countyArrow = countyOpen ? '&#9660;' : '&#9654;';
 
         const schoolRows = countySchools.length === 0
           ? '<p class="empty-state" style="padding:10px 16px; font-size:0.82rem;">No schools yet.</p>'
@@ -993,11 +1020,12 @@ function renderRegionView(q) {
 
         countyBlocksHtml += `
           <div class="region-county-block">
-            <div class="region-county-subheader" onclick="openCountyView('${county.id}')">
+            <div class="region-county-subheader" onclick="toggleCounty('${county.id}')">
+              <span class="region-county-arrow">${countyArrow}</span>
               <span class="region-county-name">${county.name} County</span>
-              <span class="region-county-count">${countySchools.length} school${countySchools.length !== 1 ? 's' : ''} &#8250;</span>
+              <span class="region-county-count">${countySchools.length} school${countySchools.length !== 1 ? 's' : ''}</span>
             </div>
-            <div class="region-county-schools">${schoolRows}</div>
+            ${countyOpen ? `<div class="region-county-schools">${schoolRows}</div>` : ''}
           </div>
         `;
       });
@@ -1007,23 +1035,31 @@ function renderRegionView(q) {
 
   let html = '<div class="region-view">';
 
+  // Build each named region
   REGIONS.forEach(function(region) {
     const regionCounties = counties.filter(function(c) { return c.region === region.key; });
     if (regionCounties.length === 0) return;
 
     const result = buildCountyBlocks(regionCounties);
-    if (filterTerm && result.countyCount === 0) return; // nothing matched - skip region
+    if (isFiltering && result.countyCount === 0) return; // nothing matched - skip region
+
+    // Region is open if filtering (auto-expand) OR the user opened it
+    const regionOpen  = isFiltering || !!regionOpenState[region.key];
+    const regionArrow = regionOpen ? '&#9660;' : '&#9654;';
 
     const countySummary = result.countyCount + ' count' + (result.countyCount !== 1 ? 'ies' : 'y');
     const schoolSummary = result.schoolCount + ' school' + (result.schoolCount !== 1 ? 's' : '');
 
     html += `
       <div class="region-section">
-        <div class="region-header">
-          <span class="region-title">${region.label}</span>
+        <div class="region-header region-header-toggle" onclick="toggleRegion('${region.key}')">
+          <div class="region-header-left">
+            <span class="region-arrow">${regionArrow}</span>
+            <span class="region-title">${region.label}</span>
+          </div>
           <span class="region-count">${countySummary} &middot; ${schoolSummary}</span>
         </div>
-        <div class="region-counties">${result.html || '<p class="empty-state" style="padding:16px;">No counties assigned to this region yet.</p>'}</div>
+        ${regionOpen ? `<div class="region-counties">${result.html}</div>` : ''}
       </div>
     `;
   });
@@ -1032,16 +1068,22 @@ function renderRegionView(q) {
   const unassignedCounties = counties.filter(function(c) { return !c.region; });
   if (unassignedCounties.length > 0) {
     const result = buildCountyBlocks(unassignedCounties);
-    if (!filterTerm || result.countyCount > 0) {
+    if (!isFiltering || result.countyCount > 0) {
+      const regionOpen  = isFiltering || !!regionOpenState['unassigned'];
+      const regionArrow = regionOpen ? '&#9660;' : '&#9654;';
       const countySummary = result.countyCount + ' count' + (result.countyCount !== 1 ? 'ies' : 'y');
       const schoolSummary = result.schoolCount + ' school' + (result.schoolCount !== 1 ? 's' : '');
+
       html += `
         <div class="region-section region-section-muted">
-          <div class="region-header">
-            <span class="region-title">No Region Assigned</span>
+          <div class="region-header region-header-toggle" onclick="toggleRegion('unassigned')">
+            <div class="region-header-left">
+              <span class="region-arrow">${regionArrow}</span>
+              <span class="region-title">No Region Assigned</span>
+            </div>
             <span class="region-count">${countySummary} &middot; ${schoolSummary}</span>
           </div>
-          <div class="region-counties">${result.html}</div>
+          ${regionOpen ? `<div class="region-counties">${result.html}</div>` : ''}
         </div>
       `;
     }
@@ -1049,7 +1091,6 @@ function renderRegionView(q) {
 
   html += '</div>';
 
-  // If nothing rendered at all (filtered everything out)
   if (!html.includes('region-section')) {
     html = '<p class="empty-state" style="padding:40px; text-align:center;">No results for "' + q + '".</p>';
   }
