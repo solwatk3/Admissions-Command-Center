@@ -488,11 +488,17 @@ function exportAllData() {
     }
   }
 
-  // Build a filename with today's date so exports are easy to tell apart
-  const dateStr = new Date().toISOString().split('T')[0];
+  // Build a descriptive filename: date + school count + visit count
+  // so you can tell backups apart at a glance in your Downloads folder
+  const dateStr     = new Date().toISOString().split('T')[0];
+  const schoolCount = (loadData('schools', [])).length;
+  const visitCount  = (loadData('visits',  [])).length;
+  const filename    = 'ACC-backup-' + dateStr
+    + '-' + schoolCount + 'schools'
+    + '-' + visitCount  + 'visits.json';
 
   // Hand off to the shared JSON download helper
-  downloadJsonFile(snapshot, 'acc-backup-' + dateStr + '.json');
+  downloadJsonFile(snapshot, filename);
 
   // Record when this backup was made so the dashboard nudge stays accurate
   saveData('last_backup', new Date().toISOString());
@@ -543,8 +549,21 @@ function importAllData(event) {
     try {
       const snapshot = JSON.parse(e.target.result);
 
+      // Read counts from the backup so the confirmation tells you what's inside
+      const importSchools = Array.isArray(snapshot['acc_schools']) ? snapshot['acc_schools'].length : '?';
+      const importVisits  = Array.isArray(snapshot['acc_visits'])  ? snapshot['acc_visits'].length  : '?';
+
+      // Try to pull the date from the filename (ACC-backup-2026-07-18-...)
+      const dateMatch = file.name.match(/(\d{4}-\d{2}-\d{2})/);
+      const dateLabel = dateMatch ? ' from ' + dateMatch[1] : '';
+
+      const confirmMsg = 'This backup' + dateLabel + ' contains:\n'
+        + '  - ' + importSchools + ' schools\n'
+        + '  - ' + importVisits  + ' visits\n\n'
+        + 'Import and replace all your current data?';
+
       // Confirm before overwriting - this replaces everything
-      if (!confirm('This will replace all your current data with the imported file. Continue?')) {
+      if (!confirm(confirmMsg)) {
         event.target.value = '';
         return;
       }
