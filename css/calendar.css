@@ -9,6 +9,59 @@
   outline: 1px solid rgba(155, 48, 255, 0.5);
 }
 
+/* =============================================
+   MULTI-DAY SPAN INDICATORS
+   Dot on first day, line through middle days, dot on last day.
+   The bar bleeds 7px past the content edge (5px padding + 1px border + 1px
+   into the 2px gap) so bars from adjacent cells meet in the center of the gap.
+============================================== */
+.cal-day-spans {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Wrapper for one span segment - sized to give room for dot + line */
+.cal-span-seg {
+  position: relative;
+  height: 8px;
+  overflow: visible; /* bar bleeds past cell edges */
+  pointer-events: none; /* don't block clicks on the cell */
+}
+
+/* The horizontal connecting line */
+.cal-span-seg::after {
+  content: '';
+  position: absolute;
+  height: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--sc);
+}
+
+/* The endpoint dot (rendered as a child span) */
+.cal-span-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sc);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+/* START day: dot on left, line from dot center to right gap-center */
+.cal-span-start .cal-span-dot { left: 0; }
+.cal-span-start::after        { left: 4px; right: -7px; }
+
+/* MIDDLE day: full-width line, no dot */
+.cal-span-middle::after { left: -7px; right: -7px; }
+
+/* END day: line from left gap-center to dot center, dot on right */
+.cal-span-end .cal-span-dot { right: 0; }
+.cal-span-end::after        { left: -7px; right: 4px; }
+
 /* Status row inside the calendar card */
 .gcal-status {
   display: flex;

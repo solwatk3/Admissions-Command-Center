@@ -1143,16 +1143,24 @@ function getCalendarItems(expandMultiDay) {
   // Routes - purple
   routes.forEach(function(r) {
     if (!r.date) return;
-    var stops = (r.stops || []).length;
-    var dates = (expandMultiDay && r.endDate) ? getDatesInRange(r.date, r.endDate) : [r.date];
-    dates.forEach(function(d) {
+    var stops     = (r.stops || []).length;
+    var isMulti   = expandMultiDay && r.endDate && r.endDate !== r.date;
+    var dates     = isMulti ? getDatesInRange(r.date, r.endDate) : [r.date];
+    dates.forEach(function(d, idx) {
+      // spanPos marks the role of this day within a multi-day span:
+      // 'start' = first day (dot), 'middle' = interior (line only), 'end' = last day (dot)
+      // null = single-day item, rendered as a regular dot with title
+      var spanPos = isMulti
+        ? (idx === 0 ? 'start' : idx === dates.length - 1 ? 'end' : 'middle')
+        : null;
       items.push({
-        type:  'route',
-        date:  d,
-        title: r.name || 'Route',
-        meta:  stops + ' stop' + (stops !== 1 ? 's' : ''),
-        id:    r.id,
-        color: '#9b30ff',
+        type:    'route',
+        date:    d,
+        title:   r.name || 'Route',
+        meta:    stops + ' stop' + (stops !== 1 ? 's' : ''),
+        id:      r.id,
+        color:   '#9b30ff',
+        spanPos: spanPos,
       });
     });
   });
@@ -1161,15 +1169,20 @@ function getCalendarItems(expandMultiDay) {
   events.forEach(function(e) {
     if (!e.date) return;
     var timeLabel = e.time ? ' · ' + formatEventTime(e.time) : '';
-    var dates = (expandMultiDay && e.endDate) ? getDatesInRange(e.date, e.endDate) : [e.date];
-    dates.forEach(function(d) {
+    var isMulti   = expandMultiDay && e.endDate && e.endDate !== e.date;
+    var dates     = isMulti ? getDatesInRange(e.date, e.endDate) : [e.date];
+    dates.forEach(function(d, idx) {
+      var spanPos = isMulti
+        ? (idx === 0 ? 'start' : idx === dates.length - 1 ? 'end' : 'middle')
+        : null;
       items.push({
-        type:  'event',
-        date:  d,
-        title: e.name || 'Event',
-        meta:  (e.type || 'Event') + timeLabel,
-        id:    e.id,
-        color: '#22d3ee',
+        type:    'event',
+        date:    d,
+        title:   e.name || 'Event',
+        meta:    (e.type || 'Event') + timeLabel,
+        id:      e.id,
+        color:   '#22d3ee',
+        spanPos: spanPos,
       });
     });
   });
@@ -1177,15 +1190,20 @@ function getCalendarItems(expandMultiDay) {
   // Visit Log entries - grey
   visits.forEach(function(v) {
     if (!v.date) return;
-    var dates = (expandMultiDay && v.endDate) ? getDatesInRange(v.date, v.endDate) : [v.date];
-    dates.forEach(function(d) {
+    var isMulti = expandMultiDay && v.endDate && v.endDate !== v.date;
+    var dates   = isMulti ? getDatesInRange(v.date, v.endDate) : [v.date];
+    dates.forEach(function(d, idx) {
+      var spanPos = isMulti
+        ? (idx === 0 ? 'start' : idx === dates.length - 1 ? 'end' : 'middle')
+        : null;
       items.push({
-        type:  'visit',
-        date:  d,
-        title: v.title || v.schoolName || 'Visit',
-        meta:  'Visit' + (v.schoolName ? ' - ' + v.schoolName : ''),
-        id:    v.id,
-        color: '#94a3b8',
+        type:    'visit',
+        date:    d,
+        title:   v.title || v.schoolName || 'Visit',
+        meta:    'Visit' + (v.schoolName ? ' - ' + v.schoolName : ''),
+        id:      v.id,
+        color:   '#94a3b8',
+        spanPos: spanPos,
       });
     });
   });
@@ -1281,22 +1299,41 @@ function renderCalendarGrid(container) {
     html += '<span class="cal-day-num">' + d + '</span>';
 
     if (dayItems.length > 0) {
-      // Dots row - one dot per item (max 6 shown)
-      html += '<div class="cal-day-dots">';
-      dayItems.slice(0, 6).forEach(function(item) {
-        html += '<span class="cal-dot" style="background:' + item.color + ';" title="' + escapeHtml(item.title) + '"></span>';
-      });
-      html += '</div>';
+      // Separate multi-day span items (dot-line-dot) from single-day items (dot + label)
+      var spanItems = dayItems.filter(function(i) { return i.spanPos; });
+      var dotItems  = dayItems.filter(function(i) { return !i.spanPos; });
 
-      // Text label chips - first 2 items
-      html += '<div class="cal-day-labels">';
-      dayItems.slice(0, 2).forEach(function(item) {
-        html += '<div class="cal-day-label" style="color:' + item.color + ';">' + escapeHtml(item.title) + '</div>';
-      });
-      if (dayItems.length > 2) {
-        html += '<div class="cal-day-more">+' + (dayItems.length - 2) + ' more</div>';
+      // Multi-day spans: render a connecting bar segment - dot on start/end, line on middle
+      if (spanItems.length > 0) {
+        html += '<div class="cal-day-spans">';
+        spanItems.forEach(function(item) {
+          var dot = (item.spanPos === 'start' || item.spanPos === 'end')
+            ? '<span class="cal-span-dot"></span>'
+            : '';
+          html += '<div class="cal-span-seg cal-span-' + item.spanPos
+            + '" style="--sc:' + item.color + ';">' + dot + '</div>';
+        });
+        html += '</div>';
       }
-      html += '</div>';
+
+      // Single-day items: existing dots row
+      if (dotItems.length > 0) {
+        html += '<div class="cal-day-dots">';
+        dotItems.slice(0, 6).forEach(function(item) {
+          html += '<span class="cal-dot" style="background:' + item.color + ';" title="' + escapeHtml(item.title) + '"></span>';
+        });
+        html += '</div>';
+
+        // Text label chips - first 2 single-day items only
+        html += '<div class="cal-day-labels">';
+        dotItems.slice(0, 2).forEach(function(item) {
+          html += '<div class="cal-day-label" style="color:' + item.color + ';">' + escapeHtml(item.title) + '</div>';
+        });
+        if (dotItems.length > 2) {
+          html += '<div class="cal-day-more">+' + (dotItems.length - 2) + ' more</div>';
+        }
+        html += '</div>';
+      }
     }
 
     html += '</div>';
