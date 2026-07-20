@@ -208,7 +208,7 @@ function renderSchoolPill(school) {
 
   return `
     <div class="school-pill">
-      <span class="priority-badge ${priorityClass}">${school.priority}</span>
+      ${school.priority ? `<span class="priority-badge ${priorityClass}">${school.priority}</span>` : ''}
       <span class="school-pill-name" onclick="openSchoolDetail('${school.id}')">${escapeHtml(school.name)}</span>
       <div class="school-pill-actions">
         <button class="btn-icon" onclick="openEditSchool('${school.id}')">&#9998;</button>
@@ -279,7 +279,7 @@ function renderSchoolDetail(schoolId) {
       <div class="school-detail-card">
         <div class="school-detail-header">
           <div>
-            <span class="priority-badge ${priorityClass}" style="margin-bottom:8px; display:inline-block;">${school.priority}</span>
+            ${school.priority ? `<span class="priority-badge ${priorityClass}" style="margin-bottom:8px; display:inline-block;">${school.priority}</span>` : ''}
             <h2 class="school-detail-name">${escapeHtml(school.name)}</h2>
             <p class="school-detail-county">${county ? escapeHtml(county.name) + ' County' : ''}</p>
           </div>
@@ -604,8 +604,9 @@ function openAddSchool(countyId) {
       </div>
     </div>
     <div class="form-group">
-      <label>Priority Level <span class="required">*</span></label>
+      <label>Priority Level</label>
       <select id="f-priority">
+        <option value="">-- Not Set --</option>
         <option value="Primary">Primary</option>
         <option value="Secondary">Secondary</option>
         <option value="Tertiary">Tertiary</option>
@@ -704,6 +705,7 @@ function openEditSchool(schoolId) {
     <div class="form-group">
       <label>Priority Level</label>
       <select id="f-priority">
+        <option value=""          ${!school.priority                 ? 'selected' : ''}>-- Not Set --</option>
         <option value="Primary"   ${school.priority === 'Primary'   ? 'selected' : ''}>Primary</option>
         <option value="Secondary" ${school.priority === 'Secondary' ? 'selected' : ''}>Secondary</option>
         <option value="Tertiary"  ${school.priority === 'Tertiary'  ? 'selected' : ''}>Tertiary</option>
@@ -1033,7 +1035,7 @@ function renderRegionView(q) {
               }[s.priority] || '';
               return `
                 <div class="region-school-chip" onclick="openSchoolDetail('${s.id}')">
-                  <span class="priority-badge ${priorityClass}">${s.priority}</span>
+                  ${s.priority ? `<span class="priority-badge ${priorityClass}">${s.priority}</span>` : ''}
                   <span class="region-chip-name">${escapeHtml(s.name)}</span>
                 </div>
               `;
