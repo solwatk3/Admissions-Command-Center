@@ -1311,11 +1311,12 @@ function renderCalendarGrid(container) {
           var dot = (item.spanPos === 'start' || item.spanPos === 'end')
             ? '<span class="cal-span-dot"></span>'
             : '';
-          var label = item.spanPos === 'start'
-            ? '<span class="cal-span-label" style="color:' + item.color + ';">' + escapeHtml(item.title) + '</span>'
-            : '';
           html += '<div class="cal-span-seg cal-span-' + item.spanPos
-            + '" style="--sc:' + item.color + ';">' + dot + label + '</div>';
+            + '" style="--sc:' + item.color + ';">' + dot + '</div>';
+          // On the start day, add a title chip below the line - same look as single-day labels
+          if (item.spanPos === 'start') {
+            html += '<div class="cal-span-label" style="color:' + item.color + ';">' + escapeHtml(item.title) + '</div>';
+          }
         });
         html += '</div>';
       }
