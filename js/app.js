@@ -46,6 +46,9 @@ function navigateTo(pageId) {
     btn.classList.toggle('active', btn.dataset.page === pageId);
   });
 
+  // Remember the current page so a refresh lands here instead of the dashboard
+  localStorage.setItem('acc_last_page', pageId);
+
   // Close the sidebar on mobile after navigating
   closeSidebar();
 
@@ -1691,7 +1694,11 @@ async function checkRestoreParam() {
 // Runs once when the page loads
 // =============================================
 function init() {
-  navigateTo('dashboard');
+  // Restore the last page the user was on before refreshing.
+  // Fall back to dashboard if nothing is saved or the saved value is invalid.
+  var validPages = Object.keys(PAGE_TITLES);
+  var lastPage   = localStorage.getItem('acc_last_page');
+  navigateTo(validPages.includes(lastPage) ? lastPage : 'dashboard');
   initHoverSidebar();
   initCalendar();
 
