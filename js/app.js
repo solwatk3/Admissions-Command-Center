@@ -765,18 +765,27 @@ function runGlobalSearch(q) {
   var events     = loadData('events',      []);
   var routes     = loadData('routes',      []);
 
+  // --- Counties ---
+  // Shows matching counties as their own result - clicking opens that county's school list.
+  // County name is intentionally removed from the school filter below so searching
+  // "Stewart" brings up Stewart County, not a wall of every school inside it.
+  var countyHits = counties.filter(function(c) {
+    return (
+      c.name.toLowerCase().includes(query) ||
+      (c.notes  || '').toLowerCase().includes(query) ||
+      (c.region || '').toLowerCase().includes(query)
+    );
+  });
+
   // --- Schools ---
-  // Matches on school-level fields only (name, address, notes, priority, county).
-  // Contact searches are handled separately below so contacts appear as their own results.
+  // Matches on school-level fields only (name, address, notes, priority).
+  // Contact searches and county searches are handled in their own sections.
   var schoolHits = schools.filter(function(s) {
-    var county = counties.find(function(c) { return c.id === s.countyId; });
-    var countyName = county ? county.name.toLowerCase() : '';
     return (
       s.name.toLowerCase().includes(query) ||
       (s.address  || '').toLowerCase().includes(query) ||
       (s.notes    || '').toLowerCase().includes(query) ||
-      (s.priority || '').toLowerCase().includes(query) ||
-      countyName.includes(query)
+      (s.priority || '').toLowerCase().includes(query)
     );
   });
 
@@ -845,8 +854,8 @@ function runGlobalSearch(q) {
     });
   });
 
-  var totalHits = schoolHits.length + contactHits.length + visitHits.length +
-                  colleagueHits.length + eventHits.length + routeHits.length;
+  var totalHits = countyHits.length + schoolHits.length + contactHits.length +
+                  visitHits.length + colleagueHits.length + eventHits.length + routeHits.length;
 
   if (totalHits === 0) {
     // Escape the query so typed quotes or angle brackets cannot break the page
@@ -855,6 +864,25 @@ function runGlobalSearch(q) {
   }
 
   var html = '';
+
+  // County results - clicking opens that county's school list directly
+  if (countyHits.length > 0) {
+    html += '<div class="gs-section-label">Counties</div>';
+    html += countyHits.map(function(c) {
+      var schoolCount = schools.filter(function(s) { return s.countyId === c.id; }).length;
+      var sub = (c.region || '') + (c.region && schoolCount ? ' - ' : '') +
+                (schoolCount ? schoolCount + ' school' + (schoolCount !== 1 ? 's' : '') : '');
+      return `
+        <div class="gs-result" onclick="closeGlobalSearch(); navigateTo('directory'); openCountyView('${c.id}')">
+          <span class="gs-result-icon">&#128205;</span>
+          <div class="gs-result-text">
+            <span class="gs-result-name">${escapeHtml(c.name)} County</span>
+            ${sub ? `<span class="gs-result-sub">${escapeHtml(sub)}</span>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
 
   // School results
   if (schoolHits.length > 0) {
