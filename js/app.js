@@ -509,19 +509,25 @@ function exportAllData() {
   const subject = 'ACC Backup - ' + dateStr
     + ' - ' + schoolCount + ' schools, ' + visitCount + ' visits';
 
-  // Simplified email - the .json file is the primary restore path now.
-  // The raw JSON is included at the bottom as a last-resort fallback only.
+  // Build the tap-to-restore URL.
+  // Encode the backup as URL-safe base64 (swaps + -> - and / -> _ and drops = padding)
+  // so it survives being placed in a URL query parameter without any extra encoding.
+  const restoreB64  = btoa(unescape(encodeURIComponent(JSON.stringify(emailSnap))))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+  const restoreUrl  = 'https://solwatk3.github.io/Admissions-Command-Center/?restore=' + restoreB64;
+
+  // Email message - restore link is front and center for easy mobile access.
+  // The .json file is the desktop fallback, raw JSON is last resort.
   const message = 'ACC Backup - ' + dateStr + '\n'
     + 'Schools: ' + schoolCount + '  |  Visits: ' + visitCount + '\n\n'
-    + 'Your backup just downloaded as:\n'
-    + filename + '\n\n'
-    + '======= HOW TO RESTORE =======\n'
-    + '1. Open ACC: https://solwatk3.github.io/Admissions-Command-Center/\n'
-    + '2. Click "Import Data" on the dashboard\n'
-    + '3. Tap "Choose File" and pick the .json backup file\n'
-    + '   (On mobile: check Downloads or Files app)\n'
-    + '==============================\n\n'
-    + '--- FALLBACK: raw JSON (only needed if the file is unavailable) ---\n'
+    + '=== RESTORE ON MOBILE (tap this link) ===\n'
+    + restoreUrl + '\n'
+    + '=========================================\n\n'
+    + 'On desktop: click "Import Data" on the dashboard and pick the .json file\n'
+    + 'that downloaded to your computer (' + filename + ').\n\n'
+    + '--- Raw JSON fallback (last resort only) ---\n'
     + JSON.stringify(emailSnap);
 
   emailjs.send('service_9sv9w6p', 'template_r0o15xz', {
@@ -1433,6 +1439,39 @@ function updateCalGcalStatus() {
 }
 
 // =============================================
+// TAP-TO-RESTORE
+// When the app is opened via a restore link from a backup email,
+// the URL contains ?restore=BASE64DATA. This function detects that,
+// decodes the data, and offers to restore - then cleans the URL.
+// =============================================
+function checkRestoreParam() {
+  var params      = new URLSearchParams(window.location.search);
+  var restoreData = params.get('restore');
+  if (!restoreData) return;
+
+  // Strip the parameter from the URL right away so it doesn't
+  // linger if the user refreshes or shares the page.
+  history.replaceState(null, '', window.location.pathname);
+
+  try {
+    // Decode URL-safe base64 back to standard base64, then to JSON.
+    // URL-safe base64 swaps + -> - and / -> _ and drops padding.
+    var standard = restoreData
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+    // Re-add padding if needed (base64 strings must be a multiple of 4)
+    while (standard.length % 4) standard += '=';
+
+    var snapshot = JSON.parse(decodeURIComponent(escape(atob(standard))));
+    restoreSnapshot(snapshot);
+
+  } catch (e) {
+    console.error('ACC: tap-to-restore failed -', e);
+    alert('The restore link appears to be invalid or expired. Try exporting again to get a fresh link.');
+  }
+}
+
+// =============================================
 // APP INIT
 // Runs once when the page loads
 // =============================================
@@ -1440,6 +1479,9 @@ function init() {
   navigateTo('dashboard');
   initHoverSidebar();
   initCalendar();
+
+  // Check for tap-to-restore link (opened from a backup email on mobile)
+  checkRestoreParam();
 
   // Ctrl+K opens global search from anywhere.
   // toLowerCase makes it work even when Caps Lock is on.
