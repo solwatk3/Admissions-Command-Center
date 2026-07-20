@@ -285,6 +285,8 @@ function confirmDeleteEvent(id) {
 
   saveEvents(events.filter(function(e) { return e.id !== id; }));
   renderEvents();
+  // Remove the corresponding GCal event if synced
+  if (typeof deleteCalendarAccEvent === 'function') deleteCalendarAccEvent(id);
   // Refresh the unified dashboard calendar so the deleted event is removed
   if (typeof renderDashboardCalendar === 'function') renderDashboardCalendar();
 }

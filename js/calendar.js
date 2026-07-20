@@ -202,6 +202,101 @@ function routeToCalendarEvent(route) {
 }
 
 // =============================================
+// EVENT -> CALENDAR EVENT
+// Converts an ACC event object into a Google Calendar event body.
+// =============================================
+function accEventToCalendarEvent(ev) {
+  var description = (ev.type || 'General') + '\n';
+  if (ev.notes) description += ev.notes + '\n';
+  description += '\nSynced from ACC - Admissions Command Center';
+
+  // If a time was set, make it a timed event (1 hour duration by default)
+  if (ev.time) {
+    var parts  = ev.time.split(':').map(Number);
+    var endHr  = parts[0] + 1;
+    var endMin = String(parts[1]).padStart(2, '0');
+    var endTime = String(endHr).padStart(2, '0') + ':' + endMin;
+
+    return {
+      summary:     ev.name,
+      description: description,
+      start: { dateTime: ev.date + 'T' + ev.time + ':00', timeZone: 'America/Chicago' },
+      end:   { dateTime: ev.date + 'T' + endTime  + ':00', timeZone: 'America/Chicago' },
+    };
+  }
+
+  // No time - all-day event
+  return {
+    summary:     ev.name,
+    description: description,
+    start: { date: ev.date },
+    end:   { date: ev.date },
+  };
+}
+
+// =============================================
+// SYNC ONE ACC EVENT
+// Creates or updates a GCal event for an ACC event.
+// Uses a separate map key (gcal_events_map) from routes.
+// =============================================
+async function syncEventToCalendar(ev) {
+  if (!isCalendarConnected()) return;
+
+  try {
+    var calendarId = await getAdmissionsCalendarId();
+    var eventsMap  = loadData('gcal_events_map', {});
+    var eventData  = accEventToCalendarEvent(ev);
+
+    if (eventsMap[ev.id]) {
+      // Already exists - update it
+      await calendarFetch(
+        'https://www.googleapis.com/calendar/v3/calendars/'
+          + encodeURIComponent(calendarId) + '/events/' + eventsMap[ev.id],
+        { method: 'PUT', body: JSON.stringify(eventData) }
+      );
+    } else {
+      // New - create it and store the returned GCal event ID
+      var created = await calendarFetch(
+        'https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(calendarId) + '/events',
+        { method: 'POST', body: JSON.stringify(eventData) }
+      );
+      eventsMap[ev.id] = created.id;
+      saveData('gcal_events_map', eventsMap);
+    }
+
+    saveData('gcal_last_sync', new Date().toISOString());
+
+  } catch (err) {
+    console.error('ACC Calendar: sync failed for event', ev.id, err);
+  }
+}
+
+// =============================================
+// DELETE ACC EVENT FROM CALENDAR
+// Called when an ACC event is deleted from the app.
+// =============================================
+async function deleteCalendarAccEvent(evId) {
+  if (!isCalendarConnected()) return;
+
+  var eventsMap = loadData('gcal_events_map', {});
+  if (!eventsMap[evId]) return;
+
+  try {
+    var calendarId = await getAdmissionsCalendarId();
+    await calendarFetch(
+      'https://www.googleapis.com/calendar/v3/calendars/'
+        + encodeURIComponent(calendarId) + '/events/' + eventsMap[evId],
+      { method: 'DELETE' }
+    );
+    delete eventsMap[evId];
+    saveData('gcal_events_map', eventsMap);
+
+  } catch (err) {
+    console.error('ACC Calendar: could not delete GCal event for ACC event', evId, err);
+  }
+}
+
+// =============================================
 // SYNC ONE ROUTE
 // Creates a new calendar event or updates an existing one.
 // The route-to-event ID mapping is stored in localStorage.
@@ -281,12 +376,14 @@ async function syncAllRoutes() {
   }
 
   const routes  = loadData('routes', []);
+  const events  = loadData('events', []);
+  const total   = routes.length + events.length;
   const syncBtn = document.getElementById('gcal-sync-btn');
 
-  if (routes.length === 0) {
+  if (total === 0) {
     // Nothing to sync - flash a brief message so the user knows why
     if (syncBtn) {
-      syncBtn.textContent = 'No routes yet';
+      syncBtn.textContent = 'Nothing to sync';
       setTimeout(function() { renderCalendarStatus(); }, 1500);
     }
     return;
@@ -295,17 +392,23 @@ async function syncAllRoutes() {
   // Disable button and show starting state
   if (syncBtn) {
     syncBtn.disabled    = true;
-    syncBtn.textContent = 'Syncing 0/' + routes.length + '...';
+    syncBtn.textContent = 'Syncing 0/' + total + '...';
   }
 
-  // Sync each route one at a time. Update the counter after each one
-  // so the user can see progress. syncBtn stays valid throughout the loop
-  // because renderCalendarStatus() is NOT called inside syncRouteToCalendar().
+  var done = 0;
+
+  // Sync routes first
   for (var i = 0; i < routes.length; i++) {
     await syncRouteToCalendar(routes[i]);
-    if (syncBtn) {
-      syncBtn.textContent = 'Syncing ' + (i + 1) + '/' + routes.length + '...';
-    }
+    done++;
+    if (syncBtn) syncBtn.textContent = 'Syncing ' + done + '/' + total + '...';
+  }
+
+  // Then sync ACC events
+  for (var j = 0; j < events.length; j++) {
+    await syncEventToCalendar(events[j]);
+    done++;
+    if (syncBtn) syncBtn.textContent = 'Syncing ' + done + '/' + total + '...';
   }
 
   // Show a brief "Done!" confirmation before the status refreshes
