@@ -1081,6 +1081,11 @@ var calView  = 'grid';                      // 'grid' or 'agenda'
 var calYear  = new Date().getFullYear();    // month displayed in grid view
 var calMonth = new Date().getMonth();       // 0-indexed
 
+// Drag-to-select state for the calendar grid
+var calDragStartDate = null;
+var calDragEndDate   = null;
+var calDragging      = false;
+
 // Switch between grid and agenda view
 function setCalView(view) {
   calView = view;
@@ -1109,10 +1114,27 @@ function calGoToday() {
 }
 
 // =============================================
-// CALENDAR DATA - collect all item types
-// Returns one unified array with route, event, visit, and gcal items
+// DATE RANGE HELPER
+// Returns every YYYY-MM-DD string between startDate and endDate inclusive.
+// Uses noon UTC to avoid DST edge cases when stepping day by day.
 // =============================================
-function getCalendarItems() {
+function getDatesInRange(startDate, endDate) {
+  var dates = [];
+  var cur   = new Date(startDate + 'T12:00:00');
+  var end   = new Date((endDate || startDate) + 'T12:00:00');
+  while (cur <= end) {
+    dates.push(cur.toISOString().split('T')[0]);
+    cur.setDate(cur.getDate() + 1);
+  }
+  return dates;
+}
+
+// =============================================
+// CALENDAR DATA - collect all item types
+// expandMultiDay: true in grid view so multi-day items show a dot on every day.
+//                false in agenda/day modal so each item appears only once.
+// =============================================
+function getCalendarItems(expandMultiDay) {
   var routes  = loadData('routes',  []);
   var events  = loadData('events',  []);
   var visits  = loadData('visits',  []);
@@ -1122,13 +1144,16 @@ function getCalendarItems() {
   routes.forEach(function(r) {
     if (!r.date) return;
     var stops = (r.stops || []).length;
-    items.push({
-      type:  'route',
-      date:  r.date,
-      title: r.name || 'Route',
-      meta:  stops + ' stop' + (stops !== 1 ? 's' : ''),
-      id:    r.id,
-      color: '#9b30ff',
+    var dates = (expandMultiDay && r.endDate) ? getDatesInRange(r.date, r.endDate) : [r.date];
+    dates.forEach(function(d) {
+      items.push({
+        type:  'route',
+        date:  d,
+        title: r.name || 'Route',
+        meta:  stops + ' stop' + (stops !== 1 ? 's' : ''),
+        id:    r.id,
+        color: '#9b30ff',
+      });
     });
   });
 
@@ -1136,26 +1161,32 @@ function getCalendarItems() {
   events.forEach(function(e) {
     if (!e.date) return;
     var timeLabel = e.time ? ' · ' + formatEventTime(e.time) : '';
-    items.push({
-      type:  'event',
-      date:  e.date,
-      title: e.name || 'Event',
-      meta:  (e.type || 'Event') + timeLabel,
-      id:    e.id,
-      color: '#22d3ee',
+    var dates = (expandMultiDay && e.endDate) ? getDatesInRange(e.date, e.endDate) : [e.date];
+    dates.forEach(function(d) {
+      items.push({
+        type:  'event',
+        date:  d,
+        title: e.name || 'Event',
+        meta:  (e.type || 'Event') + timeLabel,
+        id:    e.id,
+        color: '#22d3ee',
+      });
     });
   });
 
   // Visit Log entries - grey
   visits.forEach(function(v) {
     if (!v.date) return;
-    items.push({
-      type:  'visit',
-      date:  v.date,
-      title: v.title || v.schoolName || 'Visit',
-      meta:  'Visit' + (v.schoolName ? ' - ' + v.schoolName : ''),
-      id:    v.id,
-      color: '#94a3b8',
+    var dates = (expandMultiDay && v.endDate) ? getDatesInRange(v.date, v.endDate) : [v.date];
+    dates.forEach(function(d) {
+      items.push({
+        type:  'visit',
+        date:  d,
+        title: v.title || v.schoolName || 'Visit',
+        meta:  'Visit' + (v.schoolName ? ' - ' + v.schoolName : ''),
+        id:    v.id,
+        color: '#94a3b8',
+      });
     });
   });
 
@@ -1206,7 +1237,7 @@ function renderDashboardCalendar() {
 // Builds a 7-column monthly grid with dots for each item
 // =============================================
 function renderCalendarGrid(container) {
-  var items     = getCalendarItems();
+  var items     = getCalendarItems(true); // expand multi-day items across all their dates
   var todayStr  = new Date().toISOString().split('T')[0];
 
   // Group items by date string for quick lookup
@@ -1245,7 +1276,8 @@ function renderCalendarGrid(container) {
     var isToday   = dateStr === todayStr;
     var cellClass = 'cal-day' + (isToday ? ' cal-today' : '');
 
-    html += '<div class="' + cellClass + '" onclick="openCalDayModal(\'' + dateStr + '\')">';
+    // data-date is used by the drag-to-select system; onclick is the fallback for single taps
+    html += '<div class="' + cellClass + '" data-date="' + dateStr + '" onclick="openCalDayModal(\'' + dateStr + '\')">';
     html += '<span class="cal-day-num">' + d + '</span>';
 
     if (dayItems.length > 0) {
@@ -1279,6 +1311,135 @@ function renderCalendarGrid(container) {
 
   html += '</div></div>'; // close cal-days-grid + cal-grid
   container.innerHTML = html;
+
+  // Wire up drag-to-select now that the grid cells are in the DOM
+  initCalendarDrag(container);
+}
+
+// =============================================
+// CALENDAR DRAG-TO-SELECT
+// Lets the user click-drag across day cells to select a date range.
+// Single tap still opens the day modal as before.
+// Multi-day drag opens a type picker (Event / Route / Visit).
+// Supports both mouse and touch.
+// =============================================
+function initCalendarDrag(container) {
+  if (!container) return;
+
+  // Returns the YYYY-MM-DD date from the closest [data-date] ancestor of el
+  function getCellDate(el) {
+    var cell = el && el.closest ? el.closest('[data-date]') : null;
+    return cell ? cell.dataset.date : null;
+  }
+
+  // Highlight all cells whose date falls between startDate and endDate
+  function setHighlight(startDate, endDate) {
+    var a = startDate <= endDate ? startDate : endDate;
+    var b = startDate <= endDate ? endDate   : startDate;
+    container.querySelectorAll('[data-date]').forEach(function(cell) {
+      cell.classList.toggle('cal-drag-highlight', cell.dataset.date >= a && cell.dataset.date <= b);
+    });
+  }
+
+  function clearHighlight() {
+    container.querySelectorAll('.cal-drag-highlight').forEach(function(c) {
+      c.classList.remove('cal-drag-highlight');
+    });
+  }
+
+  // Called on mouseup or touchend - opens the right modal for the selected range
+  function finish() {
+    if (!calDragStartDate) return;
+    var start    = calDragStartDate <= calDragEndDate ? calDragStartDate : calDragEndDate;
+    var end      = calDragStartDate <= calDragEndDate ? calDragEndDate   : calDragStartDate;
+    var wasDrag  = calDragging;
+    clearHighlight();
+    calDragStartDate = null;
+    calDragEndDate   = null;
+    calDragging      = false;
+    if (wasDrag && start !== end) {
+      openCalRangeMenu(start, end);
+    } else {
+      openCalDayModal(start);
+    }
+  }
+
+  // --- Mouse events ---
+  container.addEventListener('mousedown', function(e) {
+    var date = getCellDate(e.target);
+    if (!date) return;
+    calDragStartDate = date;
+    calDragEndDate   = date;
+    calDragging      = false;
+    e.preventDefault(); // prevent text selection while dragging
+  });
+
+  // mousemove and mouseup are on document so the drag works even if the cursor
+  // leaves the calendar container mid-drag
+  document.addEventListener('mousemove', function(e) {
+    if (!calDragStartDate) return;
+    var date = getCellDate(e.target);
+    if (!date || date === calDragEndDate) return;
+    calDragEndDate = date;
+    calDragging    = true;
+    setHighlight(calDragStartDate, calDragEndDate);
+  });
+
+  document.addEventListener('mouseup', function(e) {
+    if (!calDragStartDate) return;
+    var date = getCellDate(e.target);
+    if (date) calDragEndDate = date;
+    finish();
+  });
+
+  // --- Touch events ---
+  // touchmove uses elementFromPoint because the touch target doesn't change as
+  // the finger moves across cells the way mousemove targets do
+  container.addEventListener('touchstart', function(e) {
+    var touch = e.touches[0];
+    var el    = document.elementFromPoint(touch.clientX, touch.clientY);
+    var date  = getCellDate(el);
+    if (!date) return;
+    calDragStartDate = date;
+    calDragEndDate   = date;
+    calDragging      = false;
+  }, { passive: true });
+
+  container.addEventListener('touchmove', function(e) {
+    if (!calDragStartDate) return;
+    var touch = e.touches[0];
+    var el    = document.elementFromPoint(touch.clientX, touch.clientY);
+    var date  = getCellDate(el);
+    if (!date || date === calDragEndDate) return;
+    calDragEndDate = date;
+    calDragging    = true;
+    setHighlight(calDragStartDate, calDragEndDate);
+  }, { passive: true });
+
+  container.addEventListener('touchend', function() {
+    finish();
+  });
+}
+
+// =============================================
+// CALENDAR RANGE MENU
+// Shown when the user drags across multiple days.
+// Lets them choose what type of item to create for that range.
+// =============================================
+function openCalRangeMenu(startDate, endDate) {
+  function fmtDate(ds) {
+    var d     = new Date(ds + 'T12:00:00');
+    return d.toLocaleDateString('default', { month: 'short', day: 'numeric' });
+  }
+  var label = fmtDate(startDate) + ' - ' + fmtDate(endDate);
+  var body =
+    '<p style="margin:0 0 14px; color:var(--text-secondary);">' + label + '</p>' +
+    '<div style="display:flex; flex-direction:column; gap:8px;">' +
+      '<button class="btn btn-accent" onclick="closeModal(); quickAddEventRange(\'' + startDate + '\',\'' + endDate + '\')">+ Add Event</button>' +
+      '<button class="btn btn-ghost"  onclick="closeModal(); quickAddRouteRange(\'' + startDate + '\',\'' + endDate + '\')">+ New Route</button>' +
+      '<button class="btn btn-ghost"  onclick="closeModal(); quickAddVisitRange(\'' + startDate + '\',\'' + endDate + '\')">+ Log Visit</button>' +
+    '</div>';
+  openModal('Add to Calendar', body, null);
 }
 
 // =============================================
@@ -1370,7 +1531,8 @@ function openCalItem(id, type) {
 // Lists items on that day and offers quick-add buttons.
 // =============================================
 function openCalDayModal(dateStr) {
-  var items = getCalendarItems().filter(function(i) { return i.date === dateStr; });
+  // Don't expand multi-day here - each item should appear once on its start date
+  var items = getCalendarItems(false).filter(function(i) { return i.date === dateStr; });
 
   // Format the date label for the modal title
   var d     = new Date(dateStr);
@@ -1406,7 +1568,8 @@ function openCalDayModal(dateStr) {
   // Add buttons - pre-fill the clicked date into the relevant form
   var addHtml = '<div class="cal-day-modal-add">' +
     '<button class="btn btn-accent btn-sm" onclick="quickAddEvent(\'' + dateStr + '\')">+ Add Event</button>' +
-    '<button class="btn btn-ghost btn-sm" onclick="quickAddRoute(\'' + dateStr + '\')">+ New Route</button>' +
+    '<button class="btn btn-ghost btn-sm"  onclick="quickAddRoute(\'' + dateStr + '\')">+ New Route</button>' +
+    '<button class="btn btn-ghost btn-sm"  onclick="quickAddVisit(\'' + dateStr + '\')">+ Log Visit</button>' +
   '</div>';
 
   var body = '<div class="cal-day-modal-date">' + dateLabel + '</div>' + itemsHtml + addHtml;
@@ -1419,25 +1582,67 @@ function openCalDayModal(dateStr) {
 // QUICK-ADD HELPERS
 // Close the day modal, open the relevant form, pre-fill the date
 // =============================================
+// Single-day quick-adds (from the day modal)
 function quickAddEvent(dateStr) {
   closeModal();
   openAddEvent();
-  // openAddEvent defaults to today - overwrite with the clicked date
   setTimeout(function() {
-    var dateInput = document.getElementById('f-event-date');
-    if (dateInput) dateInput.value = dateStr;
+    var el = document.getElementById('f-event-date');
+    if (el) el.value = dateStr;
   }, 0);
 }
 
 function quickAddRoute(dateStr) {
   closeModal();
-  // Open the route builder on the Routes page and pre-fill the date field
   navigateTo('routes');
   openRouteBuilder();
   setTimeout(function() {
-    var dateInput = document.getElementById('rb-date');
-    if (dateInput) dateInput.value = dateStr;
+    var el = document.getElementById('rb-date');
+    if (el) el.value = dateStr;
   }, 80);
+}
+
+function quickAddVisit(dateStr) {
+  closeModal();
+  navigateTo('visits');
+  setTimeout(function() { openLogVisit(); }, 80);
+  setTimeout(function() {
+    var el = document.getElementById('f-date');
+    if (el) el.value = dateStr;
+  }, 160);
+}
+
+// Multi-day quick-adds (from the range menu after dragging)
+function quickAddEventRange(startDate, endDate) {
+  openAddEvent();
+  setTimeout(function() {
+    var s = document.getElementById('f-event-date');
+    var e = document.getElementById('f-event-end-date');
+    if (s) s.value = startDate;
+    if (e) e.value = endDate;
+  }, 0);
+}
+
+function quickAddRouteRange(startDate, endDate) {
+  navigateTo('routes');
+  openRouteBuilder();
+  setTimeout(function() {
+    var s = document.getElementById('rb-date');
+    var e = document.getElementById('rb-end-date');
+    if (s) s.value = startDate;
+    if (e) e.value = endDate;
+  }, 80);
+}
+
+function quickAddVisitRange(startDate, endDate) {
+  navigateTo('visits');
+  setTimeout(function() { openLogVisit(); }, 80);
+  setTimeout(function() {
+    var s = document.getElementById('f-date');
+    var e = document.getElementById('f-end-date');
+    if (s) s.value = startDate;
+    if (e) e.value = endDate;
+  }, 160);
 }
 
 // =============================================

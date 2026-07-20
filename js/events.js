@@ -108,7 +108,15 @@ function renderEventRow(ev) {
   const dateStr = new Date(d.getTime() + d.getTimezoneOffset() * 60000)
     .toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 
-  // Append formatted time range if times are set (e.g. "Mon, Jul 21, 2026 · 9:00 AM - 11:00 AM")
+  // Build end date label if event spans multiple days
+  var endDateLabel = '';
+  if (ev.endDate && ev.endDate !== ev.date) {
+    var ed    = new Date(ev.endDate);
+    var edLoc = new Date(ed.getTime() + ed.getTimezoneOffset() * 60000);
+    endDateLabel = ' - ' + edLoc.toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // Append formatted time range if times are set (e.g. "· 9:00 AM - 11:00 AM")
   var timeLabel = '';
   if (ev.time) {
     timeLabel = ' &middot; ' + formatEventTime(ev.time);
@@ -129,7 +137,7 @@ function renderEventRow(ev) {
         </div>
       </div>
       <div class="event-row-right">
-        <span class="event-date">${dateStr}${timeLabel}</span>
+        <span class="event-date">${dateStr}${endDateLabel}${timeLabel}</span>
         <button class="btn-icon btn-icon-danger event-delete-btn"
           onclick="event.stopPropagation(); confirmDeleteEvent('${ev.id}')"
           title="Delete event">&#128465;</button>
@@ -161,20 +169,23 @@ function openAddEvent() {
     </div>
     <div class="form-row-split">
       <div class="form-group">
-        <label>Date <span class="required">*</span></label>
+        <label>Start Date <span class="required">*</span></label>
         <input type="date" id="f-event-date" value="${today}" />
       </div>
       <div class="form-group">
-        <label>Start Time <span class="form-optional">(optional)</span></label>
-        <input type="time" id="f-event-time" />
+        <label>End Date <span class="form-optional">(optional)</span></label>
+        <input type="date" id="f-event-end-date" />
       </div>
     </div>
     <div class="form-row-split">
       <div class="form-group">
+        <label>Start Time <span class="form-optional">(optional)</span></label>
+        <input type="time" id="f-event-time" />
+      </div>
+      <div class="form-group">
         <label>End Time <span class="form-optional">(optional)</span></label>
         <input type="time" id="f-event-end-time" />
       </div>
-      <div class="form-group"></div>
     </div>
     <div class="form-group">
       <label>Notes</label>
@@ -187,6 +198,7 @@ function openAddEvent() {
     const name    = document.getElementById('f-event-name').value.trim();
     const type    = document.getElementById('f-event-type').value.trim();
     const date    = document.getElementById('f-event-date').value;
+    const endDate = document.getElementById('f-event-end-date').value;
     const time    = document.getElementById('f-event-time').value;
     const endTime = document.getElementById('f-event-end-time').value;
     const notes   = document.getElementById('f-event-notes').value.trim();
@@ -204,6 +216,7 @@ function openAddEvent() {
       name:    name,
       type:    type,
       date:    date,
+      endDate: endDate,
       time:    time,
       endTime: endTime,
       notes:   notes,
@@ -241,20 +254,23 @@ function openEditEvent(id) {
     </div>
     <div class="form-row-split">
       <div class="form-group">
-        <label>Date <span class="required">*</span></label>
+        <label>Start Date <span class="required">*</span></label>
         <input type="date" id="f-event-date" value="${ev.date}" />
       </div>
       <div class="form-group">
-        <label>Start Time <span class="form-optional">(optional)</span></label>
-        <input type="time" id="f-event-time" value="${ev.time || ''}" />
+        <label>End Date <span class="form-optional">(optional)</span></label>
+        <input type="date" id="f-event-end-date" value="${ev.endDate || ''}" />
       </div>
     </div>
     <div class="form-row-split">
       <div class="form-group">
+        <label>Start Time <span class="form-optional">(optional)</span></label>
+        <input type="time" id="f-event-time" value="${ev.time || ''}" />
+      </div>
+      <div class="form-group">
         <label>End Time <span class="form-optional">(optional)</span></label>
         <input type="time" id="f-event-end-time" value="${ev.endTime || ''}" />
       </div>
-      <div class="form-group"></div>
     </div>
     <div class="form-group">
       <label>Notes</label>
@@ -266,6 +282,7 @@ function openEditEvent(id) {
     const name    = document.getElementById('f-event-name').value.trim();
     const type    = document.getElementById('f-event-type').value.trim();
     const date    = document.getElementById('f-event-date').value;
+    const endDate = document.getElementById('f-event-end-date').value;
     const time    = document.getElementById('f-event-time').value;
     const endTime = document.getElementById('f-event-end-time').value;
     const notes   = document.getElementById('f-event-notes').value.trim();
@@ -282,6 +299,7 @@ function openEditEvent(id) {
       name:    name,
       type:    type,
       date:    date,
+      endDate: endDate,
       time:    time,
       endTime: endTime,
       notes:   notes,

@@ -3,6 +3,12 @@
    (legacy classes kept for compatibility)
 ============================================== */
 
+/* Highlight applied to day cells while the user drags across the grid */
+.cal-drag-highlight {
+  background: rgba(155, 48, 255, 0.18) !important;
+  outline: 1px solid rgba(155, 48, 255, 0.5);
+}
+
 /* Status row inside the calendar card */
 .gcal-status {
   display: flex;

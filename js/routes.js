@@ -487,10 +487,16 @@ function renderRouteBuilder() {
         <input type="text" id="rb-name" placeholder="e.g. Gibson County Fall Tour" value="${nameValue}" />
       </div>
 
-      <!-- Route date - left blank for duplicates so user must pick a new one -->
-      <div class="form-group">
-        <label>Date <span class="required">*</span></label>
-        <input type="date" id="rb-date" value="${route ? route.date : ''}" />
+      <!-- Route date range - end date is optional for multi-day routes -->
+      <div class="form-row-split">
+        <div class="form-group">
+          <label>Start Date <span class="required">*</span></label>
+          <input type="date" id="rb-date" value="${route ? route.date : ''}" />
+        </div>
+        <div class="form-group">
+          <label>End Date <span class="form-optional">(optional)</span></label>
+          <input type="date" id="rb-end-date" value="${route ? (route.endDate || '') : ''}" />
+        </div>
       </div>
 
       <!-- Starting location - defaults to Sol's office address -->
@@ -710,9 +716,10 @@ function updateStopEndTime(stopId, time) {
 // SAVE ROUTE
 // =============================================
 function saveRoute() {
-  const name   = document.getElementById('rb-name')?.value.trim();
-  const date   = document.getElementById('rb-date')?.value;
-  const origin = document.getElementById('rb-origin')?.value.trim() || DEFAULT_ORIGIN;
+  const name    = document.getElementById('rb-name')?.value.trim();
+  const date    = document.getElementById('rb-date')?.value;
+  const endDate = document.getElementById('rb-end-date')?.value || '';
+  const origin  = document.getElementById('rb-origin')?.value.trim() || DEFAULT_ORIGIN;
 
   if (!name)              { alert('Please enter a route name.'); return; }
   if (!date)              { alert('Please choose a date for this route.'); return; }
@@ -737,6 +744,7 @@ function saveRoute() {
         ...routes[idx],
         name,
         date,
+        endDate,
         origin,
         stops:             builderStops,
         reminderDismissed: false, // reset so edited routes show the reminder again
@@ -748,6 +756,7 @@ function saveRoute() {
       id:                makeId(),
       name,
       date,
+      endDate,
       origin,
       stops:             builderStops,
       reminderDismissed: false,

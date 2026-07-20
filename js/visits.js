@@ -373,9 +373,15 @@ function openLogVisit(preselectedSchoolId) {
       <label>Visit Title (optional)</label>
       <input type="text" id="f-title" placeholder="e.g. Fall Visit, College Fair..." />
     </div>
-    <div class="form-group">
-      <label>Visit Date <span class="required">*</span></label>
-      <input type="date" id="f-date" value="${new Date().toISOString().split('T')[0]}" />
+    <div class="form-row-split">
+      <div class="form-group">
+        <label>Start Date <span class="required">*</span></label>
+        <input type="date" id="f-date" value="${new Date().toISOString().split('T')[0]}" />
+      </div>
+      <div class="form-group">
+        <label>End Date <span class="form-optional">(optional)</span></label>
+        <input type="date" id="f-end-date" />
+      </div>
     </div>
     <div class="form-group">
       <label>How did it go?</label>
@@ -426,6 +432,7 @@ function openLogVisit(preselectedSchoolId) {
     const typedName = document.getElementById('f-school-name').value.trim();
     const school    = schools.find(s => s.name.toLowerCase() === typedName.toLowerCase());
     const date      = document.getElementById('f-date').value;
+    const endDate   = document.getElementById('f-end-date').value;
     if (!typedName || !school) { alert('Please select a valid school from the list.'); return; }
     if (!date)                 { alert('Please enter a date.'); return; }
 
@@ -438,6 +445,7 @@ function openLogVisit(preselectedSchoolId) {
       schoolName:     school ? school.name : '',   // cache name in case school is deleted later
       title:          document.getElementById('f-title').value.trim(),
       date:           date,
+      endDate:        endDate,
       mood:           document.getElementById('f-mood').value,
       studentCount:   parseInt(document.getElementById('f-students').value) || 0,
       commonQuestions: document.getElementById('f-common-q').value.trim(),
@@ -483,9 +491,15 @@ function openEditVisit(visitId) {
       <label>Visit Title (optional)</label>
       <input type="text" id="f-title" placeholder="e.g. Fall Visit, College Fair..." value="${escapeHtml(visit.title || '')}" />
     </div>
-    <div class="form-group">
-      <label>Visit Date <span class="required">*</span></label>
-      <input type="date" id="f-date" value="${visit.date}" />
+    <div class="form-row-split">
+      <div class="form-group">
+        <label>Start Date <span class="required">*</span></label>
+        <input type="date" id="f-date" value="${visit.date}" />
+      </div>
+      <div class="form-group">
+        <label>End Date <span class="form-optional">(optional)</span></label>
+        <input type="date" id="f-end-date" value="${visit.endDate || ''}" />
+      </div>
     </div>
     <div class="form-group">
       <label>How did it go?</label>
@@ -536,6 +550,7 @@ function openEditVisit(visitId) {
     const typedName = document.getElementById('f-school-name').value.trim();
     const school    = schools.find(s => s.name.toLowerCase() === typedName.toLowerCase());
     const date      = document.getElementById('f-date').value;
+    const endDate   = document.getElementById('f-end-date').value;
     if (!typedName || !school) { alert('Please select a valid school from the list.'); return; }
     if (!date)                 { alert('Please enter a date.'); return; }
 
@@ -548,6 +563,7 @@ function openEditVisit(visitId) {
       schoolName:      school ? school.name : '',
       title:           document.getElementById('f-title').value.trim(),
       date:            date,
+      endDate:         endDate,
       mood:            document.getElementById('f-mood').value,
       studentCount:    parseInt(document.getElementById('f-students').value) || 0,
       commonQuestions: document.getElementById('f-common-q').value.trim(),

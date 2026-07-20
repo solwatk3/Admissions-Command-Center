@@ -189,12 +189,18 @@ function routeToCalendarEvent(route) {
     };
   }
 
-  // No times set - create an all-day event
+  // No times set - all-day event.
+  // GCal requires end.date to be the day after the last day for multi-day all-day events.
+  var routeEnd = route.endDate || route.date;
+  var routeEndNext = new Date(routeEnd + 'T12:00:00');
+  routeEndNext.setDate(routeEndNext.getDate() + 1);
+  var routeEndStr = routeEndNext.toISOString().split('T')[0];
+
   return {
     summary:     route.name,
     description: description,
     start: { date: route.date },
-    end:   { date: route.date },
+    end:   { date: routeEndStr },
   };
 }
 
@@ -225,12 +231,18 @@ function accEventToCalendarEvent(ev) {
     };
   }
 
-  // No time - all-day event
+  // No time - all-day event.
+  // GCal all-day multi-day events require end.date to be the day AFTER the last day.
+  var allDayEnd = ev.endDate || ev.date;
+  var allDayEndNext = new Date(allDayEnd + 'T12:00:00');
+  allDayEndNext.setDate(allDayEndNext.getDate() + 1);
+  var allDayEndStr = allDayEndNext.toISOString().split('T')[0];
+
   return {
     summary:     ev.name,
     description: description,
     start: { date: ev.date },
-    end:   { date: ev.date },
+    end:   { date: allDayEndStr },
   };
 }
 
