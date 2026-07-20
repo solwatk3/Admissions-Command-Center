@@ -127,11 +127,8 @@ function updateDashboardStats() {
   // Render the Primary Schools quick-access section
   renderPrimarySchools(schools);
 
-  // Render upcoming visits (today and future)
-  renderUpcomingVisits();
-
-  // Render upcoming events (from the Events page)
-  renderUpcomingEvents();
+  // Render the unified dashboard calendar (replaces old upcoming visits + events cards)
+  renderDashboardCalendar();
 
   // Render overdue school alerts
   renderOverdueSchools();
@@ -997,6 +994,415 @@ function runGlobalSearch(q) {
   }
 
   resultsEl.innerHTML = html;
+}
+
+// =============================================
+// DASHBOARD CALENDAR
+// Unified calendar that shows Routes, Events, Visits, and Google Cal events.
+// Supports a monthly grid view and a scrollable agenda view.
+// =============================================
+
+// View state - persists during the session
+var calView  = 'grid';                      // 'grid' or 'agenda'
+var calYear  = new Date().getFullYear();    // month displayed in grid view
+var calMonth = new Date().getMonth();       // 0-indexed
+
+// Switch between grid and agenda view
+function setCalView(view) {
+  calView = view;
+  renderDashboardCalendar();
+}
+
+// Move back one month in grid view
+function calPrevMonth() {
+  calMonth--;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderDashboardCalendar();
+}
+
+// Move forward one month in grid view
+function calNextMonth() {
+  calMonth++;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderDashboardCalendar();
+}
+
+// Jump grid view back to the current month/year
+function calGoToday() {
+  calYear  = new Date().getFullYear();
+  calMonth = new Date().getMonth();
+  renderDashboardCalendar();
+}
+
+// =============================================
+// CALENDAR DATA - collect all item types
+// Returns one unified array with route, event, visit, and gcal items
+// =============================================
+function getCalendarItems() {
+  var routes  = loadData('routes',  []);
+  var events  = loadData('events',  []);
+  var visits  = loadData('visits',  []);
+  var items   = [];
+
+  // Routes - purple
+  routes.forEach(function(r) {
+    if (!r.date) return;
+    var stops = (r.stops || []).length;
+    items.push({
+      type:  'route',
+      date:  r.date,
+      title: r.name || 'Route',
+      meta:  stops + ' stop' + (stops !== 1 ? 's' : ''),
+      id:    r.id,
+      color: '#9b30ff',
+    });
+  });
+
+  // Events (boss-assigned fairs / conferences) - teal
+  events.forEach(function(e) {
+    if (!e.date) return;
+    items.push({
+      type:  'event',
+      date:  e.date,
+      title: e.name || 'Event',
+      meta:  e.type || 'Event',
+      id:    e.id,
+      color: '#22d3ee',
+    });
+  });
+
+  // Visit Log entries - grey
+  visits.forEach(function(v) {
+    if (!v.date) return;
+    items.push({
+      type:  'visit',
+      date:  v.date,
+      title: v.title || v.schoolName || 'Visit',
+      meta:  'Visit' + (v.schoolName ? ' - ' + v.schoolName : ''),
+      id:    v.id,
+      color: '#94a3b8',
+    });
+  });
+
+  // Google Calendar events (pulled by fetchGCalEvents in calendar.js) - green
+  var gcalItems = window.calGcalItems || [];
+  gcalItems.forEach(function(g) {
+    if (!g.date) return;
+    items.push({
+      type:  'gcal',
+      date:  g.date,
+      title: g.title,
+      meta:  'Google Calendar',
+      id:    'gcal-' + g.id,
+      color: '#4ade80',
+    });
+  });
+
+  return items;
+}
+
+// =============================================
+// MAIN CALENDAR RENDER
+// Updates the header controls and calls the active view renderer
+// =============================================
+function renderDashboardCalendar() {
+  // Update view toggle button active states
+  var gridBtn   = document.getElementById('cal-grid-btn');
+  var agendaBtn = document.getElementById('cal-agenda-btn');
+  if (gridBtn)   gridBtn.classList.toggle('active', calView === 'grid');
+  if (agendaBtn) agendaBtn.classList.toggle('active', calView === 'agenda');
+
+  // Show month nav only in grid view
+  var monthNav = document.getElementById('cal-month-nav');
+  if (monthNav) monthNav.style.display = calView === 'grid' ? 'flex' : 'none';
+
+  // Keep month label current
+  var monthLabel = document.getElementById('cal-month-label');
+  if (monthLabel) {
+    var d = new Date(calYear, calMonth, 1);
+    monthLabel.textContent = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+  }
+
+  // Render body content
+  var container = document.getElementById('dashboard-cal-body');
+  if (!container) return;
+
+  if (calView === 'grid') {
+    renderCalendarGrid(container);
+  } else {
+    renderCalendarAgenda(container);
+  }
+
+  // Refresh the GCal status area in the header
+  updateCalGcalStatus();
+}
+
+// =============================================
+// GRID VIEW RENDERER
+// Builds a 7-column monthly grid with dots for each item
+// =============================================
+function renderCalendarGrid(container) {
+  var items     = getCalendarItems();
+  var todayStr  = new Date().toISOString().split('T')[0];
+
+  // Group items by date string for quick lookup
+  var byDate = {};
+  items.forEach(function(item) {
+    if (!byDate[item.date]) byDate[item.date] = [];
+    byDate[item.date].push(item);
+  });
+
+  var firstDay     = new Date(calYear, calMonth, 1);
+  var daysInMonth  = new Date(calYear, calMonth + 1, 0).getDate();
+  var startDow     = firstDay.getDay();  // 0=Sun
+  var prevLastDay  = new Date(calYear, calMonth, 0).getDate();
+
+  var dows = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  var html = '<div class="cal-grid">';
+
+  // Day-of-week header
+  html += '<div class="cal-dow-row">';
+  dows.forEach(function(d) {
+    html += '<div class="cal-dow-cell">' + d + '</div>';
+  });
+  html += '</div>';
+
+  html += '<div class="cal-days-grid">';
+
+  // Filler cells for days from previous month
+  for (var i = startDow - 1; i >= 0; i--) {
+    html += '<div class="cal-day cal-other-month"><span class="cal-day-num">' + (prevLastDay - i) + '</span></div>';
+  }
+
+  // Current month days
+  for (var d = 1; d <= daysInMonth; d++) {
+    var dateStr   = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    var dayItems  = byDate[dateStr] || [];
+    var isToday   = dateStr === todayStr;
+    var cellClass = 'cal-day' + (isToday ? ' cal-today' : '');
+
+    html += '<div class="' + cellClass + '" onclick="openCalDayModal(\'' + dateStr + '\')">';
+    html += '<span class="cal-day-num">' + d + '</span>';
+
+    if (dayItems.length > 0) {
+      // Dots row - one dot per item (max 6 shown)
+      html += '<div class="cal-day-dots">';
+      dayItems.slice(0, 6).forEach(function(item) {
+        html += '<span class="cal-dot" style="background:' + item.color + ';" title="' + escapeHtml(item.title) + '"></span>';
+      });
+      html += '</div>';
+
+      // Text label chips - first 2 items
+      html += '<div class="cal-day-labels">';
+      dayItems.slice(0, 2).forEach(function(item) {
+        html += '<div class="cal-day-label" style="color:' + item.color + ';">' + escapeHtml(item.title) + '</div>';
+      });
+      if (dayItems.length > 2) {
+        html += '<div class="cal-day-more">+' + (dayItems.length - 2) + ' more</div>';
+      }
+      html += '</div>';
+    }
+
+    html += '</div>';
+  }
+
+  // Filler cells for the remainder of the last week row
+  var totalCells    = startDow + daysInMonth;
+  var trailingCells = (7 - (totalCells % 7)) % 7;
+  for (var n = 1; n <= trailingCells; n++) {
+    html += '<div class="cal-day cal-other-month"><span class="cal-day-num">' + n + '</span></div>';
+  }
+
+  html += '</div></div>'; // close cal-days-grid + cal-grid
+  container.innerHTML = html;
+}
+
+// =============================================
+// AGENDA VIEW RENDERER
+// Chronological list split into Upcoming / Past sections
+// =============================================
+function renderCalendarAgenda(container) {
+  var items    = getCalendarItems();
+  var todayStr = new Date().toISOString().split('T')[0];
+
+  if (items.length === 0) {
+    container.innerHTML = '<div class="cal-agenda"><p class="empty-state">No routes, events, or visits logged yet.</p></div>';
+    return;
+  }
+
+  var upcoming = items.filter(function(i) { return i.date >= todayStr; })
+    .sort(function(a, b) { return a.date.localeCompare(b.date); });
+  var past = items.filter(function(i) { return i.date < todayStr; })
+    .sort(function(a, b) { return b.date.localeCompare(a.date); }); // newest first
+
+  var html = '<div class="cal-agenda">';
+
+  if (upcoming.length > 0) {
+    html += '<div class="cal-agenda-section">Upcoming</div>';
+    upcoming.forEach(function(item) { html += buildAgendaRow(item); });
+  }
+
+  if (past.length > 0) {
+    html += '<div class="cal-agenda-section">Past</div>';
+    past.forEach(function(item) { html += buildAgendaRow(item); });
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// Builds one agenda row's HTML string
+function buildAgendaRow(item) {
+  // Date offset fix - YYYY-MM-DD strings parse as UTC midnight; shift to local
+  var d           = new Date(item.date);
+  var local       = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+  var dayNum      = local.getDate();
+  var monStr      = local.toLocaleString('default', { month: 'short' });
+
+  var typeLabels  = { route: 'Route', event: 'Event', visit: 'Visit', gcal: 'Google Cal' };
+  var typeLabel   = typeLabels[item.type] || item.type;
+  var isReadOnly  = item.type === 'gcal';  // GCal items are display-only
+
+  var clickAttr   = isReadOnly
+    ? 'class="cal-agenda-row cal-readonly"'
+    : 'class="cal-agenda-row" onclick="openCalItem(\'' + item.id + '\', \'' + item.type + '\')"';
+
+  return '<div ' + clickAttr + '>' +
+    '<div class="cal-agenda-stripe" style="background:' + item.color + ';"></div>' +
+    '<div class="cal-agenda-date">' +
+      '<span class="cal-agenda-date-day">' + dayNum + '</span>' +
+      '<span class="cal-agenda-date-mon">' + monStr + '</span>' +
+    '</div>' +
+    '<div class="cal-agenda-info">' +
+      '<div class="cal-agenda-title">' + escapeHtml(item.title) + '</div>' +
+      '<div class="cal-agenda-meta">' + escapeHtml(item.meta) + '</div>' +
+    '</div>' +
+    '<span class="cal-agenda-type" style="color:' + item.color + '; background:' + item.color + '22; border:1px solid ' + item.color + '44;">' + typeLabel + '</span>' +
+  '</div>';
+}
+
+// =============================================
+// NAVIGATE TO A CALENDAR ITEM
+// Called from agenda row or day modal clicks
+// =============================================
+function openCalItem(id, type) {
+  if (type === 'route') {
+    navigateTo('routes');
+    // Give the route list a moment to render before opening the detail
+    setTimeout(function() { openRouteDetail(id); }, 60);
+  } else if (type === 'event') {
+    navigateTo('events');
+    setTimeout(function() { openEditEvent(id); }, 60);
+  } else if (type === 'visit') {
+    navigateTo('visits');
+    setTimeout(function() { openVisitDetail(id); }, 60);
+  }
+  // gcal items are read-only display from Google - no navigation
+}
+
+// =============================================
+// DAY DETAIL MODAL
+// Opens when the user clicks any day in the grid.
+// Lists items on that day and offers quick-add buttons.
+// =============================================
+function openCalDayModal(dateStr) {
+  var items = getCalendarItems().filter(function(i) { return i.date === dateStr; });
+
+  // Format the date label for the modal title
+  var d     = new Date(dateStr);
+  var local = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+  var dateLabel = local.toLocaleDateString('default', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+  });
+
+  var typeLabels = { route: 'Route', event: 'Event', visit: 'Visit', gcal: 'Google Cal' };
+
+  // Build item list HTML
+  var itemsHtml = '';
+  if (items.length === 0) {
+    itemsHtml = '<p class="cal-day-modal-empty">Nothing scheduled - use a button below to add something.</p>';
+  } else {
+    itemsHtml = '<div class="cal-day-modal-items">';
+    items.forEach(function(item) {
+      var isReadOnly  = item.type === 'gcal';
+      var clickAttr   = isReadOnly
+        ? 'class="cal-day-modal-item cal-readonly"'
+        : 'class="cal-day-modal-item" onclick="closeModal(); openCalItem(\'' + item.id + '\', \'' + item.type + '\')"';
+      itemsHtml += '<div ' + clickAttr + '>' +
+        '<div class="cal-day-modal-stripe" style="background:' + item.color + ';"></div>' +
+        '<div class="cal-day-modal-info">' +
+          '<div class="cal-day-modal-title">' + escapeHtml(item.title) + '</div>' +
+          '<div class="cal-day-modal-type">' + (typeLabels[item.type] || item.type) + ' &middot; ' + escapeHtml(item.meta) + '</div>' +
+        '</div>' +
+      '</div>';
+    });
+    itemsHtml += '</div>';
+  }
+
+  // Add buttons - pre-fill the clicked date into the relevant form
+  var addHtml = '<div class="cal-day-modal-add">' +
+    '<button class="btn btn-accent btn-sm" onclick="quickAddEvent(\'' + dateStr + '\')">+ Add Event</button>' +
+    '<button class="btn btn-ghost btn-sm" onclick="quickAddRoute(\'' + dateStr + '\')">+ New Route</button>' +
+  '</div>';
+
+  var body = '<div class="cal-day-modal-date">' + dateLabel + '</div>' + itemsHtml + addHtml;
+
+  // Pass null as the save handler so no Save button is shown - actions are in the body
+  openModal('', body, null);
+}
+
+// =============================================
+// QUICK-ADD HELPERS
+// Close the day modal, open the relevant form, pre-fill the date
+// =============================================
+function quickAddEvent(dateStr) {
+  closeModal();
+  openAddEvent();
+  // openAddEvent defaults to today - overwrite with the clicked date
+  setTimeout(function() {
+    var dateInput = document.getElementById('f-event-date');
+    if (dateInput) dateInput.value = dateStr;
+  }, 0);
+}
+
+function quickAddRoute(dateStr) {
+  closeModal();
+  // Open the route builder on the Routes page and pre-fill the date field
+  navigateTo('routes');
+  openRouteBuilder();
+  setTimeout(function() {
+    var dateInput = document.getElementById('rb-date');
+    if (dateInput) dateInput.value = dateStr;
+  }, 80);
+}
+
+// =============================================
+// GCAL STATUS IN CALENDAR HEADER
+// Called by renderDashboardCalendar and renderCalendarStatus in calendar.js
+// =============================================
+function updateCalGcalStatus() {
+  var statusEl = document.getElementById('cal-gcal-status');
+  if (!statusEl) return;
+
+  // isCalendarConnected is defined in calendar.js (loads after app.js)
+  var connected = (typeof isCalendarConnected === 'function') && isCalendarConnected();
+
+  var lastSyncRaw = loadData('gcal_last_sync', null);
+  var lastSync = lastSyncRaw
+    ? new Date(lastSyncRaw).toLocaleString('default', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+    : null;
+
+  if (connected) {
+    statusEl.innerHTML =
+      '<span class="cal-gcal-dot cal-gcal-dot-on"></span>' +
+      (lastSync ? '<span class="cal-gcal-meta">Synced ' + lastSync + '</span>' : '') +
+      '<button class="btn btn-ghost btn-sm" id="gcal-sync-btn" onclick="syncAllRoutes()">&#8635; Sync</button>' +
+      '<button class="btn btn-ghost btn-sm" onclick="disconnectCalendar()">Disconnect</button>';
+  } else {
+    statusEl.innerHTML =
+      '<span class="cal-gcal-dot cal-gcal-dot-off"></span>' +
+      '<button class="btn btn-accent btn-sm" onclick="connectCalendar()">Connect Google Cal</button>';
+  }
 }
 
 // =============================================

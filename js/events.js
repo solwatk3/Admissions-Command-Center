@@ -188,7 +188,8 @@ function openAddEvent() {
     saveEvents(events);
     closeModal();
     renderEvents();
-    renderUpcomingEvents(); // refresh dashboard card
+    // Refresh the unified dashboard calendar so the new event appears
+    if (typeof renderDashboardCalendar === 'function') renderDashboardCalendar();
   });
 }
 
@@ -248,7 +249,8 @@ function openEditEvent(id) {
     saveEvents(events);
     closeModal();
     renderEvents();
-    renderUpcomingEvents();
+    // Refresh the unified dashboard calendar so the edit appears
+    if (typeof renderDashboardCalendar === 'function') renderDashboardCalendar();
   });
 }
 
@@ -264,7 +266,8 @@ function confirmDeleteEvent(id) {
 
   saveEvents(events.filter(function(e) { return e.id !== id; }));
   renderEvents();
-  renderUpcomingEvents();
+  // Refresh the unified dashboard calendar so the deleted event is removed
+  if (typeof renderDashboardCalendar === 'function') renderDashboardCalendar();
 }
 
 // =============================================

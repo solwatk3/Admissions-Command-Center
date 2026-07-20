@@ -5,6 +5,10 @@
 // Access tokens are kept in memory only (not localStorage) for security.
 // =============================================
 
+// Holds Google Calendar events pulled from the "Admissions Work" calendar.
+// Populated by fetchGCalEvents() and read by getCalendarItems() in app.js.
+window.calGcalItems = [];
+
 const GCAL_CLIENT_ID  = '159077460617-30si76d90dng1cuuda9jb4in13k4439n.apps.googleusercontent.com';
 const GCAL_SCOPE      = 'https://www.googleapis.com/auth/calendar';
 const CALENDAR_NAME   = 'Admissions Work';
@@ -44,6 +48,9 @@ function handleTokenResponse(response) {
   saveData('gcal_connected', true);
 
   renderCalendarStatus();
+
+  // Pull events from GCal so they appear on the dashboard calendar
+  fetchGCalEvents();
 
   // Sync all existing routes immediately on connect
   syncAllRoutes();
@@ -278,51 +285,65 @@ async function syncAllRoutes() {
 
   if (syncBtn) {
     syncBtn.disabled    = false;
-    syncBtn.textContent = '↻ Sync Now';
+    syncBtn.textContent = '↻ Sync';
   }
 
+  // Refresh status and re-pull GCal events so the calendar is up to date
   renderCalendarStatus();
+  fetchGCalEvents();
 }
 
 // =============================================
-// CALENDAR STATUS CARD
-// Renders the connect/disconnect UI in the dashboard card
+// CALENDAR STATUS
+// Updates the GCal sync area inside the new unified calendar card header.
+// The old #dashboard-calendar element has been removed - now delegates
+// to updateCalGcalStatus() which lives in app.js (loads before this file).
+// Also re-renders the calendar body so any newly pulled GCal events appear.
 // =============================================
 function renderCalendarStatus() {
-  const container = document.getElementById('dashboard-calendar');
-  if (!container) return;
+  if (typeof updateCalGcalStatus === 'function') updateCalGcalStatus();
+  if (typeof renderDashboardCalendar === 'function') renderDashboardCalendar();
+}
 
-  const connected   = isCalendarConnected();
-  const lastSyncRaw = loadData('gcal_last_sync', null);
-  const lastSync    = lastSyncRaw
-    ? new Date(lastSyncRaw).toLocaleString('default', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-    : 'Never';
+// =============================================
+// FETCH GCAL EVENTS
+// Pulls upcoming events from the "Admissions Work" calendar so they can
+// be shown as green dots on the dashboard calendar grid and agenda.
+// Stores results in window.calGcalItems for getCalendarItems() to read.
+// =============================================
+async function fetchGCalEvents() {
+  if (!isCalendarConnected()) return;
 
-  if (connected) {
-    container.innerHTML = `
-      <div class="gcal-status gcal-connected">
-        <div class="gcal-dot gcal-dot-on"></div>
-        <div class="gcal-info">
-          <span class="gcal-label">Connected &mdash; "Admissions Work" calendar</span>
-          <span class="gcal-meta">Last synced: ${lastSync}</span>
-        </div>
-        <div class="gcal-actions">
-          <button id="gcal-sync-btn" class="btn btn-ghost btn-sm" onclick="syncAllRoutes()">&#8635; Sync Now</button>
-          <button class="btn btn-ghost btn-sm" onclick="disconnectCalendar()">Disconnect</button>
-        </div>
-      </div>
-    `;
-  } else {
-    container.innerHTML = `
-      <div class="gcal-status gcal-disconnected">
-        <div class="gcal-dot gcal-dot-off"></div>
-        <div class="gcal-info">
-          <span class="gcal-label">Google Calendar not connected</span>
-          <span class="gcal-meta">Connect to auto-sync routes to your "Admissions Work" calendar</span>
-        </div>
-        <button class="btn btn-accent btn-sm" onclick="connectCalendar()">Connect Google Calendar</button>
-      </div>
-    `;
+  try {
+    const calendarId = await getAdmissionsCalendarId();
+
+    // Fetch events from today through 1 year out
+    const now     = new Date().toISOString();
+    const maxTime = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+
+    const data = await calendarFetch(
+      'https://www.googleapis.com/calendar/v3/calendars/' +
+      encodeURIComponent(calendarId) +
+      '/events?timeMin=' + encodeURIComponent(now) +
+      '&timeMax=' + encodeURIComponent(maxTime) +
+      '&singleEvents=true&orderBy=startTime&maxResults=100'
+    );
+
+    // Map each GCal event to the flat shape getCalendarItems() expects
+    window.calGcalItems = (data.items || []).map(function(item) {
+      const start = item.start.dateTime || item.start.date;
+      return {
+        id:    item.id,
+        date:  start ? start.split('T')[0] : null,
+        title: item.summary || 'Google Calendar Event',
+      };
+    }).filter(function(item) { return item.date; });
+
+    // Refresh the calendar so the green dots appear
+    if (typeof renderDashboardCalendar === 'function') renderDashboardCalendar();
+
+  } catch (err) {
+    console.error('ACC Calendar: could not fetch GCal events -', err);
   }
 }
 

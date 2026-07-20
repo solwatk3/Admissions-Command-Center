@@ -126,16 +126,6 @@
       </div>
 
       <div class="cards-grid">
-        <!-- Upcoming visits card -->
-        <div class="card">
-          <div class="card-header">
-            <span class="card-icon">&#128197;</span>
-            <h2>Upcoming Visits</h2>
-          </div>
-          <div class="card-body" id="dashboard-upcoming">
-            <p class="empty-state">No upcoming visits scheduled. Add events to get started.</p>
-          </div>
-        </div>
 
         <!-- Overdue primary schools card -->
         <div class="card">
@@ -171,29 +161,47 @@
           </div>
         </div>
 
-        <!-- Upcoming events card -->
-        <div class="card">
-          <div class="card-header">
-            <span class="card-icon">&#127937;</span>
-            <h2>Upcoming Events</h2>
-            <button class="btn btn-ghost btn-sm" onclick="navigateTo('events')" style="margin-left:auto;">View All</button>
-          </div>
-          <div class="card-body" id="dashboard-events">
-            <p class="empty-state">No upcoming events.</p>
-          </div>
-        </div>
-
       </div>
 
-      <!-- Google Calendar sync card -->
+      <!-- Unified calendar card - replaces Upcoming Visits, Upcoming Events, and Google Calendar cards -->
       <div class="card card-full-width" style="margin-top: 16px;">
-        <div class="card-header">
+
+        <!-- Custom header: title, month nav, view toggle, GCal sync status -->
+        <div class="cal-card-header">
           <span class="card-icon">&#128197;</span>
-          <h2>Google Calendar</h2>
+          <h2>Calendar</h2>
+
+          <!-- Month navigation - only visible in grid view -->
+          <div id="cal-month-nav" class="cal-month-nav">
+            <button class="cal-month-nav-btn" onclick="calPrevMonth()" title="Previous month">&#8592;</button>
+            <span class="cal-month-label" id="cal-month-label">Loading...</span>
+            <button class="cal-month-nav-btn" onclick="calNextMonth()" title="Next month">&#8594;</button>
+            <button class="cal-today-btn" onclick="calGoToday()">Today</button>
+          </div>
+
+          <!-- Grid / Agenda toggle -->
+          <div class="cal-view-toggle">
+            <button class="cal-view-btn active" id="cal-grid-btn" onclick="setCalView('grid')">Grid</button>
+            <button class="cal-view-btn" id="cal-agenda-btn" onclick="setCalView('agenda')">Agenda</button>
+          </div>
+
+          <!-- Google Calendar sync status and action buttons -->
+          <div class="cal-gcal-status" id="cal-gcal-status">
+            <!-- Populated by updateCalGcalStatus() in app.js -->
+          </div>
         </div>
-        <div class="card-body" id="dashboard-calendar">
-          <p class="empty-state">Loading calendar status...</p>
+
+        <!-- Legend row -->
+        <div class="cal-legend">
+          <span class="cal-legend-item"><span class="cal-dot" style="background:#9b30ff;"></span> Routes</span>
+          <span class="cal-legend-item"><span class="cal-dot" style="background:#22d3ee;"></span> Events</span>
+          <span class="cal-legend-item"><span class="cal-dot" style="background:#94a3b8;"></span> Visits</span>
+          <span class="cal-legend-item"><span class="cal-dot" style="background:#4ade80;"></span> Google Cal</span>
         </div>
+
+        <!-- Calendar body - grid or agenda rendered here by renderDashboardCalendar() in app.js -->
+        <div id="dashboard-cal-body"></div>
+
       </div>
 
       <!-- Primary Schools quick-access card - always visible at bottom of dashboard -->
