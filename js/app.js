@@ -480,7 +480,6 @@ function exportAllData() {
     const key = localStorage.key(i);
     if (key && key.startsWith('acc_')) {
       try {
-        // Strip the acc_ prefix so the file is clean to read
         snapshot[key] = JSON.parse(localStorage.getItem(key));
       } catch (e) {
         snapshot[key] = localStorage.getItem(key);
@@ -489,7 +488,6 @@ function exportAllData() {
   }
 
   // Build a descriptive filename: date + school count + visit count
-  // so you can tell backups apart at a glance in your Downloads folder
   const dateStr     = new Date().toISOString().split('T')[0];
   const schoolCount = (loadData('schools', [])).length;
   const visitCount  = (loadData('visits',  [])).length;
@@ -497,12 +495,54 @@ function exportAllData() {
     + '-' + schoolCount + 'schools'
     + '-' + visitCount  + 'visits.json';
 
-  // Hand off to the shared JSON download helper
-  downloadJsonFile(snapshot, filename);
-
-  // Record when this backup was made so the dashboard nudge stays accurate
+  // Record timestamp and refresh the nudge
   saveData('last_backup', new Date().toISOString());
   renderBackupStatus();
+
+  // ---- EMAIL BACKUP ----
+  // Build a leaner copy for the email - skip the geocache and Google Calendar
+  // system keys since they're large and auto-regenerate. Core data only.
+  const emailKeys  = ['acc_counties', 'acc_schools', 'acc_visits',
+                      'acc_colleagues', 'acc_routes', 'acc_archives'];
+  const emailSnap  = {};
+  emailKeys.forEach(function(k) {
+    if (snapshot[k] !== undefined) emailSnap[k] = snapshot[k];
+  });
+
+  const btn = document.getElementById('export-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+
+  const subject = 'ACC Backup - ' + dateStr
+    + ' - ' + schoolCount + ' schools, ' + visitCount + ' visits';
+
+  const message = 'ACC Backup - ' + dateStr + '\n'
+    + 'Schools: ' + schoolCount + '  |  Visits: ' + visitCount + '\n\n'
+    + '======= HOW TO RESTORE =======\n'
+    + '1. Open ACC: https://solwatk3.github.io/Admissions-Command-Center/\n'
+    + '2. Click "Import Data" on the dashboard\n'
+    + '3. Copy EVERYTHING between the markers below (start with { end with })\n'
+    + '4. Paste it into the box and click Restore\n'
+    + '==============================\n\n'
+    + '=== START - COPY FROM HERE ===\n'
+    + JSON.stringify(emailSnap) + '\n'
+    + '=== END - COPY TO HERE ===';
+
+  emailjs.send('service_9sv9w6p', 'template_r0o15xz', {
+    to_email: 'solwatk3@gmail.com',
+    subject:  subject,
+    message:  message,
+  })
+  .then(function() {
+    if (btn) { btn.disabled = false; btn.textContent = '✓ Backed up!'; }
+    setTimeout(function() {
+      if (btn) btn.textContent = '↓ Export Data';
+    }, 3000);
+  })
+  .catch(function(err) {
+    console.error('ACC: backup email failed', err);
+    if (btn) { btn.disabled = false; btn.textContent = '↓ Export Data'; }
+    alert('File downloaded, but the email failed to send. Your local backup is still saved.');
+  });
 }
 
 // =============================================
@@ -536,10 +576,71 @@ function renderBackupStatus() {
 }
 
 // =============================================
-// DATA IMPORT
-// Reads a JSON file exported by exportAllData()
-// and restores all acc_ keys into localStorage
+// IMPORT MODAL
+// Opens a paste-in dialog so the user can restore from
+// the JSON block in their backup email - no file needed.
 // =============================================
+function openImportModal() {
+  const body = `
+    <p style="color:var(--text-muted); font-size:0.85rem; margin:0 0 14px;">
+      Open your backup email, copy the JSON block at the bottom, then paste it below.
+    </p>
+    <div class="form-group">
+      <label>Paste backup JSON</label>
+      <textarea id="f-import-json" rows="10"
+        placeholder="Paste your ACC backup JSON here..."
+        style="font-family:monospace; font-size:0.75rem; resize:vertical;"></textarea>
+    </div>
+  `;
+
+  openModal('Restore from Backup', body, function() {
+    const raw = (document.getElementById('f-import-json').value || '').trim();
+    if (!raw) {
+      alert('Nothing pasted - copy the JSON block from your backup email first.');
+      return;
+    }
+
+    let snapshot;
+    try {
+      snapshot = JSON.parse(raw);
+    } catch (e) {
+      alert('Could not read that text. Make sure you copied the full JSON block from the email - start with { and end with }.');
+      return;
+    }
+
+    restoreSnapshot(snapshot);
+  });
+}
+
+// =============================================
+// RESTORE SNAPSHOT
+// Shared restore logic used by the paste-import modal.
+// Writes all acc_ keys from the snapshot back into localStorage.
+// =============================================
+function restoreSnapshot(snapshot) {
+  const importSchools = Array.isArray(snapshot['acc_schools']) ? snapshot['acc_schools'].length : '?';
+  const importVisits  = Array.isArray(snapshot['acc_visits'])  ? snapshot['acc_visits'].length  : '?';
+
+  const confirmMsg = 'This backup contains:\n'
+    + '  - ' + importSchools + ' schools\n'
+    + '  - ' + importVisits  + ' visits\n\n'
+    + 'Restore and replace all your current data?';
+
+  if (!confirm(confirmMsg)) return;
+
+  // Only restore acc_ keys - ignore anything unexpected in the payload
+  Object.keys(snapshot).forEach(function(key) {
+    if (key.startsWith('acc_')) {
+      localStorage.setItem(key, JSON.stringify(snapshot[key]));
+    }
+  });
+
+  closeModal();
+  updateDashboardStats();
+  alert('Restore successful! Your data is back.');
+}
+
+// Legacy file-based import - kept so old downloaded .json files still work
 function importAllData(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -547,43 +648,8 @@ function importAllData(event) {
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
-      const snapshot = JSON.parse(e.target.result);
-
-      // Read counts from the backup so the confirmation tells you what's inside
-      const importSchools = Array.isArray(snapshot['acc_schools']) ? snapshot['acc_schools'].length : '?';
-      const importVisits  = Array.isArray(snapshot['acc_visits'])  ? snapshot['acc_visits'].length  : '?';
-
-      // Try to pull the date from the filename (ACC-backup-2026-07-18-...)
-      const dateMatch = file.name.match(/(\d{4}-\d{2}-\d{2})/);
-      const dateLabel = dateMatch ? ' from ' + dateMatch[1] : '';
-
-      const confirmMsg = 'This backup' + dateLabel + ' contains:\n'
-        + '  - ' + importSchools + ' schools\n'
-        + '  - ' + importVisits  + ' visits\n\n'
-        + 'Import and replace all your current data?';
-
-      // Confirm before overwriting - this replaces everything
-      if (!confirm(confirmMsg)) {
-        event.target.value = '';
-        return;
-      }
-
-      // Write each key back to localStorage.
-      // Only keys starting with acc_ are restored - anything else in the
-      // file is ignored so a wrong or tampered file cannot write junk
-      // into browser storage.
-      Object.keys(snapshot).forEach(function(key) {
-        if (key.startsWith('acc_')) {
-          localStorage.setItem(key, JSON.stringify(snapshot[key]));
-        }
-      });
-
-      // Reset the file input so the same file can be imported again if needed
+      restoreSnapshot(JSON.parse(e.target.result));
       event.target.value = '';
-
-      // Refresh the dashboard to reflect the restored data
-      updateDashboardStats();
-      alert('Import successful! Your data has been restored.');
     } catch (err) {
       alert('Could not read that file. Make sure it is a valid ACC backup.');
     }
