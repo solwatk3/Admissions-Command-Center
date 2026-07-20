@@ -411,7 +411,12 @@ function renderSchoolDetail(schoolId) {
         <div class="detail-fields">
           <div class="detail-field">
             <span class="detail-label">Address</span>
-            <span class="detail-value">${school.address ? escapeHtml(school.address) : 'Not on file'}</span>
+            ${school.address
+              ? `<span class="detail-value copy-value" onclick="copyToClipboard('${escapeHtml(school.address)}', this)" title="Click to copy">
+                  ${escapeHtml(school.address)}
+                </span>`
+              : '<span class="detail-value">Not on file</span>'
+            }
           </div>
           ${(function() {
             const contacts = getSchoolContacts(school);
