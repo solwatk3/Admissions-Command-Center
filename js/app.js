@@ -749,7 +749,8 @@ function closeGlobalSearch() {
   if (results) results.innerHTML = '';
 }
 
-// Run the search and render results
+// Run the search and render results.
+// Covers schools, visits, colleagues, events, and routes.
 function runGlobalSearch(q) {
   var resultsEl = document.getElementById('global-search-results');
   if (!resultsEl) return;
@@ -757,50 +758,83 @@ function runGlobalSearch(q) {
   var query = (q || '').trim().toLowerCase();
   if (!query) { resultsEl.innerHTML = ''; return; }
 
-  var schools    = loadData('schools',    []);
-  var visits     = loadData('visits',     []);
-  var colleagues = loadData('colleagues', []);
-  var counties   = loadData('counties',   []);
+  var schools    = loadData('schools',     []);
+  var visits     = loadData('visits',      []);
+  var colleagues = loadData('colleagues',  []);
+  var counties   = loadData('counties',    []);
+  var events     = loadData('events',      []);
+  var routes     = loadData('routes',      []);
 
-  // --- Search schools ---
+  // --- Schools ---
+  // Searches: name, address, notes, priority, county name,
+  // and every contact's name/title/email/phone
   var schoolHits = schools.filter(function(s) {
+    var county = counties.find(function(c) { return c.id === s.countyId; });
+    var countyName = county ? county.name.toLowerCase() : '';
     return (
       s.name.toLowerCase().includes(query) ||
-      (s.address || '').toLowerCase().includes(query) ||
-      (s.notes   || '').toLowerCase().includes(query) ||
-      // Search across all contacts (new multi-contact format + legacy single-contact)
+      (s.address  || '').toLowerCase().includes(query) ||
+      (s.notes    || '').toLowerCase().includes(query) ||
+      (s.priority || '').toLowerCase().includes(query) ||
+      countyName.includes(query) ||
       getSchoolContacts(s).some(function(c) {
         return (c.name  || '').toLowerCase().includes(query) ||
                (c.email || '').toLowerCase().includes(query) ||
+               (c.phone || '').toLowerCase().includes(query) ||
                (c.title || '').toLowerCase().includes(query);
       })
     );
   });
 
-  // --- Search visits ---
+  // --- Visits ---
+  // Searches: school name, visit title, all notes fields
   var visitHits = visits.filter(function(v) {
     var school = schools.find(function(s) { return s.id === v.schoolId; });
     var schoolName = school ? school.name : (v.schoolName || '');
     return (
       schoolName.toLowerCase().includes(query) ||
-      (v.title            || '').toLowerCase().includes(query) ||
-      (v.commonQuestions  || '').toLowerCase().includes(query) ||
-      (v.newQuestions     || '').toLowerCase().includes(query) ||
-      (v.nextTimeNotes    || '').toLowerCase().includes(query)
+      (v.title           || '').toLowerCase().includes(query) ||
+      (v.commonQuestions || '').toLowerCase().includes(query) ||
+      (v.newQuestions    || '').toLowerCase().includes(query) ||
+      (v.nextTimeNotes   || '').toLowerCase().includes(query) ||
+      (v.mood            || '').toLowerCase().includes(query)
     );
   });
 
-  // --- Search colleagues ---
+  // --- Colleagues ---
+  // Searches: name, institution, email, phone, notes
   var colleagueHits = colleagues.filter(function(c) {
     return (
       (c.name        || '').toLowerCase().includes(query) ||
       (c.institution || '').toLowerCase().includes(query) ||
       (c.email       || '').toLowerCase().includes(query) ||
+      (c.phone       || '').toLowerCase().includes(query) ||
       (c.notes       || '').toLowerCase().includes(query)
     );
   });
 
-  var totalHits = schoolHits.length + visitHits.length + colleagueHits.length;
+  // --- Events ---
+  // Searches: event name, type, notes
+  var eventHits = events.filter(function(ev) {
+    return (
+      (ev.name  || '').toLowerCase().includes(query) ||
+      (ev.type  || '').toLowerCase().includes(query) ||
+      (ev.notes || '').toLowerCase().includes(query)
+    );
+  });
+
+  // --- Routes ---
+  // Searches: route name, and the names of all stops in that route
+  var routeHits = routes.filter(function(r) {
+    if ((r.name || '').toLowerCase().includes(query)) return true;
+    return (r.stops || []).some(function(stop) {
+      return (stop.name    || '').toLowerCase().includes(query) ||
+             (stop.address || '').toLowerCase().includes(query);
+    });
+  });
+
+  var totalHits = schoolHits.length + visitHits.length + colleagueHits.length +
+                  eventHits.length  + routeHits.length;
 
   if (totalHits === 0) {
     // Escape the query so typed quotes or angle brackets cannot break the page
@@ -829,7 +863,7 @@ function runGlobalSearch(q) {
     }).join('');
   }
 
-  // Visit results
+  // Visit results - sorted newest first
   if (visitHits.length > 0) {
     html += '<div class="gs-section-label">Visits</div>';
     html += visitHits.slice().sort(function(a, b) { return new Date(b.date) - new Date(a.date); }).map(function(v) {
@@ -849,16 +883,52 @@ function runGlobalSearch(q) {
     }).join('');
   }
 
-  // Colleague results
+  // Colleague results - clicking opens that person's detail card directly
   if (colleagueHits.length > 0) {
     html += '<div class="gs-section-label">Colleagues</div>';
     html += colleagueHits.map(function(c) {
       return `
-        <div class="gs-result" onclick="closeGlobalSearch(); navigateTo('rolodex')">
+        <div class="gs-result" onclick="closeGlobalSearch(); navigateTo('rolodex'); openColleagueDetail('${c.id}')">
           <span class="gs-result-icon">&#128100;</span>
           <div class="gs-result-text">
             <span class="gs-result-name">${escapeHtml(c.name || 'Unnamed')}</span>
             ${c.institution ? `<span class="gs-result-sub">${escapeHtml(c.institution)}</span>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Event results - sorted soonest first
+  if (eventHits.length > 0) {
+    html += '<div class="gs-section-label">Events</div>';
+    html += eventHits.slice().sort(function(a, b) { return new Date(a.date) - new Date(b.date); }).map(function(ev) {
+      var d = new Date(ev.date);
+      var dateStr = d.toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' });
+      return `
+        <div class="gs-result" onclick="closeGlobalSearch(); navigateTo('events')">
+          <span class="gs-result-icon">&#127881;</span>
+          <div class="gs-result-text">
+            <span class="gs-result-name">${escapeHtml(ev.name || 'Unnamed Event')}</span>
+            <span class="gs-result-sub">${ev.type ? escapeHtml(ev.type) + ' - ' : ''}${dateStr}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Route results
+  if (routeHits.length > 0) {
+    html += '<div class="gs-section-label">Routes</div>';
+    html += routeHits.map(function(r) {
+      var stopCount = (r.stops || []).length;
+      var sub = stopCount + ' stop' + (stopCount !== 1 ? 's' : '') + (r.date ? ' - ' + r.date : '');
+      return `
+        <div class="gs-result" onclick="closeGlobalSearch(); navigateTo('routes'); openRouteDetail('${r.id}')">
+          <span class="gs-result-icon">&#128506;</span>
+          <div class="gs-result-text">
+            <span class="gs-result-name">${escapeHtml(r.name || 'Unnamed Route')}</span>
+            <span class="gs-result-sub">${escapeHtml(sub)}</span>
           </div>
         </div>
       `;
