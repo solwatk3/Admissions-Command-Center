@@ -77,6 +77,42 @@
       "name": "Bradley",
       "region": "East TN",
       "notes": ""
+    },
+    {
+      "id": "mrtodlof1prg",
+      "name": "Campbell",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mrtoh8j3km51",
+      "name": "Carter",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mrtoxgjufd4y",
+      "name": "Claiborne",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mrtp51ehem8o",
+      "name": "Cocke",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mrtpiadtlaz7",
+      "name": "Grainger",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mrtptmn87jy5",
+      "name": "Greene",
+      "region": "East TN",
+      "notes": ""
     }
   ],
   "acc_schools": [
@@ -741,6 +777,168 @@
       "priority": "",
       "contacts": [],
       "notes": ""
+    },
+    {
+      "id": "mrtofobrmao9",
+      "countyId": "mrtodlof1prg",
+      "name": "Campbell County High School",
+      "address": "150 Cougar Ln, Jacksboro, TN 37757, TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrtog9w79ezp",
+      "countyId": "mrtodlof1prg",
+      "name": "Jellico High School",
+      "address": "141 High School Ln, Jellico, TN 37762, TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrtohj9zbxg0",
+      "countyId": "mrtoh8j3km51",
+      "name": "Cloudland High School",
+      "address": "476 Cloudland Dr, Roan Mountain, TN 37687, TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrtoi0in9i94",
+      "countyId": "mrtoh8j3km51",
+      "name": "Elizabethton High School",
+      "address": "907 Jason Witten Way, Elizabethton, TN 37643, TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrtoo3l5nxgo",
+      "countyId": "mrtoh8j3km51",
+      "name": "Hampton High School",
+      "address": "766 1st Ave, Hampton, TN 37658, TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrtooncyc4e3",
+      "countyId": "mrtoh8j3km51",
+      "name": "Happy Valley High School",
+      "address": "121 Warpath Ln, Elizabethton, TN 37643, TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrtop8yhh3r6",
+      "countyId": "mrtoh8j3km51",
+      "name": "Unaka High School",
+      "address": "119 Robinson Ln, Elizabethton, TN 37643, TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrtoyqfys9uk",
+      "countyId": "mrtoxgjufd4y",
+      "name": "Claiborne County HS",
+      "address": "815 Davis Dr, New Tazewell, TN 37825, TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrtp0bbavatp",
+      "countyId": "mrtoxgjufd4y",
+      "name": "Cumberland County HS",
+      "address": "660 Stanley St, Crossville, TN 38555, TN TN, TN TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrtp2ayeuso3",
+      "countyId": "mrtoxgjufd4y",
+      "name": "J Frank White Academy",
+      "address": "6965 Cumberland Gap Pkwy, Harrogate, TN 37752, TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrtp61ugyrcd",
+      "countyId": "mrtp51ehem8o",
+      "name": "Cocke County HS",
+      "address": "216 Hedrick Dr, Newport, TN 37821, TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrtp6iegk4jz",
+      "countyId": "mrtp51ehem8o",
+      "name": "Cosby High School",
+      "address": "3318 Cosby Hwy, Cosby, TN 37722, TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrtpink3v651",
+      "countyId": "mrtpiadtlaz7",
+      "name": "Grainger High School",
+      "address": "2201 US-11W, Rutledge, TN 37861, TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrtpreyrelxa",
+      "countyId": "mrtpiadtlaz7",
+      "name": "Washburn High School",
+      "address": "7925 TN-131, Washburn, TN 37888, TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrtpsthvj2xk",
+      "countyId": "mrtptmn87jy5",
+      "name": "Chuckey Doak HS",
+      "address": "365 Ripley Island Rd, Afton, TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrtpui56y11d",
+      "countyId": "mrtptmn87jy5",
+      "name": "North Greene HS",
+      "address": "4675 Old Baileyton Rd, Greeneville, TN 37745, TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrtqcp4sc9ps",
+      "countyId": "mrtptmn87jy5",
+      "name": "South Greene HS",
+      "address": "7469 Asheville Hwy, Greeneville, TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrtqsbwsfwgp",
+      "countyId": "mrtptmn87jy5",
+      "name": "West Greene HS",
+      "address": "275 W Greene Dr, Mosheim, TN 37818, TN",
+      "priority": "",
+      "contacts": [],
+      "notes": ""
     }
   ],
   "acc_visits": [],
@@ -762,6 +960,7 @@
       "type": "College Fair",
       "date": "2026-08-31",
       "time": "17:30",
+      "endTime": "20:15",
       "notes": "Event Details:\n\nTime: Check-in & set-up is 5:30pm-6:45pm; Dinner (optional) at 5:45pm-6:30pm; Fair: 6:45pm-8:15pm\n\nLocation: Girls Preparatory School, 205 Island Avenue, Chattanooga TN 37405\n\nEvent Space: Gym, Athletic Commons, and Frierson Theater Lobby\n\nParking: Park in the lot at the top of the hill where your navigation will lead you if you put 205 Island Avenue as your destination. You will be directed by signage and security staff upon arrival."
     },
     {
@@ -771,10 +970,98 @@
       "date": "2026-07-24",
       "time": "",
       "notes": ""
+    },
+    {
+      "id": "mrtqwocibfg8",
+      "name": "Transfer Orientation",
+      "type": "SOAR",
+      "date": "2026-08-07",
+      "time": "08:00",
+      "endTime": "",
+      "notes": ""
+    },
+    {
+      "id": "mrtqxc3m3ics",
+      "name": "UT Breakfast- Chattanooga",
+      "type": "UT Breakfast",
+      "date": "2026-08-10",
+      "time": "",
+      "endTime": "",
+      "notes": ""
+    },
+    {
+      "id": "mrtqxlesnzpv",
+      "name": "UT Breakfast- Knoxville",
+      "type": "UT Breakfast",
+      "date": "2026-08-11",
+      "time": "",
+      "endTime": "",
+      "notes": ""
+    },
+    {
+      "id": "mrtqxu7yw0ho",
+      "name": "UT Breakfast-Tri-Cities/Kingsport",
+      "type": "UT Breakfast",
+      "date": "2026-08-12",
+      "time": "",
+      "endTime": "",
+      "notes": ""
+    },
+    {
+      "id": "mrtr15pgvteh",
+      "name": "Admissions Fall Retreat",
+      "type": "Admissions Fall Retreat",
+      "date": "2026-08-18",
+      "endDate": "2026-08-20",
+      "time": "",
+      "endTime": "",
+      "notes": ""
+    },
+    {
+      "id": "mrtr3zrfvjji",
+      "name": "Tri-Cities College Fair",
+      "type": "College Fair",
+      "date": "2026-08-27",
+      "endDate": "",
+      "time": "08:00",
+      "endTime": "12:00",
+      "notes": "10+ High Schools\nScience Hill, University High, Greeneville, Dobyns Bennett, DB Excel, Unicoi,\nCloudland, Happy Valley, Hampton, Unaka, Morristown East, Cosby, Cocke County\n6:00pm-8:00pm. – Open to Public\nThis will be a great opportunity for your college or university to share admissions\nrequirements, scholarships, academic programs, campus life, and more with prospective\nstudents and families.\nMore information and registration links to come later this summer.\nLocation\nFreedom Hall Civic Center\n1320 Pactolas Road, Johnson City, TN 37604"
+    },
+    {
+      "id": "mrtr5f3bbkft",
+      "name": "Northwest TN College Fair",
+      "type": "College Fair",
+      "date": "2026-09-10",
+      "endDate": "",
+      "time": "07:30",
+      "endTime": "13:00",
+      "notes": ""
+    },
+    {
+      "id": "mrtr699wn5ng",
+      "name": "College Fair @ Grace Christian Academy",
+      "type": "College Fair",
+      "date": "2026-09-23",
+      "endDate": "",
+      "time": "13:00",
+      "endTime": "15:30",
+      "notes": ""
+    },
+    {
+      "id": "mrtr6ts8596x",
+      "name": "Knoxville Catholic High School College Fair 2026",
+      "type": "College Fair",
+      "date": "2026-09-24",
+      "endDate": "",
+      "time": "12:45",
+      "endTime": "14:45",
+      "notes": ""
     }
   ],
   "acc_event_types": [
     "College Fair",
-    "SOAR"
+    "SOAR",
+    "UT Breakfast",
+    "Admissions Fall Retreat"
   ]
 }
