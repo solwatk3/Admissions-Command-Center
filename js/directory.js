@@ -274,6 +274,7 @@ function renderSchoolsList(countyId) {
       <div class="view-title-row">
         <h2 class="view-county-title">${county ? escapeHtml(county.name) + ' County' : 'County'}</h2>
         <button class="btn btn-accent" onclick="openAddSchool('${countyId}')">+ Add School</button>
+        <button class="btn btn-ghost" id="copy-emails-btn" onclick="copyCountyEmails('${countyId}')" title="Copy all contact emails in this county to clipboard">&#9993; Copy All Emails</button>
         ${county && county.notes ? `<button class="btn btn-ghost" onclick="toggleInlineNotes('county-inline-notes')">&#128221; Notes</button>` : ''}
         <button class="btn btn-ghost" onclick="openEditCounty('${countyId}')">&#9998; Edit County</button>
       </div>
@@ -350,6 +351,8 @@ function renderSchoolDetail(schoolId) {
   const allVisits    = loadData('visits', []);
   const schoolVisits = allVisits.filter(function(v) { return v.schoolId === school.id; });
   const visitCount   = schoolVisits.length;
+  // Check if any visit for this school has the return-visit flag set
+  const hasReturnFlag = schoolVisits.some(function(v) { return v.returnVisit; });
   const lastVisit    = schoolVisits.slice().sort(function(a, b) { return new Date(b.date) - new Date(a.date); })[0];
   const lastVisitDate = lastVisit ? new Date(lastVisit.date) : null;
   const daysSince = lastVisitDate
@@ -374,7 +377,10 @@ function renderSchoolDetail(schoolId) {
       <div class="school-detail-card">
         <div class="school-detail-header">
           <div>
-            ${school.priority ? `<span class="priority-badge ${priorityClass}" style="margin-bottom:8px; display:inline-block;">${school.priority}</span>` : ''}
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+              ${school.priority ? `<span class="priority-badge ${priorityClass}">${school.priority}</span>` : ''}
+              ${hasReturnFlag ? '<span class="return-flag">&#8617; Return Visit Flagged</span>' : ''}
+            </div>
             <h2 class="school-detail-name">${escapeHtml(school.name)}</h2>
             <p class="school-detail-county">${county ? escapeHtml(county.name) + ' County' : ''}</p>
           </div>
@@ -1213,6 +1219,59 @@ function renderRegionView(q) {
   }
 
   container.innerHTML = html;
+}
+
+// =============================================
+// COPY COUNTY EMAILS
+// Collects every contact email from every school
+// in a county and copies them as a comma-separated
+// list - ready to paste into a To: or BCC: field.
+// =============================================
+function copyCountyEmails(countyId) {
+  const schools = getSchools().filter(function(s) { return s.countyId === countyId; });
+
+  // Pull all email addresses across all contacts in the county,
+  // using getSchoolContacts() to handle both old and new contact formats.
+  const emails = [];
+  schools.forEach(function(school) {
+    getSchoolContacts(school).forEach(function(c) {
+      if (c.email && c.email.trim()) emails.push(c.email.trim());
+    });
+  });
+
+  if (emails.length === 0) {
+    alert('No contact emails found for schools in this county.');
+    return;
+  }
+
+  // Join with comma+space - works for most email clients
+  const emailList = emails.join(', ');
+
+  const btn = document.getElementById('copy-emails-btn');
+
+  navigator.clipboard.writeText(emailList).then(function() {
+    // Brief confirmation feedback on the button
+    if (btn) {
+      const original = btn.innerHTML;
+      btn.innerHTML = '&#10003; Copied ' + emails.length + ' email' + (emails.length !== 1 ? 's' : '') + '!';
+      btn.style.color = 'var(--success)';
+      setTimeout(function() {
+        btn.innerHTML = original;
+        btn.style.color = '';
+      }, 2500);
+    }
+  }).catch(function() {
+    // Fallback: show in a selectable textarea modal if clipboard access is denied
+    openModal(
+      'Copy Emails',
+      `<p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:12px;">
+        Clipboard access was denied. Select all the text below and copy it manually.
+      </p>
+      <textarea rows="4" style="width:100%; font-family:monospace; font-size:0.8rem; resize:vertical;"
+        onclick="this.select()">${escapeHtml(emailList)}</textarea>`,
+      null
+    );
+  });
 }
 
 // =============================================

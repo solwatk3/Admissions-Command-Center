@@ -127,9 +127,6 @@ function updateDashboardStats() {
   // Render the Primary Schools quick-access section
   renderPrimarySchools(schools);
 
-  // Render flagged return visits
-  renderReturnVisits();
-
   // Render upcoming visits (today and future)
   renderUpcomingVisits();
 
@@ -195,6 +192,9 @@ function renderPrimarySchools(schools) {
   // Load counties so we can look up the name by countyId
   const counties = loadData('counties', []);
 
+  // Load visits so we can flag schools that need a return visit
+  const visits = loadData('visits', []);
+
   // Filter down to only Primary-priority schools
   const primaries = schools.filter(s => s.priority === 'Primary');
 
@@ -209,41 +209,19 @@ function renderPrimarySchools(schools) {
       // Look up county name from the countyId stored on the school
       const county     = counties.find(c => c.id === s.countyId);
       const countyName = county ? county.name + ' County' : '';
+      // Check if any visit for this school has the return-visit flag set
+      const needsReturn = visits.some(function(v) { return v.schoolId === s.id && v.returnVisit; });
       return `
         <div class="primary-school-chip" onclick="navigateTo('directory'); openSchoolDetail('${s.id}')">
           <span>${escapeHtml(s.name)}</span>
           <span class="chip-county">${escapeHtml(countyName)}</span>
+          ${needsReturn ? '<span class="chip-return-tag">&#8617; Revisit</span>' : ''}
         </div>
       `;
     }).join('') +
   '</div>';
 
   container.innerHTML = html;
-}
-
-// =============================================
-// RETURN VISITS DASHBOARD CARD
-// Shows visits flagged for a return
-// =============================================
-function renderReturnVisits() {
-  const container = document.getElementById('dashboard-returns');
-  if (!container) return;
-
-  const visits  = loadData('visits', []);
-  const schools = loadData('schools', []);
-  const flagged = visits.filter(v => v.returnVisit);
-
-  if (flagged.length === 0) {
-    container.innerHTML = '<p class="empty-state">No return visits flagged yet.</p>';
-    return;
-  }
-
-  container.innerHTML = flagged.map(v => {
-    const school = schools.find(s => s.id === v.schoolId);
-    const name   = school ? school.name : v.schoolName || 'Unknown';
-    const date   = new Date(v.date).toLocaleDateString('default', { month: 'short', day: 'numeric' });
-    return `<div class="return-visit-row"><span>&#128260; ${escapeHtml(name)}</span><span class="return-visit-date">${date}</span></div>`;
-  }).join('');
 }
 
 // =============================================

@@ -554,6 +554,19 @@ a {
   font-weight: 400;
 }
 
+/* Revisit badge shown on primary school chips when a return visit is flagged */
+.chip-return-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent-light);
+  background: rgba(155,48,255,0.15);
+  border: 1px solid var(--accent);
+  border-radius: 20px;
+  padding: 2px 7px;
+  align-self: flex-start;
+  white-space: nowrap;
+}
+
 /* =============================================
    COMING SOON PLACEHOLDER
 ============================================== */

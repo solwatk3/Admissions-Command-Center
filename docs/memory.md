@@ -1,7 +1,7 @@
 # ACC - Admissions Command Center
 ## Project Memory
 
-Last updated: 2026-07-18
+Last updated: 2026-07-20
 
 ---
 
@@ -61,11 +61,10 @@ ACC/
 ## Features Built
 
 ### Dashboard
-- Upcoming Visits card - pulls from Google Calendar if connected
-- Return Visits Flagged card - schools from Visit Log with `returnVisit: true`
+- Upcoming Visits card - pulls from routes (Route Planner)
 - Overdue Schools card - Primary schools not visited in 60+ days, grouped by county with collapsible dropdowns, max-height scroll, "View School Directory" footer link
 - Season Snapshot card - live counts of schools, visits, colleagues
-- Primary Schools quick-access section - auto-populated from Directory
+- Primary Schools quick-access section - auto-populated from Directory; shows a small "Revisit" badge on schools with a return-visit flag in the Visit Log
 - Export Data / Import Data buttons - full JSON backup/restore; import only restores keys starting with `acc_`
 - Last-backup nudge next to the export buttons - shows days since last export, turns orange after 14 days or if no backup exists
 - Archive Season button - saves visits + routes under a named season label, clears them for a fresh start
@@ -93,7 +92,10 @@ Three tabs: A-Z Counties (default), Map, By Region
 - Resync Map button re-geocodes all addresses
 
 **Schools**
-- Fields: name, address (street/city/zip), priority (Primary/Secondary/Tertiary), contact name, contact email, contact phone, notes
+- Fields: name, address (street/city/zip), priority (Primary/Secondary/Tertiary), notes
+- Multi-contact support: each school can have multiple contacts with title/role, name, email, phone. Old single-contact fields are migrated on-the-fly by `getSchoolContacts()`
+- Return visit indicator shown in school detail header when any visit has `returnVisit: true`
+- County view has "Copy All Emails" button - collects all contact emails from all schools in that county and copies as comma-separated list
 - Visit stats bar on detail page: total visits, last visit date, days since (red if overdue)
 - Visit history list on detail page
 - Edit and Delete buttons on detail page
@@ -130,6 +132,13 @@ Three tabs: A-Z Counties (default), Map, By Region
 - 48-hour reminder banner on the route list, dismissible per route
 - Saved routes sync to Google Calendar when connected
 
+### Events
+- Boss-assigned events: fairs, conferences, open houses, etc.
+- Fields: name, event type (autocomplete from saved types), date, notes
+- Event types persist in `acc_event_types` datalist for reuse
+- Upcoming/Past grouping on the Events page
+- Dashboard card shows next 5 upcoming events
+
 ### Global Search (top bar)
 - Magnifier button in top bar opens a slide-down search panel
 - Keyboard shortcut: Ctrl+K
@@ -149,11 +158,13 @@ Three tabs: A-Z Counties (default), Map, By Region
 | Key | Contents |
 |---|---|
 | `acc_counties` | `[{id, name, notes, region}]` - region is "West TN", "Middle TN", or "East TN" |
-| `acc_schools` | `[{id, countyId, name, address, priority, contact, contactEmail, contactPhone, notes}]` |
+| `acc_schools` | `[{id, countyId, name, address, priority, contacts: [{id, title, name, email, phone}], notes}]` - old single-contact fields (contact, contactEmail, contactPhone) still exist on legacy records, migrated on read by `getSchoolContacts()` |
 | `acc_visits` | `[{id, schoolId, schoolName, title, date, mood, studentCount, commonQuestions, newQuestions, nextTimeNotes, promoCount, returnVisit}]` |
 | `acc_colleagues` | `[{id, name, institution, email, phone, notes}]` |
 | `acc_routes` | `[{id, name, date, origin, stops, reminderDismissed, createdAt}]` - stop: `{id, type, schoolId?, name, address, startTime?, endTime?}` |
 | `acc_archives` | `[{id, name, archivedOn, visits, routes}]` - season archive snapshots |
+| `acc_events` | `[{id, name, type, date, notes}]` - boss-assigned events |
+| `acc_event_types` | `[string]` - saved event type names for the datalist autocomplete |
 | `acc_geo_cache` | Address -> `{lat, lng, fallback?, manual?}` geocode cache (manual = user dragged the pin) |
 | `acc_gcal_connected` | Whether Google Calendar was connected |
 | `acc_gcal_calendar_id` | ID of the "Admissions Work" calendar |
@@ -210,8 +221,8 @@ new Date(d.getTime() + d.getTimezoneOffset() * 60000)
 - Driving only - no flight logistics
 - Google Calendar: dedicated "Admissions Work" calendar only - never personal events
 - Priority levels: Primary, Secondary, Tertiary (fixed, not custom)
-- Return visit flag is within the same season
-- One contact person per school
+- Return visit flag is within the same season; shown as a badge on Primary School chips on the dashboard and in the school detail header
+- Multiple contacts per school (contacts array with title/name/email/phone); old single-contact format migrated on read
 - Colleague Rolodex is separate from School Directory
 - Season archive clears visits and routes but keeps school directory and colleagues
 - Import only restores `acc_` keys - unexpected keys in a backup file are ignored
