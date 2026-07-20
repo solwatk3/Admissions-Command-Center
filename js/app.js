@@ -479,6 +479,19 @@ function exportAllData() {
   saveData('last_backup', new Date().toISOString());
   renderBackupStatus();
 
+  // ---- FILE DOWNLOAD ----
+  // Trigger a .json file download to the device so the user can import it
+  // directly with the file picker - no copying and pasting required.
+  const blob    = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+  const blobUrl = URL.createObjectURL(blob);
+  const dlLink  = document.createElement('a');
+  dlLink.href     = blobUrl;
+  dlLink.download = filename;
+  document.body.appendChild(dlLink);
+  dlLink.click();
+  document.body.removeChild(dlLink);
+  URL.revokeObjectURL(blobUrl);
+
   // ---- EMAIL BACKUP ----
   // Build a leaner copy for the email - skip the geocache and Google Calendar
   // system keys since they're large and auto-regenerate. Core data only.
@@ -496,17 +509,20 @@ function exportAllData() {
   const subject = 'ACC Backup - ' + dateStr
     + ' - ' + schoolCount + ' schools, ' + visitCount + ' visits';
 
+  // Simplified email - the .json file is the primary restore path now.
+  // The raw JSON is included at the bottom as a last-resort fallback only.
   const message = 'ACC Backup - ' + dateStr + '\n'
     + 'Schools: ' + schoolCount + '  |  Visits: ' + visitCount + '\n\n'
+    + 'Your backup just downloaded as:\n'
+    + filename + '\n\n'
     + '======= HOW TO RESTORE =======\n'
     + '1. Open ACC: https://solwatk3.github.io/Admissions-Command-Center/\n'
     + '2. Click "Import Data" on the dashboard\n'
-    + '3. Copy EVERYTHING between the markers below (start with { end with })\n'
-    + '4. Paste it into the box and click Restore\n'
+    + '3. Tap "Choose File" and pick the .json backup file\n'
+    + '   (On mobile: check Downloads or Files app)\n'
     + '==============================\n\n'
-    + '=== START - COPY FROM HERE ===\n'
-    + JSON.stringify(emailSnap) + '\n'
-    + '=== END - COPY TO HERE ===';
+    + '--- FALLBACK: raw JSON (only needed if the file is unavailable) ---\n'
+    + JSON.stringify(emailSnap);
 
   emailjs.send('service_9sv9w6p', 'template_r0o15xz', {
     to_email: 'solwatk3@gmail.com',
@@ -558,39 +574,34 @@ function renderBackupStatus() {
 
 // =============================================
 // IMPORT MODAL
-// Opens a paste-in dialog so the user can restore from
-// the JSON block in their backup email - no file needed.
+// File-picker based restore - no copying or pasting required.
+// The user picks the .json backup file downloaded during Export
+// and the data is read and restored automatically.
 // =============================================
 function openImportModal() {
   const body = `
-    <p style="color:var(--text-muted); font-size:0.85rem; margin:0 0 14px;">
-      Open your backup email, copy the JSON block at the bottom, then paste it below.
+    <p style="color:var(--text-muted); font-size:0.875rem; margin:0 0 16px;">
+      Pick the .json backup file from your device to restore your data.
+      On mobile, check your Downloads or Files app after exporting.
     </p>
     <div class="form-group">
-      <label>Paste backup JSON</label>
-      <textarea id="f-import-json" rows="10"
-        placeholder="Paste your ACC backup JSON here..."
-        style="font-family:monospace; font-size:0.75rem; resize:vertical;"></textarea>
+      <label>Backup file (.json)</label>
+      <input
+        type="file"
+        id="f-import-file"
+        accept=".json,application/json"
+        style="color:var(--text); padding:8px 0;"
+        onchange="importAllData(event)"
+      />
     </div>
+    <p style="color:var(--text-muted); font-size:0.78rem; margin-top:12px;">
+      Don't have the file? Export from another device first, then transfer the .json to this one.
+    </p>
   `;
 
-  openModal('Restore from Backup', body, function() {
-    const raw = (document.getElementById('f-import-json').value || '').trim();
-    if (!raw) {
-      alert('Nothing pasted - copy the JSON block from your backup email first.');
-      return;
-    }
-
-    let snapshot;
-    try {
-      snapshot = JSON.parse(raw);
-    } catch (e) {
-      alert('Could not read that text. Make sure you copied the full JSON block from the email - start with { and end with }.');
-      return;
-    }
-
-    restoreSnapshot(snapshot);
-  });
+  // null as the save handler hides the Save button -
+  // the file input triggers the restore automatically on file selection.
+  openModal('Restore from Backup', body, null);
 }
 
 // =============================================

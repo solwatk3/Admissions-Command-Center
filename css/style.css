@@ -437,6 +437,11 @@ a {
   gap: 16px;
 }
 
+/* Forces exactly 3 equal columns - used on the dashboard summary row */
+.cards-grid-thirds {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .card {
   background: var(--surface);
   border-radius: var(--radius);
@@ -816,7 +821,8 @@ a {
     justify-content: center;
   }
 
-  .cards-grid {
+  .cards-grid,
+  .cards-grid-thirds {
     grid-template-columns: 1fr;
   }
 
