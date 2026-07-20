@@ -144,6 +144,35 @@
 }
 
 /* =============================================
+   FORM ROW SPLIT
+   Side-by-side layout for date + time inputs
+============================================== */
+.form-row-split {
+  display: flex;
+  gap: 12px;
+}
+
+.form-row-split .form-group {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Stack vertically on small screens */
+@media (max-width: 480px) {
+  .form-row-split {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+/* Small "optional" label inside a field label */
+.form-optional {
+  font-size: 0.73rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+/* =============================================
    FORM HINT TEXT
    Small grey note below form inputs
 ============================================== */

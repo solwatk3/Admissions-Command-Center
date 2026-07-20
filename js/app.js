@@ -1008,6 +1008,21 @@ function runGlobalSearch(q) {
 }
 
 // =============================================
+// TIME FORMATTING
+// Converts a 24-hour "HH:MM" string to "9:00 AM" style.
+// Used by events display and the calendar meta line.
+// =============================================
+function formatEventTime(timeStr) {
+  if (!timeStr) return '';
+  var parts = timeStr.split(':');
+  var h     = parseInt(parts[0], 10);
+  var m     = parts[1];
+  var ampm  = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return h + ':' + m + ' ' + ampm;
+}
+
+// =============================================
 // DASHBOARD CALENDAR
 // Unified calendar that shows Routes, Events, Visits, and Google Cal events.
 // Supports a monthly grid view and a scrollable agenda view.
@@ -1072,11 +1087,12 @@ function getCalendarItems() {
   // Events (boss-assigned fairs / conferences) - teal
   events.forEach(function(e) {
     if (!e.date) return;
+    var timeLabel = e.time ? ' · ' + formatEventTime(e.time) : '';
     items.push({
       type:  'event',
       date:  e.date,
       title: e.name || 'Event',
-      meta:  e.type || 'Event',
+      meta:  (e.type || 'Event') + timeLabel,
       id:    e.id,
       color: '#22d3ee',
     });

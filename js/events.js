@@ -108,6 +108,9 @@ function renderEventRow(ev) {
   const dateStr = new Date(d.getTime() + d.getTimezoneOffset() * 60000)
     .toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 
+  // Append formatted time if one was set (e.g. "Mon, Jul 21, 2026 · 9:00 AM")
+  const timeLabel = ev.time ? ' &middot; ' + formatEventTime(ev.time) : '';
+
   const notesHtml = ev.notes
     ? '<span class="event-notes">' + escapeHtml(ev.notes) + '</span>'
     : '';
@@ -122,7 +125,7 @@ function renderEventRow(ev) {
         </div>
       </div>
       <div class="event-row-right">
-        <span class="event-date">${dateStr}</span>
+        <span class="event-date">${dateStr}${timeLabel}</span>
         <button class="btn-icon btn-icon-danger event-delete-btn"
           onclick="event.stopPropagation(); confirmDeleteEvent('${ev.id}')"
           title="Delete event">&#128465;</button>
@@ -152,9 +155,15 @@ function openAddEvent() {
         Pick a saved type from the list, or type a new one - it will be saved for next time.
       </small>
     </div>
-    <div class="form-group">
-      <label>Date <span class="required">*</span></label>
-      <input type="date" id="f-event-date" value="${today}" />
+    <div class="form-row-split">
+      <div class="form-group">
+        <label>Date <span class="required">*</span></label>
+        <input type="date" id="f-event-date" value="${today}" />
+      </div>
+      <div class="form-group">
+        <label>Start Time <span class="form-optional">(optional)</span></label>
+        <input type="time" id="f-event-time" />
+      </div>
     </div>
     <div class="form-group">
       <label>Notes</label>
@@ -167,6 +176,7 @@ function openAddEvent() {
     const name  = document.getElementById('f-event-name').value.trim();
     const type  = document.getElementById('f-event-type').value.trim();
     const date  = document.getElementById('f-event-date').value;
+    const time  = document.getElementById('f-event-time').value;
     const notes = document.getElementById('f-event-notes').value.trim();
 
     if (!name) { alert('Event name is required.'); return; }
@@ -182,6 +192,7 @@ function openAddEvent() {
       name:  name,
       type:  type,
       date:  date,
+      time:  time,
       notes: notes,
     });
 
@@ -215,9 +226,15 @@ function openEditEvent(id) {
         Pick a saved type from the list, or type a new one - it will be saved for next time.
       </small>
     </div>
-    <div class="form-group">
-      <label>Date <span class="required">*</span></label>
-      <input type="date" id="f-event-date" value="${ev.date}" />
+    <div class="form-row-split">
+      <div class="form-group">
+        <label>Date <span class="required">*</span></label>
+        <input type="date" id="f-event-date" value="${ev.date}" />
+      </div>
+      <div class="form-group">
+        <label>Start Time <span class="form-optional">(optional)</span></label>
+        <input type="time" id="f-event-time" value="${ev.time || ''}" />
+      </div>
     </div>
     <div class="form-group">
       <label>Notes</label>
@@ -229,6 +246,7 @@ function openEditEvent(id) {
     const name  = document.getElementById('f-event-name').value.trim();
     const type  = document.getElementById('f-event-type').value.trim();
     const date  = document.getElementById('f-event-date').value;
+    const time  = document.getElementById('f-event-time').value;
     const notes = document.getElementById('f-event-notes').value.trim();
 
     if (!name) { alert('Event name is required.'); return; }
@@ -243,6 +261,7 @@ function openEditEvent(id) {
       name:  name,
       type:  type,
       date:  date,
+      time:  time,
       notes: notes,
     };
 
