@@ -517,23 +517,58 @@ async function exportAllData() {
     URL.revokeObjectURL(url);
   }
 
+  // ---- BUILD TAP-TO-RESTORE LINK ----
+  // Post the core backup keys (no large geocache or GCal system data) to an
+  // anonymous GitHub Gist. GitHub returns a short Gist ID we can put in a URL.
+  // The email then has a real tappable link instead of a huge base64 blob.
+  // Falls back silently if the API is unavailable - email still sends without the link.
+  const emailKeys = ['acc_counties', 'acc_schools', 'acc_visits',
+                     'acc_colleagues', 'acc_routes', 'acc_archives',
+                     'acc_events', 'acc_event_types'];
+  const emailSnap = {};
+  emailKeys.forEach(function(k) {
+    if (snapshot[k] !== undefined) emailSnap[k] = snapshot[k];
+  });
+
+  let restoreUrl = '';
+  try {
+    const gistRes = await fetch('https://api.github.com/gists', {
+      method:  'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept':       'application/vnd.github.v3+json',
+      },
+      body: JSON.stringify({
+        description: 'ACC Backup ' + dateStr,
+        public:      true,
+        files:       { [filename]: { content: JSON.stringify(emailSnap) } },
+      }),
+    });
+    if (gistRes.ok) {
+      const gistData = await gistRes.json();
+      // Short restore URL - fits easily in an email and has no length limit
+      restoreUrl = 'https://solwatk3.github.io/Admissions-Command-Center/?gist=' + gistData.id;
+    }
+  } catch (err) {
+    // Non-fatal - the file is already saved to the device, email sends without the link
+    console.warn('ACC: could not create Gist for restore URL -', err);
+  }
+
   // ---- EMAIL CONFIRMATION ----
-  // Send a lightweight record email - no JSON dump, no URL.
-  // The export file is on the device; import it with the file picker.
   const btn = document.getElementById('export-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Backing up...'; }
 
   const subject = 'ACC Backup - ' + dateStr
     + ' - ' + schoolCount + ' schools, ' + visitCount + ' visits';
 
+  // Include the short restore URL if the Gist was created, otherwise just instructions
+  const restoreLine = restoreUrl
+    ? 'TAP TO RESTORE ON ANY DEVICE:\n' + restoreUrl + '\n\n'
+    : 'To restore: open ACC, tap Import Data, and select the .json file.\n\n';
+
   const message = 'ACC Backup - ' + dateStr + '\n'
     + 'Schools: ' + schoolCount + '  |  Visits: ' + visitCount + '\n\n'
-    + 'Your backup file (' + filename + ') was saved to your device.\n\n'
-    + 'To restore on another device:\n'
-    + '1. Transfer the .json file to the target device\n'
-    + '   (AirDrop, Files app, Google Drive, email attachment, etc.)\n'
-    + '2. Open ACC and tap "Import Data"\n'
-    + '3. Select the .json file\n\n'
+    + restoreLine
     + 'Backed up: ' + new Date().toLocaleString();
 
   emailjs.send('service_9sv9w6p', 'template_r0o15xz', {
@@ -1446,33 +1481,53 @@ function updateCalGcalStatus() {
 
 // =============================================
 // TAP-TO-RESTORE
-// When the app is opened via a restore link from a backup email,
-// the URL contains ?restore=BASE64DATA. This function detects that,
-// decodes the data, and offers to restore - then cleans the URL.
+// Checks for restore parameters in the URL when the app opens.
+//
+// Two formats are handled:
+//   ?gist=GIST_ID  - new format: fetches backup JSON from a GitHub Gist.
+//                    Short URL, no length limit, tappable on mobile.
+//   ?restore=BASE64 - old format: decodes a base64 snapshot from the URL.
+//                     Kept so any old restore links still work.
+//
+// After reading the param the URL is cleaned so it does not persist on refresh.
 // =============================================
-function checkRestoreParam() {
-  var params      = new URLSearchParams(window.location.search);
+async function checkRestoreParam() {
+  var params = new URLSearchParams(window.location.search);
+
+  // --- New format: restore from a GitHub Gist ID ---
+  var gistId = params.get('gist');
+  if (gistId) {
+    history.replaceState(null, '', window.location.pathname);
+    try {
+      var res = await fetch('https://api.github.com/gists/' + gistId, {
+        headers: { 'Accept': 'application/vnd.github.v3+json' },
+      });
+      if (!res.ok) throw new Error('Gist fetch failed: ' + res.status);
+      var gist     = await res.json();
+      // The first file in the Gist is the backup
+      var fileObj  = Object.values(gist.files)[0];
+      var snapshot = JSON.parse(fileObj.content);
+      restoreSnapshot(snapshot);
+    } catch (e) {
+      console.error('ACC: Gist restore failed -', e);
+      alert('Could not load the backup from that link. It may have been deleted or the link is invalid.');
+    }
+    return;
+  }
+
+  // --- Old format: decode base64 snapshot from URL ---
   var restoreData = params.get('restore');
   if (!restoreData) return;
 
-  // Strip the parameter from the URL right away so it doesn't
-  // linger if the user refreshes or shares the page.
   history.replaceState(null, '', window.location.pathname);
-
   try {
-    // Decode URL-safe base64 back to standard base64, then to JSON.
-    // URL-safe base64 swaps + -> - and / -> _ and drops padding.
-    var standard = restoreData
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
-    // Re-add padding if needed (base64 strings must be a multiple of 4)
+    // URL-safe base64 swaps + -> - and / -> _ and drops padding
+    var standard = restoreData.replace(/-/g, '+').replace(/_/g, '/');
     while (standard.length % 4) standard += '=';
-
     var snapshot = JSON.parse(decodeURIComponent(escape(atob(standard))));
     restoreSnapshot(snapshot);
-
   } catch (e) {
-    console.error('ACC: tap-to-restore failed -', e);
+    console.error('ACC: base64 restore failed -', e);
     alert('The restore link appears to be invalid or expired. Try exporting again to get a fresh link.');
   }
 }

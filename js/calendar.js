@@ -273,28 +273,49 @@ async function deleteCalendarEvent(routeId) {
 // Called on connect and via the Sync Now button.
 // =============================================
 async function syncAllRoutes() {
-  const routes   = loadData('routes', []);
-  const syncBtn  = document.getElementById('gcal-sync-btn');
+  // Guard: token may have expired since the page loaded - check before starting.
+  if (!isCalendarConnected()) {
+    alert('Google Calendar session expired. Please reconnect.');
+    renderCalendarStatus();
+    return;
+  }
 
+  const routes  = loadData('routes', []);
+  const syncBtn = document.getElementById('gcal-sync-btn');
+
+  if (routes.length === 0) {
+    // Nothing to sync - flash a brief message so the user knows why
+    if (syncBtn) {
+      syncBtn.textContent = 'No routes yet';
+      setTimeout(function() { renderCalendarStatus(); }, 1500);
+    }
+    return;
+  }
+
+  // Disable button and show starting state
   if (syncBtn) {
     syncBtn.disabled    = true;
-    syncBtn.textContent = 'Syncing...';
+    syncBtn.textContent = 'Syncing 0/' + routes.length + '...';
   }
 
-  for (const route of routes) {
-    await syncRouteToCalendar(route);
+  // Sync each route one at a time. Update the counter after each one
+  // so the user can see progress. syncBtn stays valid throughout the loop
+  // because renderCalendarStatus() is NOT called inside syncRouteToCalendar().
+  for (var i = 0; i < routes.length; i++) {
+    await syncRouteToCalendar(routes[i]);
+    if (syncBtn) {
+      syncBtn.textContent = 'Syncing ' + (i + 1) + '/' + routes.length + '...';
+    }
   }
 
-  // Re-enable the button and briefly flash a "Synced!" confirmation.
-  // The button is still in the DOM here because renderCalendarStatus() is no
-  // longer called inside syncRouteToCalendar() mid-loop.
+  // Show a brief "Done!" confirmation before the status refreshes
   if (syncBtn) {
     syncBtn.disabled    = false;
-    syncBtn.textContent = 'Synced!';
+    syncBtn.textContent = 'Done!';
   }
 
-  // After 1.5 seconds, refresh the status area (updates the lastSync timestamp)
-  // and pull the latest GCal events so new dots appear on the calendar.
+  // After 1.5 seconds, refresh the GCal status area (shows updated lastSync time)
+  // and pull the latest calendar events so new green dots appear on the grid.
   setTimeout(function() {
     renderCalendarStatus();
     fetchGCalEvents();
