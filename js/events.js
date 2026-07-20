@@ -108,11 +108,15 @@ function renderEventRow(ev) {
   const dateStr = new Date(d.getTime() + d.getTimezoneOffset() * 60000)
     .toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 
-  // Append formatted time if one was set (e.g. "Mon, Jul 21, 2026 · 9:00 AM")
-  const timeLabel = ev.time ? ' &middot; ' + formatEventTime(ev.time) : '';
+  // Append formatted time range if times are set (e.g. "Mon, Jul 21, 2026 · 9:00 AM - 11:00 AM")
+  var timeLabel = '';
+  if (ev.time) {
+    timeLabel = ' &middot; ' + formatEventTime(ev.time);
+    if (ev.endTime) timeLabel += ' - ' + formatEventTime(ev.endTime);
+  }
 
   const notesHtml = ev.notes
-    ? '<span class="event-notes">' + escapeHtml(ev.notes) + '</span>'
+    ? '<div class="event-notes">' + escapeHtml(ev.notes).replace(/\n/g, '<br>') + '</div>'
     : '';
 
   return `
@@ -165,19 +169,27 @@ function openAddEvent() {
         <input type="time" id="f-event-time" />
       </div>
     </div>
+    <div class="form-row-split">
+      <div class="form-group">
+        <label>End Time <span class="form-optional">(optional)</span></label>
+        <input type="time" id="f-event-end-time" />
+      </div>
+      <div class="form-group"></div>
+    </div>
     <div class="form-group">
       <label>Notes</label>
-      <textarea id="f-event-notes" rows="3"
+      <textarea id="f-event-notes" rows="6" style="min-height:120px; resize:vertical;"
         placeholder="Optional: location, prep needed, who else is attending..."></textarea>
     </div>
   `;
 
   openModal('Add Event', body, function() {
-    const name  = document.getElementById('f-event-name').value.trim();
-    const type  = document.getElementById('f-event-type').value.trim();
-    const date  = document.getElementById('f-event-date').value;
-    const time  = document.getElementById('f-event-time').value;
-    const notes = document.getElementById('f-event-notes').value.trim();
+    const name    = document.getElementById('f-event-name').value.trim();
+    const type    = document.getElementById('f-event-type').value.trim();
+    const date    = document.getElementById('f-event-date').value;
+    const time    = document.getElementById('f-event-time').value;
+    const endTime = document.getElementById('f-event-end-time').value;
+    const notes   = document.getElementById('f-event-notes').value.trim();
 
     if (!name) { alert('Event name is required.'); return; }
     if (!type) { alert('Event type is required.'); return; }
@@ -188,12 +200,13 @@ function openAddEvent() {
 
     const events = getEvents();
     events.push({
-      id:    makeId(),
-      name:  name,
-      type:  type,
-      date:  date,
-      time:  time,
-      notes: notes,
+      id:      makeId(),
+      name:    name,
+      type:    type,
+      date:    date,
+      time:    time,
+      endTime: endTime,
+      notes:   notes,
     });
 
     saveEvents(events);
@@ -236,18 +249,26 @@ function openEditEvent(id) {
         <input type="time" id="f-event-time" value="${ev.time || ''}" />
       </div>
     </div>
+    <div class="form-row-split">
+      <div class="form-group">
+        <label>End Time <span class="form-optional">(optional)</span></label>
+        <input type="time" id="f-event-end-time" value="${ev.endTime || ''}" />
+      </div>
+      <div class="form-group"></div>
+    </div>
     <div class="form-group">
       <label>Notes</label>
-      <textarea id="f-event-notes" rows="3">${escapeHtml(ev.notes || '')}</textarea>
+      <textarea id="f-event-notes" rows="6" style="min-height:120px; resize:vertical;">${escapeHtml(ev.notes || '')}</textarea>
     </div>
   `;
 
   openModal('Edit Event', body, function() {
-    const name  = document.getElementById('f-event-name').value.trim();
-    const type  = document.getElementById('f-event-type').value.trim();
-    const date  = document.getElementById('f-event-date').value;
-    const time  = document.getElementById('f-event-time').value;
-    const notes = document.getElementById('f-event-notes').value.trim();
+    const name    = document.getElementById('f-event-name').value.trim();
+    const type    = document.getElementById('f-event-type').value.trim();
+    const date    = document.getElementById('f-event-date').value;
+    const time    = document.getElementById('f-event-time').value;
+    const endTime = document.getElementById('f-event-end-time').value;
+    const notes   = document.getElementById('f-event-notes').value.trim();
 
     if (!name) { alert('Event name is required.'); return; }
     if (!type) { alert('Event type is required.'); return; }
@@ -257,12 +278,13 @@ function openEditEvent(id) {
 
     const idx = events.findIndex(function(e) { return e.id === id; });
     events[idx] = {
-      id:    events[idx].id,
-      name:  name,
-      type:  type,
-      date:  date,
-      time:  time,
-      notes: notes,
+      id:      events[idx].id,
+      name:    name,
+      type:    type,
+      date:    date,
+      time:    time,
+      endTime: endTime,
+      notes:   notes,
     };
 
     saveEvents(events);

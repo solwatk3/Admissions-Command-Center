@@ -207,18 +207,21 @@ function accEventToCalendarEvent(ev) {
   if (ev.notes) description += ev.notes + '\n';
   description += '\nSynced from ACC - Admissions Command Center';
 
-  // If a time was set, make it a timed event (1 hour duration by default)
+  // If a start time was set, make it a timed event.
+  // Use the saved end time if available; otherwise default to start + 1 hour.
   if (ev.time) {
-    var parts  = ev.time.split(':').map(Number);
-    var endHr  = parts[0] + 1;
-    var endMin = String(parts[1]).padStart(2, '0');
-    var endTime = String(endHr).padStart(2, '0') + ':' + endMin;
+    var endTime = ev.endTime || '';
+    if (!endTime) {
+      var parts  = ev.time.split(':').map(Number);
+      var endHr  = parts[0] + 1;
+      endTime = String(endHr).padStart(2, '0') + ':' + String(parts[1]).padStart(2, '0');
+    }
 
     return {
       summary:     ev.name,
       description: description,
-      start: { dateTime: ev.date + 'T' + ev.time + ':00', timeZone: 'America/Chicago' },
-      end:   { dateTime: ev.date + 'T' + endTime  + ':00', timeZone: 'America/Chicago' },
+      start: { dateTime: ev.date + 'T' + ev.time    + ':00', timeZone: 'America/Chicago' },
+      end:   { dateTime: ev.date + 'T' + endTime + ':00', timeZone: 'America/Chicago' },
     };
   }
 
