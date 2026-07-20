@@ -473,10 +473,11 @@ function renderSchoolDetail(schoolId) {
     </div>
   `;
 
-  // After the HTML is in the DOM, initialize the mini-map if there's an address
+  // After the HTML is in the DOM, initialize the mini-map if there's an address.
+  // Pass the full school object so the map can use county name as a last-resort fallback.
   if (school.address) {
     setTimeout(function() {
-      initSchoolDetailMap(school.address);
+      initSchoolDetailMap(school.address, school);
     }, 0);
   }
 }

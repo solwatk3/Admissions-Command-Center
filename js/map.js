@@ -410,7 +410,7 @@ async function initSchoolMap() {
 // =============================================
 let detailMapInstance = null;
 
-async function initSchoolDetailMap(address) {
+async function initSchoolDetailMap(address, school) {
   const mapEl = document.getElementById('school-detail-map');
   if (!mapEl) return;
 
@@ -420,21 +420,65 @@ async function initSchoolDetailMap(address) {
     detailMapInstance = null;
   }
 
-  // Try the cache first, then Nominatim if not cached
+  // Try the cache first so we never re-geocode a known address
   const key   = address.trim().toLowerCase();
   const cache = getGeoCache();
-  let coords  = cache[key] || null;
+  let coords     = cache[key] || null;
+  let isFallback = coords ? !!coords.fallback : false;
 
   if (!coords) {
-    coords = await geocodeAddress(address.trim(), 0);
-    if (coords) {
-      cache[key] = coords;
-      saveGeoCache(cache);
+    // Build the same fallback chain used in geocodeAllSchools:
+    // full address -> city only -> ZIP code -> county name.
+    // This handles cases where the street address contains a
+    // highway identifier (e.g. TN-58) that Nominatim can't resolve.
+    const parts    = address.split(',').map(function(p) { return p.trim(); });
+    const city     = parts[1] || '';
+    const lastPart = parts[parts.length - 1] || '';
+    const zip      = lastPart.replace(/^TN\s*/i, '').trim();
+    const county   = school
+      ? getCounties().find(function(c) { return c.id === school.countyId; })
+      : null;
+
+    const attempts = [
+      // 1. Full street address - most accurate
+      { query: address.trim(), fallback: false },
+    ];
+
+    // 2. City only - lands somewhere in the right town
+    if (city) {
+      attempts.push({ query: city, fallback: true });
+    }
+
+    // 3. ZIP code - drops pin in the right postal area
+    if (zip && /^\d{5}$/.test(zip)) {
+      attempts.push({ query: zip, fallback: true });
+    }
+
+    // 4. County name - last resort, at least shows the right county
+    if (county) {
+      attempts.push({ query: county.name + ' County', fallback: true });
+    }
+
+    // Stagger requests by 1.1 seconds each to respect Nominatim's
+    // rate limit of 1 request per second. Stop at the first hit.
+    let delay = 0;
+    for (const attempt of attempts) {
+      const result = await geocodeAddress(attempt.query, delay);
+      delay += 1100;
+
+      if (result) {
+        coords     = result;
+        isFallback = attempt.fallback;
+        // Cache with fallback flag so a future resync knows this can be improved
+        cache[key] = { lat: coords.lat, lng: coords.lng, fallback: isFallback };
+        saveGeoCache(cache);
+        break;
+      }
     }
   }
 
   if (!coords) {
-    // Address couldn't be geocoded - show a plain message in the map area
+    // All attempts failed - show a plain message in the map area
     mapEl.innerHTML = '<p style="color:var(--text-muted); font-size:0.82rem; padding:16px; text-align:center;">Location not found for this address.</p>';
     return;
   }
@@ -476,6 +520,14 @@ async function initSchoolDetailMap(address) {
     iconSize:    [20, 20],
     iconAnchor:  [10, 10],  // center of the circle sits on the coordinate
   });
+
+  // If we landed on a fallback location (city/ZIP/county), update the note
+  // below the map so the user knows the pin is approximate and can drag it.
+  const noteEl = document.querySelector('.school-detail-map-note');
+  if (isFallback && noteEl) {
+    noteEl.innerHTML = '&#9432; Approximate location - drag the pin to correct it.';
+    noteEl.style.color = '#ff9800';
+  }
 
   // Use a draggable marker so the user can correct the pin position
   const marker = L.marker([coords.lat, coords.lng], {
