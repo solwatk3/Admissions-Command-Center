@@ -284,11 +284,26 @@ function renderSchoolsList(countyId) {
         </div>` : ''}
     </div>
 
-    <!-- Schools grid -->
+    <!-- Schools grid, grouped under A-Z letter headers -->
     <div class="schools-pill-grid">
       ${countySchools.length === 0
         ? '<p class="empty-state" style="padding:40px; text-align:center;">No schools in this county yet. Add one above.</p>'
-        : countySchools.map(s => renderSchoolPill(s)).join('')
+        : (function() {
+            var html = '';
+            var currentLetter = '';
+            countySchools.forEach(function(s) {
+              // Get the first letter of the school name (uppercase, fallback to #)
+              var letter = s.name.trim()[0].toUpperCase();
+              if (!/[A-Z]/.test(letter)) letter = '#';
+              // Insert a letter divider whenever the letter changes
+              if (letter !== currentLetter) {
+                currentLetter = letter;
+                html += '<div class="school-alpha-divider">' + letter + '</div>';
+              }
+              html += renderSchoolPill(s);
+            });
+            return html;
+          })()
       }
     </div>
   `;

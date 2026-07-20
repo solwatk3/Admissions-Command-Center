@@ -230,6 +230,21 @@ new Date(d.getTime() + d.getTimezoneOffset() * 60000)
 
 ---
 
+## Handoff Protocol
+
+When Sol says **"handoff"**, generate a self-contained prompt he can paste into a new chat to resume seamlessly. The prompt must include:
+
+1. A one-paragraph summary of what ACC is (plain HTML/CSS/JS, localStorage, GitHub Pages, no frameworks)
+2. The current file structure and tech conventions (escapeHtml, loadData/saveData, makeId, openModal, getSchoolContacts, script load order)
+3. A bullet list of everything built so far (pull from the Features Built section above)
+4. The safety rules (never delete/send/push without asking, surgical edits only, no em dashes, confirm before implementing)
+5. Any work that was in progress or just completed in the current session
+6. The instruction: "Read all source files at ClaudeOS/ACC before making any changes."
+
+Keep the prompt under 600 words so it fits cleanly in a new chat window.
+
+---
+
 ## GitHub
 - Repo exists; push requires Sol's explicit go-ahead
 - Will be hosted via GitHub Pages for access from any device

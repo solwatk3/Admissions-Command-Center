@@ -265,6 +265,18 @@
   gap: 8px;
 }
 
+/* A-Z letter divider shown before each new letter group in the school list */
+.school-alpha-divider {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  text-transform: uppercase;
+  padding: 10px 4px 2px;
+  border-bottom: 1px solid var(--border);
+  margin-top: 4px;
+}
+
 /* Individual school row */
 .school-pill {
   display: flex;
