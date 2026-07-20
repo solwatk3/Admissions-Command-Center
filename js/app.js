@@ -766,8 +766,8 @@ function runGlobalSearch(q) {
   var routes     = loadData('routes',      []);
 
   // --- Schools ---
-  // Searches: name, address, notes, priority, county name,
-  // and every contact's name/title/email/phone
+  // Matches on school-level fields only (name, address, notes, priority, county).
+  // Contact searches are handled separately below so contacts appear as their own results.
   var schoolHits = schools.filter(function(s) {
     var county = counties.find(function(c) { return c.id === s.countyId; });
     var countyName = county ? county.name.toLowerCase() : '';
@@ -776,14 +776,26 @@ function runGlobalSearch(q) {
       (s.address  || '').toLowerCase().includes(query) ||
       (s.notes    || '').toLowerCase().includes(query) ||
       (s.priority || '').toLowerCase().includes(query) ||
-      countyName.includes(query) ||
-      getSchoolContacts(s).some(function(c) {
-        return (c.name  || '').toLowerCase().includes(query) ||
-               (c.email || '').toLowerCase().includes(query) ||
-               (c.phone || '').toLowerCase().includes(query) ||
-               (c.title || '').toLowerCase().includes(query);
-      })
+      countyName.includes(query)
     );
+  });
+
+  // --- School Contacts ---
+  // Each matching contact becomes its own result row showing the contact's
+  // name, title, and which school they belong to.
+  // Clicking opens that school's detail page where the contact info lives.
+  var contactHits = [];
+  schools.forEach(function(s) {
+    getSchoolContacts(s).forEach(function(c) {
+      if (
+        (c.name  || '').toLowerCase().includes(query) ||
+        (c.email || '').toLowerCase().includes(query) ||
+        (c.phone || '').toLowerCase().includes(query) ||
+        (c.title || '').toLowerCase().includes(query)
+      ) {
+        contactHits.push({ contact: c, school: s });
+      }
+    });
   });
 
   // --- Visits ---
@@ -833,8 +845,8 @@ function runGlobalSearch(q) {
     });
   });
 
-  var totalHits = schoolHits.length + visitHits.length + colleagueHits.length +
-                  eventHits.length  + routeHits.length;
+  var totalHits = schoolHits.length + contactHits.length + visitHits.length +
+                  colleagueHits.length + eventHits.length + routeHits.length;
 
   if (totalHits === 0) {
     // Escape the query so typed quotes or angle brackets cannot break the page
@@ -858,6 +870,27 @@ function runGlobalSearch(q) {
             ${sub ? `<span class="gs-result-sub">${escapeHtml(sub)}</span>` : ''}
           </div>
           <span class="gs-result-tag">${s.priority || ''}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Contact results - each contact shown individually with school as subtitle
+  if (contactHits.length > 0) {
+    html += '<div class="gs-section-label">School Contacts</div>';
+    html += contactHits.map(function(item) {
+      var c = item.contact;
+      var s = item.school;
+      // Show the most useful piece of contact info as the subtitle line
+      var detail = c.title ? escapeHtml(c.title) : '';
+      if (c.email) detail += (detail ? ' - ' : '') + escapeHtml(c.email);
+      return `
+        <div class="gs-result" onclick="closeGlobalSearch(); navigateTo('directory'); openSchoolDetail('${s.id}')">
+          <span class="gs-result-icon">&#128101;</span>
+          <div class="gs-result-text">
+            <span class="gs-result-name">${escapeHtml(c.name || 'Unnamed Contact')}</span>
+            <span class="gs-result-sub">${escapeHtml(s.name)}${detail ? ' - ' + detail : ''}</span>
+          </div>
         </div>
       `;
     }).join('');
