@@ -517,11 +517,11 @@ async function exportAllData() {
     URL.revokeObjectURL(url);
   }
 
-  // ---- BUILD TAP-TO-RESTORE LINK ----
-  // Post the core backup keys (no large geocache or GCal system data) to an
-  // anonymous GitHub Gist. GitHub returns a short Gist ID we can put in a URL.
-  // The email then has a real tappable link instead of a huge base64 blob.
-  // Falls back silently if the API is unavailable - email still sends without the link.
+  // ---- SAVE TO ACC REPO (tap-to-restore) ----
+  // If a GitHub token is configured, write the core backup data to
+  // backups/latest.json in the ACC repo. The email then includes a short
+  // ?restore_raw=1 link that always points to that file.
+  // Falls back silently if no token is set or the API call fails.
   const emailKeys = ['acc_counties', 'acc_schools', 'acc_visits',
                      'acc_colleagues', 'acc_routes', 'acc_archives',
                      'acc_events', 'acc_event_types'];
@@ -532,26 +532,10 @@ async function exportAllData() {
 
   let restoreUrl = '';
   try {
-    const gistRes = await fetch('https://api.github.com/gists', {
-      method:  'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept':       'application/vnd.github.v3+json',
-      },
-      body: JSON.stringify({
-        description: 'ACC Backup ' + dateStr,
-        public:      true,
-        files:       { [filename]: { content: JSON.stringify(emailSnap) } },
-      }),
-    });
-    if (gistRes.ok) {
-      const gistData = await gistRes.json();
-      // Short restore URL - fits easily in an email and has no length limit
-      restoreUrl = 'https://solwatk3.github.io/Admissions-Command-Center/?gist=' + gistData.id;
-    }
+    restoreUrl = await saveBackupToRepo(emailSnap, dateStr);
   } catch (err) {
-    // Non-fatal - the file is already saved to the device, email sends without the link
-    console.warn('ACC: could not create Gist for restore URL -', err);
+    // Non-fatal - file is already on the device, email still sends without the link
+    console.warn('ACC: could not save backup to GitHub repo -', err);
   }
 
   // ---- EMAIL CONFIRMATION ----
@@ -561,7 +545,7 @@ async function exportAllData() {
   const subject = 'ACC Backup - ' + dateStr
     + ' - ' + schoolCount + ' schools, ' + visitCount + ' visits';
 
-  // Include the short restore URL if the Gist was created, otherwise just instructions
+  // Restore link if the repo save worked, plain instructions if not
   const restoreLine = restoreUrl
     ? 'TAP TO RESTORE ON ANY DEVICE:\n' + restoreUrl + '\n\n'
     : 'To restore: open ACC, tap Import Data, and select the .json file.\n\n';
@@ -1480,6 +1464,113 @@ function updateCalGcalStatus() {
 }
 
 // =============================================
+// GITHUB REPO BACKUP
+// Saves backups/latest.json in the ACC repo using the GitHub Contents API.
+// Requires a Personal Access Token (PAT) stored in localStorage under
+// acc_gh_token (not prefixed with acc_ to keep it out of data exports).
+// Returns the short restore URL on success, or null if no token is set.
+// =============================================
+
+// Opens a modal where the user can enter or update their GitHub PAT.
+// Called from the "Restore Link" button on the dashboard.
+function openGitHubTokenSetup() {
+  var existing = localStorage.getItem('acc_gh_token') || '';
+
+  var body = `
+    <p style="color:var(--text-muted); font-size:0.875rem; margin:0 0 16px;">
+      A GitHub Personal Access Token lets ACC save your backup directly into
+      your repository, so every backup email contains a one-tap restore link.
+    </p>
+    <p style="color:var(--text-muted); font-size:0.85rem; margin:0 0 16px;">
+      <strong style="color:var(--text);">How to create one:</strong><br>
+      1. Go to GitHub.com - Settings - Developer settings<br>
+      2. Personal access tokens - Fine-grained tokens - Generate new token<br>
+      3. Token name: ACC Restore<br>
+      4. Repository access: Only select repositories - Admissions-Command-Center<br>
+      5. Permissions: Repository permissions - Contents: Read and write<br>
+      6. Click Generate token, then paste it below.
+    </p>
+    <div class="form-group">
+      <label>Personal Access Token</label>
+      <input type="password" id="f-gh-token" placeholder="github_pat_..."
+        value="${escapeHtml(existing)}"
+        style="font-family:monospace; font-size:0.85rem;" />
+    </div>
+    ${existing ? '<p style="color:var(--text-muted);font-size:0.78rem;margin-top:4px;">A token is already saved. Paste a new one to replace it, or close to keep the current one.</p>' : ''}
+  `;
+
+  openModal('Set Up Restore Link', body, function() {
+    var token = document.getElementById('f-gh-token').value.trim();
+    if (!token) {
+      // Allow clearing the token by saving empty string
+      localStorage.removeItem('acc_gh_token');
+      closeModal();
+      alert('Restore link removed. Backup emails will include file-picker instructions instead.');
+      return;
+    }
+    localStorage.setItem('acc_gh_token', token);
+    closeModal();
+    alert('Token saved! Your next backup will include a tap-to-restore link in the email.');
+  });
+}
+
+// Saves the backup JSON to backups/latest.json in the ACC GitHub repo.
+// Creates the file on first use; updates it (with the required SHA) on subsequent saves.
+// Returns the short restore URL on success, null if no token is configured.
+async function saveBackupToRepo(emailSnap, dateStr) {
+  var token = localStorage.getItem('acc_gh_token');
+  if (!token) return null;
+
+  var owner   = 'solwatk3';
+  var repo    = 'Admissions-Command-Center';
+  var path    = 'backups/latest.json';
+  var apiUrl  = 'https://api.github.com/repos/' + owner + '/' + repo + '/contents/' + path;
+  var headers = {
+    'Authorization': 'Bearer ' + token,
+    'Content-Type':  'application/json',
+    'Accept':        'application/vnd.github.v3+json',
+  };
+
+  // Encode the JSON as base64 (required by GitHub Contents API)
+  var content = btoa(unescape(encodeURIComponent(JSON.stringify(emailSnap, null, 2))));
+
+  // Check if the file already exists - if so, we need its SHA to update it
+  var sha = null;
+  try {
+    var getRes = await fetch(apiUrl, { headers: headers });
+    if (getRes.ok) {
+      var fileData = await getRes.json();
+      sha = fileData.sha;
+    }
+    // 404 means the file does not exist yet - that is fine, sha stays null
+  } catch (err) {
+    // Network error on the GET - proceed without SHA (will create a new file)
+  }
+
+  // Build the PUT body - include SHA only when updating an existing file
+  var putBody = {
+    message: 'ACC backup ' + dateStr,
+    content: content,
+  };
+  if (sha) putBody.sha = sha;
+
+  var putRes = await fetch(apiUrl, {
+    method:  'PUT',
+    headers: headers,
+    body:    JSON.stringify(putBody),
+  });
+
+  if (!putRes.ok) {
+    var errData = {};
+    try { errData = await putRes.json(); } catch (e) {}
+    throw new Error('GitHub API ' + putRes.status + ': ' + (errData.message || 'unknown error'));
+  }
+
+  // Always the same short URL - it always points to the latest backup in the repo
+  return 'https://solwatk3.github.io/Admissions-Command-Center/?restore_raw=1';
+}
+
+// =============================================
 // TAP-TO-RESTORE
 // Checks for restore parameters in the URL when the app opens.
 //
@@ -1494,34 +1585,31 @@ function updateCalGcalStatus() {
 async function checkRestoreParam() {
   var params = new URLSearchParams(window.location.search);
 
-  // --- New format: restore from a GitHub Gist ID ---
-  var gistId = params.get('gist');
-  if (gistId) {
+  // --- Repo restore: fetch backups/latest.json from the ACC GitHub repo ---
+  // Triggered by the ?restore_raw=1 link in backup emails.
+  // The raw URL is hardcoded here so the email link stays short and permanent.
+  if (params.get('restore_raw')) {
     history.replaceState(null, '', window.location.pathname);
+    var rawUrl = 'https://raw.githubusercontent.com/solwatk3/Admissions-Command-Center/main/backups/latest.json';
     try {
-      var res = await fetch('https://api.github.com/gists/' + gistId, {
-        headers: { 'Accept': 'application/vnd.github.v3+json' },
-      });
-      if (!res.ok) throw new Error('Gist fetch failed: ' + res.status);
-      var gist     = await res.json();
-      // The first file in the Gist is the backup
-      var fileObj  = Object.values(gist.files)[0];
-      var snapshot = JSON.parse(fileObj.content);
+      var res = await fetch(rawUrl);
+      if (!res.ok) throw new Error('fetch failed: ' + res.status);
+      var snapshot = await res.json();
       restoreSnapshot(snapshot);
     } catch (e) {
-      console.error('ACC: Gist restore failed -', e);
-      alert('Could not load the backup from that link. It may have been deleted or the link is invalid.');
+      console.error('ACC: repo restore failed -', e);
+      alert('Could not load the backup file. Make sure you have exported at least once with the restore link set up.');
     }
     return;
   }
 
-  // --- Old format: decode base64 snapshot from URL ---
+  // --- Legacy format: decode base64 snapshot from URL ---
+  // Kept so any old ?restore= links still work.
   var restoreData = params.get('restore');
   if (!restoreData) return;
 
   history.replaceState(null, '', window.location.pathname);
   try {
-    // URL-safe base64 swaps + -> - and / -> _ and drops padding
     var standard = restoreData.replace(/-/g, '+').replace(/_/g, '/');
     while (standard.length % 4) standard += '=';
     var snapshot = JSON.parse(decodeURIComponent(escape(atob(standard))));
