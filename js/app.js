@@ -1304,14 +1304,18 @@ function renderCalendarGrid(container) {
       var dotItems  = dayItems.filter(function(i) { return !i.spanPos; });
 
       // Multi-day spans: render a connecting bar segment - dot on start/end, line on middle
+      // On the start day also show the item title so the user knows what it is
       if (spanItems.length > 0) {
         html += '<div class="cal-day-spans">';
         spanItems.forEach(function(item) {
           var dot = (item.spanPos === 'start' || item.spanPos === 'end')
             ? '<span class="cal-span-dot"></span>'
             : '';
+          var label = item.spanPos === 'start'
+            ? '<span class="cal-span-label" style="color:' + item.color + ';">' + escapeHtml(item.title) + '</span>'
+            : '';
           html += '<div class="cal-span-seg cal-span-' + item.spanPos
-            + '" style="--sc:' + item.color + ';">' + dot + '</div>';
+            + '" style="--sc:' + item.color + ';">' + dot + label + '</div>';
         });
         html += '</div>';
       }

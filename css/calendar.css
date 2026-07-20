@@ -62,6 +62,18 @@
 .cal-span-end .cal-span-dot { right: 0; }
 .cal-span-end::after        { left: -7px; right: 4px; }
 
+/* Title label shown only on the START day of a multi-day span */
+.cal-span-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Status row inside the calendar card */
 .gcal-status {
   display: flex;
