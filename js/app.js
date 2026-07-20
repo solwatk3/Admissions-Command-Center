@@ -1568,8 +1568,14 @@ async function saveBackupToRepo(emailSnap, dateStr) {
     'Accept':        'application/vnd.github.v3+json',
   };
 
+  // Strip the GitHub token from the repo copy before encoding.
+  // GitHub secret scanning will reject the push if the token appears in the file content.
+  // The token is already saved in localStorage so it does not need to be in the repo backup.
+  var repoSnap = Object.assign({}, emailSnap);
+  delete repoSnap['acc_gh_token'];
+
   // Encode the JSON as base64 (required by GitHub Contents API)
-  var content = btoa(unescape(encodeURIComponent(JSON.stringify(emailSnap, null, 2))));
+  var content = btoa(unescape(encodeURIComponent(JSON.stringify(repoSnap, null, 2))));
 
   // Check if the file already exists - if so, we need its SHA to update it
   var sha = null;
