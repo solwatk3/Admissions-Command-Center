@@ -782,10 +782,14 @@ function runGlobalSearch(q) {
   var schoolHits = schools.filter(function(s) {
     return (
       s.name.toLowerCase().includes(query) ||
-      (s.address        || '').toLowerCase().includes(query) ||
-      (s.contact        || '').toLowerCase().includes(query) ||
-      (s.contactEmail   || '').toLowerCase().includes(query) ||
-      (s.notes          || '').toLowerCase().includes(query)
+      (s.address || '').toLowerCase().includes(query) ||
+      (s.notes   || '').toLowerCase().includes(query) ||
+      // Search across all contacts (new multi-contact format + legacy single-contact)
+      getSchoolContacts(s).some(function(c) {
+        return (c.name  || '').toLowerCase().includes(query) ||
+               (c.email || '').toLowerCase().includes(query) ||
+               (c.title || '').toLowerCase().includes(query);
+      })
     );
   });
 

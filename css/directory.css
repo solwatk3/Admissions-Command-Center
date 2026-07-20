@@ -414,6 +414,85 @@
   flex-shrink: 0;
 }
 
+/* =============================================
+   MULTIPLE CONTACTS - DETAIL VIEW
+   Each contact renders as its own block inside .detail-fields
+============================================== */
+.detail-contact-block {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.detail-contact-block:last-child {
+  border-bottom: none;
+}
+
+/* Separator line between contacts when there are multiple */
+.detail-contact-block-sep {
+  border-top: 1px dashed var(--border);
+}
+
+.detail-contact-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.detail-contact-row {
+  font-size: 0.9rem;
+  color: #ffffff;
+}
+
+/* =============================================
+   MULTIPLE CONTACTS - FORM (ADD/EDIT MODAL)
+============================================== */
+
+/* Section heading above the contacts list in the form */
+.contacts-section-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin: 16px 0 10px;
+}
+
+/* One contact entry block inside the modal form */
+.contact-entry {
+  background: #12001e;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 10px;
+}
+
+/* Header row: "Contact" label + Remove button */
+.contact-entry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.contact-entry-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+}
+
+/* Tighten the form groups inside a contact entry */
+.contact-entry .form-group {
+  margin-bottom: 8px;
+}
+
 .detail-value {
   font-size: 0.92rem;
   color: #ffffff;

@@ -43,6 +43,101 @@ function makeId() {
 }
 
 // =============================================
+// CONTACT HELPERS
+// Schools now store contacts as an array so you can track
+// multiple people per school, each with a title/role.
+// Older schools used single-contact fields (contact,
+// contactEmail, contactPhone). getSchoolContacts() handles
+// both formats so no migration script is needed.
+// =============================================
+
+// Returns the contacts array for a school, migrating old
+// single-contact fields on the fly if the new format isn't present.
+function getSchoolContacts(school) {
+  if (Array.isArray(school.contacts) && school.contacts.length > 0) {
+    return school.contacts;
+  }
+  // Migrate legacy single-contact fields
+  if (school.contact || school.contactEmail || school.contactPhone) {
+    return [{
+      id:    'legacy',
+      title: '',
+      name:  school.contact      || '',
+      email: school.contactEmail || '',
+      phone: school.contactPhone || '',
+    }];
+  }
+  return [];
+}
+
+// Returns the HTML for one contact entry row inside the add/edit modal.
+// prefill is an optional existing contact object to pre-populate the fields.
+function contactRowHtml(prefill) {
+  const c = prefill || {};
+  return `
+    <div class="contact-entry">
+      <div class="contact-entry-header">
+        <span class="contact-entry-label">Contact</span>
+        <button type="button" class="btn-icon btn-icon-danger contact-remove-btn"
+          onclick="removeSchoolContact(this)" title="Remove this contact">&#10005;</button>
+      </div>
+      <input type="hidden" class="c-id" value="${escapeHtml(c.id || makeId())}">
+      <div class="form-group">
+        <label>Title / Role</label>
+        <input type="text" class="c-title" value="${escapeHtml(c.title || '')}"
+          placeholder="e.g. Admissions Director, Counselor">
+      </div>
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" class="c-name" value="${escapeHtml(c.name || '')}"
+          placeholder="e.g. Jane Smith">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" class="c-email" value="${escapeHtml(c.email || '')}"
+          placeholder="jsmith@school.edu">
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="tel" class="c-phone" value="${escapeHtml(c.phone || '')}"
+          placeholder="(555) 000-0000">
+      </div>
+    </div>
+  `;
+}
+
+// Appends a new contact row to the contacts list inside the modal.
+// Called from the "Add Contact" button and from pre-populating the edit form.
+function addSchoolContact(prefill) {
+  const list = document.getElementById('contacts-list');
+  if (!list) return;
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = contactRowHtml(prefill);
+  list.appendChild(wrapper.firstElementChild);
+}
+
+// Removes the contact row that contains the clicked Remove button.
+function removeSchoolContact(btn) {
+  const entry = btn.closest('.contact-entry');
+  if (entry) entry.remove();
+}
+
+// Reads all contact rows from the modal and returns a clean array.
+// Rows with no name and no email are silently dropped.
+function readSchoolContacts() {
+  const entries = document.querySelectorAll('#contacts-list .contact-entry');
+  return Array.from(entries).map(function(entry) {
+    return {
+      id:    entry.querySelector('.c-id').value  || makeId(),
+      title: entry.querySelector('.c-title').value.trim(),
+      name:  entry.querySelector('.c-name').value.trim(),
+      email: entry.querySelector('.c-email').value.trim(),
+      phone: formatPhone(entry.querySelector('.c-phone').value.trim()),
+    };
+  }).filter(function(c) { return c.name || c.email; });
+}
+
+// =============================================
 // ADDRESS HELPERS
 // Builds and parses the standardized address format
 // used for geocoding: "Street, City, TN ZIP"
@@ -312,26 +407,31 @@ function renderSchoolDetail(schoolId) {
             <span class="detail-label">Address</span>
             <span class="detail-value">${school.address ? escapeHtml(school.address) : 'Not on file'}</span>
           </div>
-          <div class="detail-field">
-            <span class="detail-label">Contact Name</span>
-            <span class="detail-value">${school.contact ? escapeHtml(school.contact) : 'Not on file'}</span>
-          </div>
-          <div class="detail-field">
-            <span class="detail-label">Contact Email</span>
-            <span class="detail-value">
-              ${school.contactEmail
-                ? `<span class="copy-value" onclick="copyToClipboard('${escapeHtml(school.contactEmail)}', this)">&#9993; ${escapeHtml(school.contactEmail)}</span>`
-                : 'Not on file'}
-            </span>
-          </div>
-          <div class="detail-field">
-            <span class="detail-label">Contact Phone</span>
-            <span class="detail-value">
-              ${school.contactPhone
-                ? `<span class="copy-value" onclick="copyToClipboard('${escapeHtml(school.contactPhone)}', this)">&#128222; ${escapeHtml(school.contactPhone)}</span>`
-                : 'Not on file'}
-            </span>
-          </div>
+          ${(function() {
+            const contacts = getSchoolContacts(school);
+            if (contacts.length === 0) {
+              return `
+                <div class="detail-field">
+                  <span class="detail-label">Contacts</span>
+                  <span class="detail-value" style="color:var(--text-muted);">Not on file</span>
+                </div>`;
+            }
+            return contacts.map(function(c, i) {
+              return `
+                <div class="detail-contact-block${i > 0 ? ' detail-contact-block-sep' : ''}">
+                  <div class="detail-contact-title">${c.title ? escapeHtml(c.title) : 'Contact ' + (i + 1)}</div>
+                  ${c.name  ? `<div class="detail-contact-row">&#128100; ${escapeHtml(c.name)}</div>` : ''}
+                  ${c.email ? `<div class="detail-contact-row">
+                    <span class="copy-value" onclick="copyToClipboard('${escapeHtml(c.email)}', this)" title="Click to copy">
+                      &#9993; ${escapeHtml(c.email)}
+                    </span></div>` : ''}
+                  ${c.phone ? `<div class="detail-contact-row">
+                    <span class="copy-value" onclick="copyToClipboard('${escapeHtml(c.phone)}', this)" title="Click to copy">
+                      &#128222; ${escapeHtml(c.phone)}
+                    </span></div>` : ''}
+                </div>`;
+            }).join('');
+          })()}
           ${school.notes ? `
           <div class="detail-field detail-field-notes">
             <span class="detail-label">Notes</span>
@@ -612,18 +712,9 @@ function openAddSchool(countyId) {
         <option value="Tertiary">Tertiary</option>
       </select>
     </div>
-    <div class="form-group">
-      <label>School Contact Name</label>
-      <input type="text" id="f-contact" placeholder="e.g. Jane Smith" />
-    </div>
-    <div class="form-group">
-      <label>Contact Email</label>
-      <input type="email" id="f-contact-email" placeholder="jsmith@school.edu" />
-    </div>
-    <div class="form-group">
-      <label>Contact Phone</label>
-      <input type="tel" id="f-contact-phone" placeholder="(555) 000-0000" />
-    </div>
+    <div class="contacts-section-label">Contacts</div>
+    <div id="contacts-list"></div>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="addSchoolContact()" style="margin-bottom:14px;">+ Add Contact</button>
     <div class="form-group">
       <label>Notes</label>
       <textarea id="f-notes" rows="3" placeholder="e.g. Park in back lot, contact prefers email..."></textarea>
@@ -646,19 +737,17 @@ function openAddSchool(countyId) {
     if (duplicate) { alert('"' + name + '" already exists in this county.'); return; }
 
     schools.push({
-      id:           makeId(),
-      countyId:     selectedCountyId,
-      name:         name,
-      address:      buildAddress(
-                      document.getElementById('f-street').value.trim(),
-                      document.getElementById('f-city').value.trim(),
-                      document.getElementById('f-zip').value.trim()
-                    ),
-      priority:     document.getElementById('f-priority').value,
-      contact:      document.getElementById('f-contact').value.trim(),
-      contactEmail: document.getElementById('f-contact-email').value.trim(),
-      contactPhone: formatPhone(document.getElementById('f-contact-phone').value.trim()),
-      notes:        document.getElementById('f-notes').value.trim(),
+      id:       makeId(),
+      countyId: selectedCountyId,
+      name:     name,
+      address:  buildAddress(
+                  document.getElementById('f-street').value.trim(),
+                  document.getElementById('f-city').value.trim(),
+                  document.getElementById('f-zip').value.trim()
+                ),
+      priority: document.getElementById('f-priority').value,
+      contacts: readSchoolContacts(),
+      notes:    document.getElementById('f-notes').value.trim(),
     });
 
     saveSchools(schools);
@@ -666,6 +755,9 @@ function openAddSchool(countyId) {
     renderDirectory();
     updateDashboardStats();
   });
+
+  // Start with one empty contact row so the form is ready to fill in
+  addSchoolContact();
 }
 
 // =============================================
@@ -711,18 +803,9 @@ function openEditSchool(schoolId) {
         <option value="Tertiary"  ${school.priority === 'Tertiary'  ? 'selected' : ''}>Tertiary</option>
       </select>
     </div>
-    <div class="form-group">
-      <label>School Contact Name</label>
-      <input type="text" id="f-contact" value="${escapeHtml(school.contact || '')}" />
-    </div>
-    <div class="form-group">
-      <label>Contact Email</label>
-      <input type="email" id="f-contact-email" value="${escapeHtml(school.contactEmail || '')}" />
-    </div>
-    <div class="form-group">
-      <label>Contact Phone</label>
-      <input type="tel" id="f-contact-phone" value="${escapeHtml(school.contactPhone || '')}" />
-    </div>
+    <div class="contacts-section-label">Contacts</div>
+    <div id="contacts-list"></div>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="addSchoolContact()" style="margin-bottom:14px;">+ Add Contact</button>
     <div class="form-group">
       <label>Notes</label>
       <textarea id="f-notes" rows="3">${escapeHtml(school.notes || '')}</textarea>
@@ -734,7 +817,6 @@ function openEditSchool(schoolId) {
     if (!name) { alert('School name is required.'); return; }
 
     // Block renaming to match another school in the same county.
-    // Uses school.countyId captured above instead of re-searching the list each pass.
     const duplicate = schools.find(function(s) {
       return s.id !== schoolId && s.countyId === school.countyId && s.name.toLowerCase() === name.toLowerCase();
     });
@@ -743,17 +825,19 @@ function openEditSchool(schoolId) {
     const idx = schools.findIndex(s => s.id === schoolId);
     schools[idx] = {
       ...schools[idx],
-      name:         name,
-      address:      buildAddress(
-                      document.getElementById('f-street').value.trim(),
-                      document.getElementById('f-city').value.trim(),
-                      document.getElementById('f-zip').value.trim()
-                    ),
-      priority:     document.getElementById('f-priority').value,
-      contact:      document.getElementById('f-contact').value.trim(),
-      contactEmail: document.getElementById('f-contact-email').value.trim(),
-      contactPhone: formatPhone(document.getElementById('f-contact-phone').value.trim()),
-      notes:        document.getElementById('f-notes').value.trim(),
+      name:     name,
+      address:  buildAddress(
+                  document.getElementById('f-street').value.trim(),
+                  document.getElementById('f-city').value.trim(),
+                  document.getElementById('f-zip').value.trim()
+                ),
+      priority: document.getElementById('f-priority').value,
+      contacts: readSchoolContacts(),
+      // Clear old single-contact fields so migrated data doesn't linger
+      contact:      undefined,
+      contactEmail: undefined,
+      contactPhone: undefined,
+      notes:    document.getElementById('f-notes').value.trim(),
     };
 
     saveSchools(schools);
@@ -761,6 +845,14 @@ function openEditSchool(schoolId) {
     renderDirectory();
     updateDashboardStats();
   });
+
+  // Pre-populate existing contacts; add one empty row if there are none
+  const existingContacts = getSchoolContacts(school);
+  if (existingContacts.length > 0) {
+    existingContacts.forEach(function(c) { addSchoolContact(c); });
+  } else {
+    addSchoolContact();
+  }
 }
 
 // =============================================
