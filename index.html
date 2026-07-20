@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/routes.css" />
   <link rel="stylesheet" href="css/map.css" />
   <link rel="stylesheet" href="css/calendar.css" />
+  <link rel="stylesheet" href="css/events.css" />
   <!-- Leaflet CSS - the mapping library used for the school map view -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
@@ -82,6 +83,11 @@
       <li>
         <a href="#" onclick="navigateTo('routes')" class="nav-link" data-page="routes">
           <span class="nav-icon">&#128205;</span> Route Planner
+        </a>
+      </li>
+      <li>
+        <a href="#" onclick="navigateTo('events')" class="nav-link" data-page="events">
+          <span class="nav-icon">&#128197;</span> Events
         </a>
       </li>
     </ul>
@@ -175,6 +181,19 @@
             </div>
           </div>
         </div>
+
+        <!-- Upcoming events card -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">&#127937;</span>
+            <h2>Upcoming Events</h2>
+            <button class="btn btn-ghost btn-sm" onclick="navigateTo('events')" style="margin-left:auto;">View All</button>
+          </div>
+          <div class="card-body" id="dashboard-events">
+            <p class="empty-state">No upcoming events.</p>
+          </div>
+        </div>
+
       </div>
 
       <!-- Google Calendar sync card -->
@@ -347,6 +366,20 @@
       <div id="routes-content"></div>
     </section>
 
+    <!-- EVENTS PAGE -->
+    <section id="page-events" class="page">
+      <div class="page-header">
+        <div class="page-header-row">
+          <div>
+            <h1>Events</h1>
+            <p class="subtitle">Boss-assigned events: fairs, conferences, open houses, and more</p>
+          </div>
+          <button class="btn btn-accent" onclick="openAddEvent()">+ Add Event</button>
+        </div>
+      </div>
+      <div id="events-content"></div>
+    </section>
+
   </main>
 
   <!-- Bottom tab bar - visible on mobile only -->
@@ -366,6 +399,9 @@
     <button class="bottom-nav-btn" data-page="routes" onclick="navigateTo('routes')">
       <span class="bnav-icon">&#128205;</span>Routes
     </button>
+    <button class="bottom-nav-btn" data-page="events" onclick="navigateTo('events')">
+      <span class="bnav-icon">&#127937;</span>Events
+    </button>
   </nav>
 
   <!-- EmailJS SDK - enables sending emails directly from the browser -->
@@ -381,5 +417,6 @@
   <script src="js/routes.js"></script>
   <script src="js/map.js"></script>
   <script src="js/calendar.js"></script>
+  <script src="js/events.js"></script>
 </body>
 </html>

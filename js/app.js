@@ -17,6 +17,7 @@ const PAGE_TITLES = {
   rolodex:    'Colleague Rolodex',
   visits:     'Visit Log',
   routes:     'Route Planner',
+  events:     'Events',
 };
 
 // =============================================
@@ -54,6 +55,7 @@ function navigateTo(pageId) {
   if (pageId === 'rolodex')   initRolodex();
   if (pageId === 'visits')    initVisits();
   if (pageId === 'routes')    initRoutes();
+  if (pageId === 'events')    initEvents();
 }
 
 // =============================================
@@ -130,6 +132,9 @@ function updateDashboardStats() {
 
   // Render upcoming visits (today and future)
   renderUpcomingVisits();
+
+  // Render upcoming events (from the Events page)
+  renderUpcomingEvents();
 
   // Render overdue school alerts
   renderOverdueSchools();
@@ -503,7 +508,8 @@ function exportAllData() {
   // Build a leaner copy for the email - skip the geocache and Google Calendar
   // system keys since they're large and auto-regenerate. Core data only.
   const emailKeys  = ['acc_counties', 'acc_schools', 'acc_visits',
-                      'acc_colleagues', 'acc_routes', 'acc_archives'];
+                      'acc_colleagues', 'acc_routes', 'acc_archives',
+                      'acc_events', 'acc_event_types'];
   const emailSnap  = {};
   emailKeys.forEach(function(k) {
     if (snapshot[k] !== undefined) emailSnap[k] = snapshot[k];
