@@ -88,8 +88,8 @@ function renderColleagueCard(c) {
       <!-- Hover popup - stopPropagation on all items so they don't also fire the card's detail opener -->
       <div class="colleague-popup" onclick="event.stopPropagation()">
         <p class="popup-institution">${escapeHtml(c.institution)}</p>
-        ${c.email ? `<span class="popup-link popup-copy" onclick="copyToClipboard('${escapeHtml(c.email)}', this)" title="Click to copy">&#9993; ${escapeHtml(c.email)}</span>` : ''}
-        ${c.phone ? `<span class="popup-link popup-copy" onclick="copyToClipboard('${escapeHtml(c.phone)}', this)" title="Click to copy">&#128222; ${escapeHtml(c.phone)}</span>` : ''}
+        ${c.email ? `<span class="popup-link popup-copy" data-copy="${escapeHtml(c.email)}" onclick="copyToClipboard(this.dataset.copy, this)" title="Click to copy">&#9993; ${escapeHtml(c.email)}</span>` : ''}
+        ${c.phone ? `<span class="popup-link popup-copy" data-copy="${escapeHtml(c.phone)}" onclick="copyToClipboard(this.dataset.copy, this)" title="Click to copy">&#128222; ${escapeHtml(c.phone)}</span>` : ''}
         <div class="colleague-actions">
           <button class="btn-icon" onclick="openEditColleague('${c.id}')">&#9998; Edit</button>
           <button class="btn-icon btn-icon-danger" onclick="confirmDeleteColleague('${c.id}')">&#128465; Delete</button>
@@ -119,7 +119,7 @@ function openColleagueDetail(id) {
       <div class="colleague-detail-row">
         <span class="detail-label">Email</span>
         <span class="detail-value">
-          <span class="copy-value" onclick="copyToClipboard('${escapeHtml(c.email)}', this)" title="Click to copy">
+          <span class="copy-value" data-copy="${escapeHtml(c.email)}" onclick="copyToClipboard(this.dataset.copy, this)" title="Click to copy">
             &#9993; ${escapeHtml(c.email)}
           </span>
         </span>
@@ -128,7 +128,7 @@ function openColleagueDetail(id) {
       <div class="colleague-detail-row">
         <span class="detail-label">Phone</span>
         <span class="detail-value">
-          <span class="copy-value" onclick="copyToClipboard('${escapeHtml(c.phone)}', this)" title="Click to copy">
+          <span class="copy-value" data-copy="${escapeHtml(c.phone)}" onclick="copyToClipboard(this.dataset.copy, this)" title="Click to copy">
             &#128222; ${escapeHtml(c.phone)}
           </span>
         </span>
