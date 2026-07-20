@@ -784,10 +784,22 @@ function openEditSchool(schoolId) {
   // Parse the stored address back into street / city / zip for pre-filling
   const parsedAddr = parseAddress(school.address || '');
 
+  // Build county options sorted A-Z, pre-selecting the school's current county
+  const allCounties = getCounties().slice().sort(function(a, b) {
+    return a.name.localeCompare(b.name);
+  });
+  const countyOptions = allCounties.map(function(c) {
+    return `<option value="${escapeHtml(c.id)}" ${c.id === school.countyId ? 'selected' : ''}>${escapeHtml(c.name)} County</option>`;
+  }).join('');
+
   const body = `
     <div class="form-group">
       <label>School Name <span class="required">*</span></label>
       <input type="text" id="f-name" value="${escapeHtml(school.name)}" />
+    </div>
+    <div class="form-group">
+      <label>County <span class="required">*</span></label>
+      <select id="f-county">${countyOptions}</select>
     </div>
     <div class="form-group">
       <label>Street Address</label>
@@ -826,19 +838,22 @@ function openEditSchool(schoolId) {
   `;
 
   openModal('Edit School', body, function() {
-    const name = document.getElementById('f-name').value.trim();
-    if (!name) { alert('School name is required.'); return; }
+    const name     = document.getElementById('f-name').value.trim();
+    const countyId = document.getElementById('f-county').value;
+    if (!name)     { alert('School name is required.'); return; }
+    if (!countyId) { alert('Please select a county.'); return; }
 
-    // Block renaming to match another school in the same county.
+    // Block saving if another school in the target county has the same name.
     const duplicate = schools.find(function(s) {
-      return s.id !== schoolId && s.countyId === school.countyId && s.name.toLowerCase() === name.toLowerCase();
+      return s.id !== schoolId && s.countyId === countyId && s.name.toLowerCase() === name.toLowerCase();
     });
-    if (duplicate) { alert('"' + name + '" already exists in this county.'); return; }
+    if (duplicate) { alert('"' + name + '" already exists in that county.'); return; }
 
     const idx = schools.findIndex(s => s.id === schoolId);
     schools[idx] = {
       ...schools[idx],
       name:     name,
+      countyId: countyId,
       address:  buildAddress(
                   document.getElementById('f-street').value.trim(),
                   document.getElementById('f-city').value.trim(),
