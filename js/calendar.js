@@ -49,10 +49,7 @@ function handleTokenResponse(response) {
 
   renderCalendarStatus();
 
-  // Pull events from GCal so they appear on the dashboard calendar
-  fetchGCalEvents();
-
-  // Sync all existing routes immediately on connect
+  // Sync all existing routes and events immediately on connect
   syncAllRoutes();
 }
 
@@ -421,7 +418,6 @@ async function syncAllRoutes() {
   // and pull the latest calendar events so new green dots appear on the grid.
   setTimeout(function() {
     renderCalendarStatus();
-    fetchGCalEvents();
   }, 1500);
 }
 

@@ -1156,19 +1156,8 @@ function getCalendarItems() {
     });
   });
 
-  // Google Calendar events (pulled by fetchGCalEvents in calendar.js) - green
-  var gcalItems = window.calGcalItems || [];
-  gcalItems.forEach(function(g) {
-    if (!g.date) return;
-    items.push({
-      type:  'gcal',
-      date:  g.date,
-      title: g.title,
-      meta:  'Google Calendar',
-      id:    'gcal-' + g.id,
-      color: '#4ade80',
-    });
-  });
+  // GCal items are no longer pulled back - routes and events already appear above.
+  // Fetching them back caused duplicates on the calendar grid.
 
   return items;
 }
