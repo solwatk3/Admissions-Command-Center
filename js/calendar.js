@@ -233,7 +233,9 @@ async function syncRouteToCalendar(route) {
 
     // Record the sync time for display in the status card
     saveData('gcal_last_sync', new Date().toISOString());
-    renderCalendarStatus();
+    // Do NOT call renderCalendarStatus() here - it would replace the sync button
+    // in the DOM mid-loop, making the syncAllRoutes() button reference stale.
+    // syncAllRoutes() calls renderCalendarStatus() once when the whole loop is done.
 
   } catch (err) {
     console.error('ACC Calendar: sync failed for route', route.id, err);
@@ -283,14 +285,20 @@ async function syncAllRoutes() {
     await syncRouteToCalendar(route);
   }
 
+  // Re-enable the button and briefly flash a "Synced!" confirmation.
+  // The button is still in the DOM here because renderCalendarStatus() is no
+  // longer called inside syncRouteToCalendar() mid-loop.
   if (syncBtn) {
     syncBtn.disabled    = false;
-    syncBtn.textContent = '↻ Sync';
+    syncBtn.textContent = 'Synced!';
   }
 
-  // Refresh status and re-pull GCal events so the calendar is up to date
-  renderCalendarStatus();
-  fetchGCalEvents();
+  // After 1.5 seconds, refresh the status area (updates the lastSync timestamp)
+  // and pull the latest GCal events so new dots appear on the calendar.
+  setTimeout(function() {
+    renderCalendarStatus();
+    fetchGCalEvents();
+  }, 1500);
 }
 
 // =============================================

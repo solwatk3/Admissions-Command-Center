@@ -449,10 +449,13 @@ function downloadArchive(archiveId) {
 
 // =============================================
 // DATA EXPORT
-// Collects every acc_ key from localStorage and
-// downloads it as a single JSON file the user can save
+// Collects every acc_ key from localStorage and saves it as a .json file.
+// On mobile browsers that support the Web Share API (iOS 15+, Android Chrome),
+// the native share sheet opens so the user can send the file via AirDrop,
+// email attachment, Files app, etc. - no URL length limits.
+// On desktop the file is downloaded normally.
 // =============================================
-function exportAllData() {
+async function exportAllData() {
   const snapshot = {};
 
   // Loop through every key in localStorage and grab the ones that belong to ACC
@@ -479,56 +482,59 @@ function exportAllData() {
   saveData('last_backup', new Date().toISOString());
   renderBackupStatus();
 
-  // ---- FILE DOWNLOAD ----
-  // Trigger a .json file download to the device so the user can import it
-  // directly with the file picker - no copying and pasting required.
-  const blob    = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
-  const blobUrl = URL.createObjectURL(blob);
-  const dlLink  = document.createElement('a');
-  dlLink.href     = blobUrl;
-  dlLink.download = filename;
-  document.body.appendChild(dlLink);
-  dlLink.click();
-  document.body.removeChild(dlLink);
-  URL.revokeObjectURL(blobUrl);
+  const json = JSON.stringify(snapshot, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
 
-  // ---- EMAIL BACKUP ----
-  // Build a leaner copy for the email - skip the geocache and Google Calendar
-  // system keys since they're large and auto-regenerate. Core data only.
-  const emailKeys  = ['acc_counties', 'acc_schools', 'acc_visits',
-                      'acc_colleagues', 'acc_routes', 'acc_archives',
-                      'acc_events', 'acc_event_types'];
-  const emailSnap  = {};
-  emailKeys.forEach(function(k) {
-    if (snapshot[k] !== undefined) emailSnap[k] = snapshot[k];
-  });
+  // ---- MOBILE: NATIVE SHARE SHEET ----
+  // The Web Share API with files lets iOS/Android open the system share sheet,
+  // so the user can pick AirDrop, Files, email attachment, etc.
+  // This avoids the URL-length problem entirely.
+  const shareFile = new File([blob], filename, { type: 'application/json' });
+  let shared = false;
 
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [shareFile] })) {
+    try {
+      await navigator.share({ title: 'ACC Backup ' + dateStr, files: [shareFile] });
+      shared = true;
+    } catch (err) {
+      // AbortError means the user dismissed the share sheet - that is fine, no message needed.
+      // Any other error falls through to the regular download below.
+      if (err.name !== 'AbortError') {
+        console.warn('ACC: share sheet failed, falling back to download -', err);
+      }
+    }
+  }
+
+  // ---- DESKTOP / FALLBACK: FILE DOWNLOAD ----
+  if (!shared) {
+    const url    = URL.createObjectURL(blob);
+    const dlLink = document.createElement('a');
+    dlLink.href     = url;
+    dlLink.download = filename;
+    document.body.appendChild(dlLink);
+    dlLink.click();
+    document.body.removeChild(dlLink);
+    URL.revokeObjectURL(url);
+  }
+
+  // ---- EMAIL CONFIRMATION ----
+  // Send a lightweight record email - no JSON dump, no URL.
+  // The export file is on the device; import it with the file picker.
   const btn = document.getElementById('export-btn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Backing up...'; }
 
   const subject = 'ACC Backup - ' + dateStr
     + ' - ' + schoolCount + ' schools, ' + visitCount + ' visits';
 
-  // Build the tap-to-restore URL.
-  // Encode the backup as URL-safe base64 (swaps + -> - and / -> _ and drops = padding)
-  // so it survives being placed in a URL query parameter without any extra encoding.
-  const restoreB64  = btoa(unescape(encodeURIComponent(JSON.stringify(emailSnap))))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
-  const restoreUrl  = 'https://solwatk3.github.io/Admissions-Command-Center/?restore=' + restoreB64;
-
-  // Email message - restore link is front and center for easy mobile access.
-  // The .json file is the desktop fallback, raw JSON is last resort.
   const message = 'ACC Backup - ' + dateStr + '\n'
     + 'Schools: ' + schoolCount + '  |  Visits: ' + visitCount + '\n\n'
-    + '=== RESTORE ON MOBILE (tap this link) ===\n'
-    + restoreUrl + '\n'
-    + '=========================================\n\n'
-    + 'On desktop: click "Import Data" on the dashboard and pick the .json file\n'
-    + 'that downloaded to your computer (' + filename + ').\n\n'
-    + '--- Raw JSON fallback (last resort only) ---\n'
-    + JSON.stringify(emailSnap);
+    + 'Your backup file (' + filename + ') was saved to your device.\n\n'
+    + 'To restore on another device:\n'
+    + '1. Transfer the .json file to the target device\n'
+    + '   (AirDrop, Files app, Google Drive, email attachment, etc.)\n'
+    + '2. Open ACC and tap "Import Data"\n'
+    + '3. Select the .json file\n\n'
+    + 'Backed up: ' + new Date().toLocaleString();
 
   emailjs.send('service_9sv9w6p', 'template_r0o15xz', {
     to_email: 'solwatk3@gmail.com',
@@ -544,7 +550,7 @@ function exportAllData() {
   .catch(function(err) {
     console.error('ACC: backup email failed', err);
     if (btn) { btn.disabled = false; btn.textContent = '↓ Export Data'; }
-    alert('File downloaded, but the email failed to send. Your local backup is still saved.');
+    // File was still saved to the device - only the email failed, so no alert needed.
   });
 }
 
