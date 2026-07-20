@@ -533,10 +533,12 @@ async function exportAllData() {
   });
 
   let restoreUrl = '';
+  let repoSaveError = '';
   try {
     restoreUrl = await saveBackupToRepo(emailSnap, dateStr);
   } catch (err) {
-    // Non-fatal - file is already on the device, email still sends without the link
+    // Capture the error so we can show it to the user after the email sends
+    repoSaveError = err.message || 'unknown error';
     console.warn('ACC: could not save backup to GitHub repo -', err);
   }
 
@@ -563,15 +565,25 @@ async function exportAllData() {
     message:  message,
   })
   .then(function() {
-    if (btn) { btn.disabled = false; btn.textContent = '✓ Backed up!'; }
+    if (btn) {
+      btn.disabled = false;
+      // Tell the user whether the restore link was included or not
+      btn.textContent = restoreUrl ? '✓ Backed up with restore link!' : '✓ Backed up (no restore link)';
+    }
+    // If the repo save failed, surface the error so the user knows what to fix
+    if (repoSaveError) {
+      setTimeout(function() {
+        alert('Backup email sent, but the tap-to-restore link failed.\n\nError: ' + repoSaveError
+          + '\n\nCheck your token in the Restore Link setup, then export again.');
+      }, 500);
+    }
     setTimeout(function() {
       if (btn) btn.textContent = '↓ Export Data';
-    }, 3000);
+    }, 4000);
   })
   .catch(function(err) {
     console.error('ACC: backup email failed', err);
     if (btn) { btn.disabled = false; btn.textContent = '↓ Export Data'; }
-    // File was still saved to the device - only the email failed, so no alert needed.
   });
 }
 
@@ -1481,9 +1493,12 @@ function openGitHubTokenSetup() {
   var existing = loadData('gh_token', '');
 
   var copyBtn = existing
-    ? '<button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px;"'
+    ? '<button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px; margin-right:6px;"'
       + ' onclick="copyToClipboard(document.getElementById(\'f-gh-token\').value, this)">Copy token</button>'
-    : '';
+      + '<button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px;"'
+      + ' onclick="testGitHubToken(document.getElementById(\'f-gh-token\').value, this)">Test connection</button>'
+    : '<button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px;"'
+      + ' onclick="testGitHubToken(document.getElementById(\'f-gh-token\').value, this)">Test connection</button>';
 
   var hint = existing
     ? '<p style="color:var(--text-muted);font-size:0.78rem;margin-top:4px;">'
@@ -1538,8 +1553,9 @@ function openGitHubTokenSetup() {
 // Creates the file on first use; updates it (with the required SHA) on subsequent saves.
 // Returns the short restore URL on success, null if no token is configured.
 async function saveBackupToRepo(emailSnap, dateStr) {
-  // loadData reads using the acc_ prefix and JSON-decodes, matching how saveData saved it
-  var token = loadData('gh_token', '');
+  // Try loadData first (new storage format), then fall back to raw localStorage
+  // in case the token was saved by an older version of the code.
+  var token = loadData('gh_token', '') || localStorage.getItem('acc_gh_token') || '';
   if (!token) return null;
 
   var owner   = 'solwatk3';
@@ -1589,6 +1605,40 @@ async function saveBackupToRepo(emailSnap, dateStr) {
 
   // Always the same short URL - it always points to the latest backup in the repo
   return 'https://solwatk3.github.io/Admissions-Command-Center/?restore_raw=1';
+}
+
+// Tests a GitHub token by hitting the repo contents API.
+// Called from the "Test connection" button in the token setup modal.
+// el is the button element so we can show inline feedback.
+async function testGitHubToken(token, el) {
+  token = (token || '').trim();
+  if (!token) { alert('Paste a token first, then test it.'); return; }
+
+  var original = el.textContent;
+  el.textContent = 'Testing...';
+  el.disabled    = true;
+
+  try {
+    var res = await fetch(
+      'https://api.github.com/repos/solwatk3/Admissions-Command-Center/contents/',
+      { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' } }
+    );
+    if (res.ok) {
+      el.textContent = '✓ Connected!';
+      el.style.color = 'var(--success, #4ade80)';
+    } else {
+      var data = {};
+      try { data = await res.json(); } catch (e) {}
+      el.textContent = original;
+      el.disabled    = false;
+      alert('Connection failed (error ' + res.status + '): ' + (data.message || 'check the token and its permissions.')
+        + '\n\nMake sure:\n- Token has Contents: Read and write permission\n- Repository is set to Admissions-Command-Center only');
+    }
+  } catch (err) {
+    el.textContent = original;
+    el.disabled    = false;
+    alert('Network error while testing: ' + err.message);
+  }
 }
 
 // =============================================
