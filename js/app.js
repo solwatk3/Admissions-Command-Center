@@ -522,9 +522,11 @@ async function exportAllData() {
   // backups/latest.json in the ACC repo. The email then includes a short
   // ?restore_raw=1 link that always points to that file.
   // Falls back silently if no token is set or the API call fails.
+  // acc_gh_token is included so tap-to-restore on a new device also restores the token.
+  // The token only has write access to this repo's files, so including it is low-risk.
   const emailKeys = ['acc_counties', 'acc_schools', 'acc_visits',
                      'acc_colleagues', 'acc_routes', 'acc_archives',
-                     'acc_events', 'acc_event_types'];
+                     'acc_events', 'acc_event_types', 'acc_gh_token'];
   const emailSnap = {};
   emailKeys.forEach(function(k) {
     if (snapshot[k] !== undefined) emailSnap[k] = snapshot[k];
@@ -1471,46 +1473,64 @@ function updateCalGcalStatus() {
 // Returns the short restore URL on success, or null if no token is set.
 // =============================================
 
-// Opens a modal where the user can enter or update their GitHub PAT.
+// Opens a modal where the user can enter, view, or update their GitHub PAT.
 // Called from the "Restore Link" button on the dashboard.
+// The token is shown in plaintext so it can be copied to other devices.
 function openGitHubTokenSetup() {
-  var existing = localStorage.getItem('acc_gh_token') || '';
+  // Use loadData so the token is read the same way it was saved (JSON-decoded)
+  var existing = loadData('gh_token', '');
+
+  var copyBtn = existing
+    ? '<button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px;"'
+      + ' onclick="copyToClipboard(document.getElementById(\'f-gh-token\').value, this)">Copy token</button>'
+    : '';
+
+  var hint = existing
+    ? '<p style="color:var(--text-muted);font-size:0.78rem;margin-top:4px;">'
+      + 'Your token is shown above - copy it to use on other devices. '
+      + 'Paste a new one to replace it, or close to keep it as-is.</p>'
+    : '<p style="color:var(--text-muted);font-size:0.78rem;margin-top:4px;">'
+      + 'Once saved, your token appears here so you can copy it to other devices.</p>';
 
   var body = `
     <p style="color:var(--text-muted); font-size:0.875rem; margin:0 0 16px;">
-      A GitHub Personal Access Token lets ACC save your backup directly into
-      your repository, so every backup email contains a one-tap restore link.
+      A GitHub Personal Access Token lets ACC save your backup into your
+      repository, so every backup email has a one-tap restore link.
+      The token is included in your backup so it restores automatically on new devices.
     </p>
     <p style="color:var(--text-muted); font-size:0.85rem; margin:0 0 16px;">
-      <strong style="color:var(--text);">How to create one:</strong><br>
-      1. Go to GitHub.com - Settings - Developer settings<br>
-      2. Personal access tokens - Fine-grained tokens - Generate new token<br>
-      3. Token name: ACC Restore<br>
-      4. Repository access: Only select repositories - Admissions-Command-Center<br>
-      5. Permissions: Repository permissions - Contents: Read and write<br>
-      6. Click Generate token, then paste it below.
+      <strong style="color:var(--text);">How to create one (do this once):</strong><br>
+      1. GitHub.com - click your profile picture - Settings<br>
+      2. Scroll to the bottom of the left sidebar - Developer settings<br>
+      3. Personal access tokens - Fine-grained tokens - Generate new token<br>
+      4. Token name: ACC Restore | No expiration<br>
+      5. Repository access: Only select repositories - Admissions-Command-Center<br>
+      6. Permissions: Contents - Read and write<br>
+      7. Generate token, copy it, paste below.
     </p>
     <div class="form-group">
       <label>Personal Access Token</label>
-      <input type="password" id="f-gh-token" placeholder="github_pat_..."
+      <input type="text" id="f-gh-token" placeholder="github_pat_..."
         value="${escapeHtml(existing)}"
-        style="font-family:monospace; font-size:0.85rem;" />
+        style="font-family:monospace; font-size:0.82rem;" />
+      ${copyBtn}
     </div>
-    ${existing ? '<p style="color:var(--text-muted);font-size:0.78rem;margin-top:4px;">A token is already saved. Paste a new one to replace it, or close to keep the current one.</p>' : ''}
+    ${hint}
   `;
 
   openModal('Set Up Restore Link', body, function() {
     var token = document.getElementById('f-gh-token').value.trim();
     if (!token) {
-      // Allow clearing the token by saving empty string
-      localStorage.removeItem('acc_gh_token');
+      // Clearing the field removes the token
+      saveData('gh_token', '');
       closeModal();
       alert('Restore link removed. Backup emails will include file-picker instructions instead.');
       return;
     }
-    localStorage.setItem('acc_gh_token', token);
+    // Save using saveData so it is included in backup exports and restores
+    saveData('gh_token', token);
     closeModal();
-    alert('Token saved! Your next backup will include a tap-to-restore link in the email.');
+    alert('Token saved! Your next backup will include a tap-to-restore link.');
   });
 }
 
@@ -1518,7 +1538,8 @@ function openGitHubTokenSetup() {
 // Creates the file on first use; updates it (with the required SHA) on subsequent saves.
 // Returns the short restore URL on success, null if no token is configured.
 async function saveBackupToRepo(emailSnap, dateStr) {
-  var token = localStorage.getItem('acc_gh_token');
+  // loadData reads using the acc_ prefix and JSON-decodes, matching how saveData saved it
+  var token = loadData('gh_token', '');
   if (!token) return null;
 
   var owner   = 'solwatk3';
