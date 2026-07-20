@@ -412,9 +412,10 @@ function renderSchoolDetail(schoolId) {
           <div class="detail-field">
             <span class="detail-label">Address</span>
             ${school.address
-              ? `<span class="detail-value copy-value" onclick="copyToClipboard('${escapeHtml(school.address)}', this)" title="Click to copy">
-                  ${escapeHtml(school.address)}
-                </span>`
+              ? `<span class="detail-value copy-value"
+                  data-copy="${escapeHtml(school.address)}"
+                  onclick="copyToClipboard(this.dataset.copy, this)"
+                  title="Click to copy">${escapeHtml(school.address)}</span>`
               : '<span class="detail-value">Not on file</span>'
             }
           </div>
@@ -433,11 +434,11 @@ function renderSchoolDetail(schoolId) {
                   <div class="detail-contact-title">${c.title ? escapeHtml(c.title) : 'Contact ' + (i + 1)}</div>
                   ${c.name  ? `<div class="detail-contact-row">&#128100; ${escapeHtml(c.name)}</div>` : ''}
                   ${c.email ? `<div class="detail-contact-row">
-                    <span class="copy-value" onclick="copyToClipboard('${escapeHtml(c.email)}', this)" title="Click to copy">
+                    <span class="copy-value" data-copy="${escapeHtml(c.email)}" onclick="copyToClipboard(this.dataset.copy, this)" title="Click to copy">
                       &#9993; ${escapeHtml(c.email)}
                     </span></div>` : ''}
                   ${c.phone ? `<div class="detail-contact-row">
-                    <span class="copy-value" onclick="copyToClipboard('${escapeHtml(c.phone)}', this)" title="Click to copy">
+                    <span class="copy-value" data-copy="${escapeHtml(c.phone)}" onclick="copyToClipboard(this.dataset.copy, this)" title="Click to copy">
                       &#128222; ${escapeHtml(c.phone)}
                     </span></div>` : ''}
                 </div>`;
