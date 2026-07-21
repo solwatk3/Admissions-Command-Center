@@ -1182,3 +1182,48 @@ a {
   font-size: 0.78rem;
   color: var(--text-muted);
 }
+
+/* =============================================
+   MAP PRINT
+   When window.print() fires from the map tab,
+   hide all app chrome so only the map renders.
+============================================== */
+@media print {
+  /* Hide everything except the map container */
+  header,
+  nav,
+  .tab-bar,
+  .directory-controls,
+  .dir-toggle-row,
+  .directory-btn-row,
+  #dir-alpha-view,
+  #dir-region-view,
+  #dir-priority-view,
+  .modal-overlay,
+  .sidebar,
+  .dashboard-col,
+  footer {
+    display: none !important;
+  }
+
+  /* Make the map fill the whole printed page */
+  body, html {
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #dir-map-view {
+    display: block !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+  }
+
+  #map-container {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}

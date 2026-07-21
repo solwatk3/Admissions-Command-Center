@@ -1545,3 +1545,26 @@
   color: var(--text-muted);
   white-space: nowrap;
 }
+
+/* =============================================
+   PRINT MENU BUTTONS
+   Used inside the Print modal to select export type.
+============================================== */
+.print-menu-btn {
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.print-menu-btn:hover {
+  background: #1a0a2e;
+  border-color: var(--accent);
+  color: var(--accent);
+}

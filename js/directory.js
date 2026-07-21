@@ -1507,11 +1507,365 @@ function copyPriorityEmails(priority) {
 }
 
 // =============================================
-// INIT DIRECTORY
+// PRINT / EXPORT
+// Generates clean print-ready pages in a new tab.
+// No frameworks - just plain HTML written into
+// a new window, then window.print() fires.
 // =============================================
-function initDirectory() {
-  dirView = 'counties';
-  renderDirectory();
+
+// Opens the print options modal so Sol can pick what to export.
+function openPrintMenu() {
+  var body = `
+    <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:16px;">
+      Choose what to print. Each option opens a new tab formatted for printing or saving as PDF.
+    </p>
+
+    <p class="dir-search-section-label" style="padding-top:0;">By Priority</p>
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+      <button class="print-menu-btn" onclick="closeModal(); printByPriority('Primary')">&#11088; Primary Schools</button>
+      <button class="print-menu-btn" onclick="closeModal(); printByPriority('Secondary')">&#11088; Secondary Schools</button>
+      <button class="print-menu-btn" onclick="closeModal(); printByPriority('Tertiary')">&#11088; Tertiary Schools</button>
+      <button class="print-menu-btn" onclick="closeModal(); printAllPriorities()">&#11088; All Priorities (3 sections)</button>
+    </div>
+
+    <p class="dir-search-section-label">Full Directory</p>
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+      <button class="print-menu-btn" onclick="closeModal(); printAlphabetical()">&#128218; All Schools - A to Z</button>
+      <button class="print-menu-btn" onclick="closeModal(); printByCounty()">&#128218; All Schools - By County</button>
+    </div>
+
+    <p class="dir-search-section-label">Map</p>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button class="print-menu-btn" onclick="closeModal(); printMap()">&#128205; Tennessee Coverage Map</button>
+    </div>
+  `;
+
+  // null for onSave hides the Save button - this modal is selection only
+  openModal('Print / Export', body, null);
+}
+
+// Returns a formatted date string for print headers (e.g. "July 21, 2026")
+function getPrintDate() {
+  return new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+// Builds the HTML block for one school - used in all print functions.
+// Shows name, county, priority, address, all contacts, and notes.
+function buildSchoolPrintCard(school, countyName) {
+  var contacts = getSchoolContacts(school);
+
+  // Build contacts section - one row per contact
+  var contactsHtml = '';
+  if (contacts.length > 0) {
+    contactsHtml = '<div class="pc-contacts">';
+    contacts.forEach(function(c) {
+      var parts = [];
+      if (c.title) parts.push('<span class="pc-contact-title">' + escapeHtml(c.title) + '</span>');
+      if (c.name)  parts.push(escapeHtml(c.name));
+      if (c.email) parts.push('<a href="mailto:' + escapeHtml(c.email) + '">' + escapeHtml(c.email) + '</a>');
+      if (c.phone) parts.push(escapeHtml(c.phone));
+      contactsHtml += '<div class="pc-contact-row">' + parts.join(' &nbsp;|&nbsp; ') + '</div>';
+    });
+    contactsHtml += '</div>';
+  } else {
+    contactsHtml = '<div class="pc-no-contact">No contacts on file</div>';
+  }
+
+  var priorityLabel = school.priority || 'Not Set';
+  var addressHtml   = school.address
+    ? '<div class="pc-address">&#128205; ' + escapeHtml(school.address) + '</div>'
+    : '';
+  var notesHtml     = school.notes
+    ? '<div class="pc-notes"><strong>Notes:</strong> ' + escapeHtml(school.notes) + '</div>'
+    : '';
+
+  return `
+    <div class="pc-school-card">
+      <div class="pc-school-header">
+        <span class="pc-school-name">${escapeHtml(school.name)}</span>
+        <span class="pc-priority-badge pc-priority-${priorityLabel.toLowerCase()}">${priorityLabel}</span>
+      </div>
+      <div class="pc-county">${escapeHtml(countyName)}</div>
+      ${addressHtml}
+      ${contactsHtml}
+      ${notesHtml}
+    </div>
+  `;
+}
+
+// Shared CSS used by all print windows - clean, black-on-white, printable.
+function getPrintStyles() {
+  return `
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 11pt;
+        color: #111;
+        background: #fff;
+        padding: 20px 32px;
+      }
+      h1.print-title {
+        font-size: 18pt;
+        font-weight: 700;
+        margin-bottom: 2px;
+        color: #1a0a2e;
+      }
+      .print-date {
+        font-size: 9pt;
+        color: #666;
+        margin-bottom: 20px;
+      }
+      h2.priority-section-title {
+        font-size: 14pt;
+        font-weight: 700;
+        color: #1a0a2e;
+        border-bottom: 2px solid #1a0a2e;
+        padding-bottom: 4px;
+        margin: 24px 0 14px;
+        page-break-after: avoid;
+      }
+      h2.county-section-title {
+        font-size: 12pt;
+        font-weight: 700;
+        color: #333;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 3px;
+        margin: 20px 0 10px;
+        page-break-after: avoid;
+      }
+      .pc-school-card {
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        page-break-inside: avoid;
+      }
+      .pc-school-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 3px;
+      }
+      .pc-school-name {
+        font-size: 12pt;
+        font-weight: 700;
+        color: #111;
+      }
+      .pc-priority-badge {
+        font-size: 8pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 2px 8px;
+        border-radius: 20px;
+        white-space: nowrap;
+        border: 1px solid #999;
+        color: #333;
+      }
+      .pc-priority-primary   { border-color: #6b21a8; color: #6b21a8; }
+      .pc-priority-secondary { border-color: #15803d; color: #15803d; }
+      .pc-priority-tertiary  { border-color: #b45309; color: #b45309; }
+      .pc-county {
+        font-size: 9pt;
+        color: #555;
+        margin-bottom: 4px;
+      }
+      .pc-address {
+        font-size: 9.5pt;
+        color: #444;
+        margin-bottom: 5px;
+      }
+      .pc-contacts {
+        margin: 6px 0;
+        border-left: 3px solid #ddd;
+        padding-left: 10px;
+      }
+      .pc-contact-row {
+        font-size: 9.5pt;
+        color: #333;
+        margin-bottom: 3px;
+      }
+      .pc-contact-title {
+        font-weight: 700;
+        color: #111;
+      }
+      .pc-contact-row a {
+        color: #1a0a6e;
+        text-decoration: none;
+      }
+      .pc-no-contact {
+        font-size: 9pt;
+        color: #999;
+        font-style: italic;
+        margin: 4px 0;
+      }
+      .pc-notes {
+        font-size: 9.5pt;
+        color: #444;
+        margin-top: 6px;
+        font-style: italic;
+      }
+      .print-footer {
+        margin-top: 30px;
+        font-size: 8pt;
+        color: #aaa;
+        text-align: center;
+        border-top: 1px solid #eee;
+        padding-top: 8px;
+      }
+      @media print {
+        body { padding: 12px 20px; }
+        .pc-school-card { page-break-inside: avoid; }
+      }
+    </style>
+  `;
+}
+
+// Opens a new tab, writes the given HTML into it, and fires window.print().
+function openPrintWindow(titleText, htmlContent) {
+  var win = window.open('', '_blank');
+  if (!win) {
+    alert('Pop-up blocked. Please allow pop-ups for this page and try again.');
+    return;
+  }
+  win.document.write(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>${escapeHtml(titleText)}</title>
+      ${getPrintStyles()}
+    </head>
+    <body>
+      ${htmlContent}
+      <div class="print-footer">Admissions Command Center - printed ${getPrintDate()}</div>
+      <script>window.onload = function() { window.print(); }<\/script>
+    </body>
+    </html>
+  `);
+  win.document.close();
+}
+
+// Prints all schools of a single priority tier (Primary, Secondary, or Tertiary).
+function printByPriority(priority) {
+  var schools  = getSchools().filter(function(s) { return s.priority === priority; })
+                             .sort(function(a, b) { return a.name.localeCompare(b.name); });
+  var counties = getCounties();
+
+  if (schools.length === 0) {
+    alert('No ' + priority + ' schools to print.');
+    return;
+  }
+
+  var cardsHtml = schools.map(function(s) {
+    var county = counties.find(function(c) { return c.id === s.countyId; });
+    return buildSchoolPrintCard(s, county ? county.name : '');
+  }).join('');
+
+  var html = `
+    <h1 class="print-title">${priority} Schools</h1>
+    <div class="print-date">${getPrintDate()} &nbsp;|&nbsp; ${schools.length} school${schools.length !== 1 ? 's' : ''}</div>
+    ${cardsHtml}
+  `;
+
+  openPrintWindow(priority + ' Schools', html);
+}
+
+// Prints all three priority tiers in one document with a section header each.
+function printAllPriorities() {
+  var schools  = getSchools();
+  var counties = getCounties();
+  var html     = '<h1 class="print-title">All Schools by Priority</h1><div class="print-date">' + getPrintDate() + '</div>';
+
+  ['Primary', 'Secondary', 'Tertiary'].forEach(function(priority) {
+    var tier = schools.filter(function(s) { return s.priority === priority; })
+                      .sort(function(a, b) { return a.name.localeCompare(b.name); });
+    html += '<h2 class="priority-section-title">' + priority + ' (' + tier.length + ')</h2>';
+    if (tier.length === 0) {
+      html += '<p style="color:#999; font-style:italic; margin-bottom:12px;">No ' + priority + ' schools.</p>';
+    } else {
+      tier.forEach(function(s) {
+        var county = counties.find(function(c) { return c.id === s.countyId; });
+        html += buildSchoolPrintCard(s, county ? county.name : '');
+      });
+    }
+  });
+
+  openPrintWindow('All Schools by Priority', html);
+}
+
+// Prints every school sorted A-Z by name.
+function printAlphabetical() {
+  var schools  = getSchools().sort(function(a, b) { return a.name.localeCompare(b.name); });
+  var counties = getCounties();
+
+  if (schools.length === 0) {
+    alert('No schools to print.');
+    return;
+  }
+
+  var cardsHtml = schools.map(function(s) {
+    var county = counties.find(function(c) { return c.id === s.countyId; });
+    return buildSchoolPrintCard(s, county ? county.name : '');
+  }).join('');
+
+  var html = `
+    <h1 class="print-title">All Schools - A to Z</h1>
+    <div class="print-date">${getPrintDate()} &nbsp;|&nbsp; ${schools.length} school${schools.length !== 1 ? 's' : ''}</div>
+    ${cardsHtml}
+  `;
+
+  openPrintWindow('All Schools - A to Z', html);
+}
+
+// Prints every school grouped by county, counties sorted A-Z,
+// schools within each county sorted A-Z.
+function printByCounty() {
+  var schools  = getSchools();
+  var counties = getCounties().slice().sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+  if (schools.length === 0) {
+    alert('No schools to print.');
+    return;
+  }
+
+  var html = '<h1 class="print-title">All Schools by County</h1><div class="print-date">' + getPrintDate() + '</div>';
+
+  counties.forEach(function(county) {
+    var countySchools = schools
+      .filter(function(s) { return s.countyId === county.id; })
+      .sort(function(a, b) { return a.name.localeCompare(b.name); });
+    if (countySchools.length === 0) return;
+
+    html += '<h2 class="county-section-title">' + escapeHtml(county.name) + ' (' + countySchools.length + ')</h2>';
+    countySchools.forEach(function(s) {
+      html += buildSchoolPrintCard(s, county.name);
+    });
+  });
+
+  openPrintWindow('All Schools by County', html);
+}
+
+// Prints the Leaflet map fitted to all of Tennessee.
+// Hides all app chrome with CSS, resets map bounds to TN, then window.print().
+function printMap() {
+  // Make sure the map tab is active so the Leaflet instance is visible
+  showDirectoryMap();
+
+  // Tennessee approximate bounds - covers the full state
+  var tnBounds = [[34.98, -90.31], [36.68, -81.65]];
+
+  // leafletMap is the global Leaflet map instance created in map.js
+  if (typeof leafletMap !== 'undefined' && leafletMap) {
+    leafletMap.fitBounds(tnBounds, { animate: false });
+  }
+
+  // Give tiles a moment to load before the print dialog opens
+  setTimeout(function() {
+    window.print();
+  }, 800);
 }
 
 // =============================================
