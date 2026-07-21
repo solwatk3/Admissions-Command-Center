@@ -1,93 +1,122 @@
 # ACC Session Handoff
-**Date:** 2026-07-20  
-**Status:** All changes coded and pushed to GitHub. Ready to test end-to-end.
+**Date:** 2026-07-21
+**Status:** All changes coded and pushed to GitHub. Ready to test.
 
 ---
 
-## What Was Fixed This Session
+## What Was Built This Session
 
-### 1. Google Calendar sync button did nothing
-**Root cause:** `syncRouteToCalendar()` was calling `renderCalendarStatus()` after each route, which rebuilt the DOM and created a new sync button element. The old button reference was now pointing at a detached node, so the progress updates went nowhere.
+### 1. Priority Triage Mode
+A fast in-modal flow for assigning priorities to a batch of schools.
 
-**Fix:** Removed `renderCalendarStatus()` from inside `syncRouteToCalendar()`. Now `syncAllRoutes()` holds the button reference cleanly across the whole loop, shows a live counter ("Syncing 1/3... 2/3... Done!"), then calls `renderCalendarStatus()` once at the end.
+- Triage button in the directory toolbar opens a modal with three clickable option boxes: "Schools with no priority set", "One county" (shows county dropdown), "All schools"
+- On Start, the modal body swaps to show the first school card - name, county, current priority
+- Four buttons: Primary / Secondary / Tertiary / Skip - tap one and the next school loads automatically
+- Progress bar shows how far through the queue you are
+- Done screen appears when the queue is exhausted
 
-**File:** `ACC/js/calendar.js`
-
----
-
-### 2. Tap-to-restore link in backup email (full flow now working)
-
-**Problem chain:**
-- Old approach: base64-encoded full snapshot in the URL - too long, "URI too long" error
-- First fix: anonymous GitHub Gist - Sol wanted their own repo instead
-- Second fix: GitHub Contents API writing to `backups/latest.json` in the ACC repo
-
-**How it works now:**
-1. Sol has a GitHub Personal Access Token stored via `saveData('gh_token', token)` (key: `acc_gh_token` in localStorage)
-2. On export, `saveBackupToRepo()` writes the backup JSON to `https://github.com/solwatk3/Admissions-Command-Center/backups/latest.json` via the GitHub Contents API (PUT, includes SHA on update)
-3. The backup email contains a single tappable line: `https://solwatk3.github.io/Admissions-Command-Center/?restore_raw=1`
-4. On load, `checkRestoreParam()` detects `?restore_raw=1`, fetches `https://raw.githubusercontent.com/solwatk3/Admissions-Command-Center/main/backups/latest.json`, and calls `restoreSnapshot()`
-5. The token itself is included in the backup payload (`emailKeys` array includes `acc_gh_token`), so it auto-restores on new devices - no re-entry needed
-
-**File:** `ACC/js/app.js`
+**Files:** `js/directory.js` (openTriagePrompt, renderTriageInModal, setTriagePriority), `css/directory.css` (triage styles), `index.html` (Triage button)
 
 ---
 
-### 3. Token visibility and testing
+### 2. Map Marker Colors by Priority
+Each school dot on the map now has a distinct color based on its priority level.
 
-**Problems:** Token was `type="password"` so invisible, and there was no way to verify it worked before exporting.
+- Primary: purple (#9b30ff)
+- Secondary: cyan (#22d3ee)
+- Tertiary: amber (#f59e0b)
+- Unset / fallback: grey / orange
 
-**Fixes:**
-- Token input is now `type="text"` (monospace) so Sol can see and copy it
-- "Copy token" button (appears when a token is already saved) - copies it to clipboard for pasting on other devices
-- "Test connection" button calls `testGitHubToken(token, el)` which hits the GitHub API, shows "✓ Connected!" in green or pops an alert with the exact HTTP error code and what to check
-
-**File:** `ACC/js/app.js` - functions: `openGitHubTokenSetup()`, `testGitHubToken()`
-
----
-
-### 4. Silent failure feedback
-
-Previously, if the token was wrong or missing, the backup email just silently had no restore link and the user had no idea why.
-
-**Fix:**
-- Button text distinguishes success: "✓ Backed up with restore link!" vs "✓ Backed up (no restore link)"
-- If repo save failed, an alert fires 500ms after the email send with the exact error from the GitHub API
+**File:** `js/map.js` - `priorityColor` object
 
 ---
 
-## Current State of Key Files
+### 3. Primary Schools Dashboard Card - County Dropdowns
+Instead of a flat chip grid that grew too large, the Primary Schools card now groups schools by county with collapsible dropdowns.
 
-| File | Key sections |
-|------|-------------|
-| `ACC/js/app.js` | `exportAllData()` (line ~458), `openGitHubTokenSetup()` (1491), `saveBackupToRepo()` (1555), `testGitHubToken()` (1613), `checkRestoreParam()` (1656) |
-| `ACC/js/calendar.js` | `syncAllRoutes()` (line ~275), `syncRouteToCalendar()` (~209) |
-| `ACC/index.html` | `🔑 Restore Link` button in the dashboard header |
+- Click a county header to expand/collapse its school list
+- State managed by `primaryCountyOpen` object
+- Each school row is clickable and opens the school detail modal
 
----
-
-## Token Storage Details
-
-- Saved with: `saveData('gh_token', token)` -> JSON-encodes to `acc_gh_token` in localStorage
-- Read with: `loadData('gh_token', '') || localStorage.getItem('acc_gh_token') || ''` (self-healing fallback handles old format)
-- Included in: `emailKeys` array inside `exportAllData()` so it goes into the repo backup and auto-restores
+**File:** `js/app.js` - `renderPrimarySchools()`
 
 ---
 
-## What Sol Still Needs to Do (one time)
+### 4. Directory Search - Counties AND Schools
+Previously search only filtered counties. Now it finds both.
 
-1. Go to GitHub.com - Profile - Settings - Developer settings - Fine-grained tokens
-2. Create token: name "ACC Restore", no expiration, repo = Admissions-Command-Center only, permission = Contents: Read and write
-3. Open ACC, click **🔑 Restore Link**, paste the token, click **Test connection** to verify, then **Save**
-4. Do one **Export** - the email will now have the tappable restore link
+- Typing in the search box re-renders with two sections: matching counties and matching schools
+- County rows call `openCountyView()`, school rows call `openSchoolDetail()`
+- Clearing the search returns to the normal county pill grid
 
-After that, the token lives in the backup and restores automatically on any new device.
+**File:** `js/directory.js` - `renderAlphaCountyView(q)`
 
 ---
 
-## Known Limitations / Watch Points
+### 5. By Priority View
+New tab in the directory showing all schools of a chosen priority in one list.
 
-- The `backups/latest.json` file is **public** (repo is public). It contains school names, visit data, and colleagues - no passwords or truly sensitive data, but Sol should be aware.
-- The token is stored in plaintext in localStorage and in the backup JSON. It has minimal permissions (Contents only, one repo) so exposure is low-risk, but Sol should not share their backup file with others.
-- GCal token is in-memory only - expires after ~1 hour. Sol will need to reconnect each session. This is a Google OAuth limitation, not a bug.
-- `checkRestoreParam()` still handles the old `?restore=BASE64` format for backward compatibility, but no new links use that format.
+- Filter pills: Primary / Secondary / Tertiary
+- Each school row shows name and county, clickable to open detail
+- "Copy All Emails" button copies all contact emails for that tier to clipboard
+
+**Files:** `js/directory.js` (showDirectoryPriority, renderPriorityView, copyPriorityEmails), `css/directory.css` (pv-* styles), `index.html` (By Priority toggle button)
+
+---
+
+### 6. Auto-Focus Modal Inputs
+When any modal opens, the cursor automatically goes to the first text input or textarea.
+
+- 50ms setTimeout needed because DOM isn't ready synchronously after appendChild
+- Applies to all modals - add school, add county, edit school, triage prompt, etc.
+
+**File:** `js/directory.js` - `openModal()` function
+
+---
+
+### 7. Print / Export System
+Seven print options accessible via the Print button in the directory toolbar.
+
+Opens a modal with:
+- **By Priority:** Primary, Secondary, Tertiary individually - or all three in one doc
+- **Full Directory:** All schools A-Z, or all schools grouped by county
+- **Map:** Tennessee coverage map with marker toggle
+
+Each school card includes: name, county, priority badge, address, all contacts (title / name / email / phone), notes.
+
+Print pages open in a new tab with clean black-on-white formatting and auto-trigger `window.print()`.
+
+**Map print uses html2canvas** (loaded from cdnjs) because cross-origin OSM tiles go blank in browser print. html2canvas screenshots the Leaflet div and opens it as a PNG in the print tab.
+
+Marker toggle in the print menu lets you hide school dots before the screenshot, then restores them after capture by iterating `mapInstance.eachLayer()`.
+
+**Files:** `js/directory.js` (openPrintMenu, buildSchoolPrintCard, printByPriority, printAllPriorities, printAlphabetical, printByCounty, printMap), `css/directory.css` (print-menu-btn, toggle styles), `index.html` (Print button, html2canvas CDN script)
+
+---
+
+## Key Variable / Function Names
+
+| Name | File | What it does |
+|---|---|---|
+| `mapInstance` | `js/map.js` | The Leaflet map object - used in printMap() to iterate layers |
+| `triageQueue` / `triageIndex` | `js/directory.js` | State for the current triage session |
+| `activePriorityFilter` | `js/directory.js` | Which priority pill is active in the By Priority view |
+| `primaryCountyOpen` | `js/app.js` | Tracks which county dropdowns are open on the dashboard |
+| `openModal(title, body, onSave)` | `js/directory.js` | Pass `null` for onSave to hide the Save button |
+| `getSchoolContacts(school)` | `js/directory.js` | Handles both legacy single-contact and new contacts array |
+| `escapeHtml(str)` | `js/directory.js` | Always use on user data before inserting into innerHTML |
+
+---
+
+## Known Issues / Watch Points
+
+- Map print marker colors depend on `L.CircleMarker` instanceof check - if Leaflet version changes this could break
+- html2canvas CDN loaded from cloudflare - if offline, map print will silently fail (html2canvas not defined)
+- The secondary priority color was changed from cyan to green (#22c55e) by a linter at some point - if the map marker color looks wrong, check `priorityColor` in map.js vs the CSS badge color
+- `initDirectory()` must exist in directory.js - it's called by app.js every time the directory tab is opened
+
+---
+
+## Start Here Next Session
+
+Test all 7 print options with real data and verify school cards show all fields correctly.
