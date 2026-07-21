@@ -1226,53 +1226,24 @@
 
 /* =============================================
    PRIORITY TRIAGE MODE
-   Full-width card view inside directory-content
+   Runs entirely inside the existing modal.
    ============================================= */
 
-/* Outer wrapper that centers everything vertically */
-.triage-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 24px 16px 40px;
-  min-height: 60vh;
-}
-
-/* Thin progress bar across the top of the triage wrapper */
+/* Thin progress bar at the top of the modal body */
 .triage-progress-bar-wrap {
   width: 100%;
-  max-width: 480px;
   height: 6px;
   background: var(--border);
   border-radius: 3px;
   overflow: hidden;
-  margin-bottom: 6px;
 }
 
-/* Filled portion of the progress bar */
+/* Filled portion animates as schools are completed */
 .triage-progress-bar {
   height: 100%;
   background: var(--accent);
   border-radius: 3px;
   transition: width 0.25s ease;
-}
-
-/* "3 of 47 schools" counter below the bar */
-.triage-progress-label {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin-bottom: 20px;
-}
-
-/* The main school card */
-.triage-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 28px 24px 24px;
-  width: 100%;
-  max-width: 480px;
-  text-align: center;
 }
 
 /* Small county label above the school name */
@@ -1284,35 +1255,35 @@
   margin-bottom: 6px;
 }
 
-/* School name - big and readable */
+/* School name - prominent but fits the modal width */
 .triage-school-name {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: var(--text);
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   line-height: 1.3;
 }
 
-/* "Current: Primary" label */
+/* "Current: Primary" line */
 .triage-current-priority {
   font-size: 0.85rem;
   color: var(--text-muted);
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
-/* 2x2 grid of action buttons */
+/* 2x2 grid of priority buttons */
 .triage-btn-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
 }
 
-/* Base style for all 4 triage buttons - large touch targets */
+/* Base style for all 4 buttons - big enough to tap easily on mobile */
 .triage-btn {
-  padding: 18px 12px;
+  padding: 16px 10px;
   border-radius: 10px;
   border: 2px solid transparent;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.15s, transform 0.1s;
@@ -1324,67 +1295,52 @@
   opacity: 0.85;
 }
 
-/* Primary button - purple accent */
+/* Primary - purple accent */
 .triage-primary {
   background: var(--accent);
   border-color: var(--accent);
 }
 
-/* Secondary button - indigo tone */
+/* Secondary - indigo */
 .triage-secondary {
   background: #5c6bc0;
   border-color: #5c6bc0;
 }
 
-/* Tertiary button - muted gray-blue */
+/* Tertiary - muted gray-blue */
 .triage-tertiary {
   background: #455a64;
   border-color: #455a64;
 }
 
-/* Skip button - ghost style, no color commitment */
+/* Skip - ghost, no commitment */
 .triage-skip {
   background: transparent;
   border-color: var(--border);
   color: var(--text-muted);
 }
 
-/* Exit triage link below the card */
-.triage-exit-btn {
-  margin-top: 20px;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-/* Done screen shown when all schools have been reviewed */
+/* Done screen inside the modal - compact, no min-height */
 .triage-done {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 60px 24px;
+  padding: 24px 0;
   text-align: center;
-  min-height: 50vh;
 }
 
 .triage-done-icon {
-  font-size: 3rem;
+  font-size: 2.5rem;
   color: var(--accent);
-  margin-bottom: 12px;
-}
-
-.triage-done-title {
-  font-size: 1.6rem;
-  font-weight: 700;
-  margin: 0 0 8px;
+  margin-bottom: 10px;
 }
 
 .triage-done-sub {
   color: var(--text-muted);
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
-/* No-priority badge used when a school has no priority set */
+/* Badge for schools that have no priority assigned */
 .priority-none {
   background: #333;
   color: var(--text-muted);
@@ -1395,10 +1351,10 @@
 
 @media (max-width: 480px) {
   .triage-school-name {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
   }
   .triage-btn {
-    padding: 16px 8px;
-    font-size: 0.95rem;
+    padding: 14px 8px;
+    font-size: 0.9rem;
   }
 }
