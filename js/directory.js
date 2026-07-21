@@ -1318,3 +1318,214 @@ function initDirectory() {
   dirView = 'counties';
   renderDirectory();
 }
+
+// =============================================
+// PRIORITY TRIAGE MODE
+// Lets Sol flip through a batch of schools and
+// assign a priority to each one with a single tap.
+// No submit button - each tap saves instantly and
+// advances to the next school.
+// =============================================
+
+// Holds the list of school IDs queued for triage in the current session.
+var triageQueue   = [];
+// Index of the school currently being shown.
+var triageIndex   = 0;
+
+// Opens the setup modal that asks Sol whether to triage
+// a specific county or all schools with no priority set.
+function openTriagePrompt() {
+  var counties = getCounties().slice().sort(function(a, b) {
+    return a.name.localeCompare(b.name);
+  });
+
+  // Build the county options for the dropdown
+  var countyOptions = counties.map(function(c) {
+    return '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>';
+  }).join('');
+
+  var body = `
+    <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:16px;">
+      Choose which schools to triage. Tap a priority to assign it and move on - changes save instantly.
+    </p>
+
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>
+        <input type="radio" name="triage-scope" value="unset" checked style="margin-right:6px;">
+        Schools with no priority set
+      </label>
+    </div>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>
+        <input type="radio" name="triage-scope" value="county" style="margin-right:6px;">
+        One county
+      </label>
+    </div>
+    <div class="form-group" id="triage-county-wrap" style="margin-bottom:10px; display:none;">
+      <select id="triage-county-select" class="form-control" style="margin-top:6px;">
+        ${countyOptions}
+      </select>
+    </div>
+    <div class="form-group" style="margin-bottom:0;">
+      <label>
+        <input type="radio" name="triage-scope" value="all" style="margin-right:6px;">
+        All schools
+      </label>
+    </div>
+  `;
+
+  openModal('Triage Priorities', body, function() {
+    // Read which scope the user selected
+    var scope = document.querySelector('input[name="triage-scope"]:checked').value;
+    var schools = getSchools();
+    var queue = [];
+
+    if (scope === 'unset') {
+      // Only schools that have no priority assigned yet
+      queue = schools.filter(function(s) { return !s.priority; });
+    } else if (scope === 'county') {
+      var countyId = document.getElementById('triage-county-select').value;
+      queue = schools.filter(function(s) { return s.countyId === countyId; });
+    } else {
+      // All schools regardless of priority
+      queue = schools.slice();
+    }
+
+    if (queue.length === 0) {
+      alert('No schools found for that selection.');
+      return;
+    }
+
+    // Kick off triage with the selected school IDs
+    startTriage(queue.map(function(s) { return s.id; }));
+  });
+
+  // Show or hide the county picker based on the radio selection
+  document.querySelectorAll('input[name="triage-scope"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      var wrap = document.getElementById('triage-county-wrap');
+      if (wrap) {
+        wrap.style.display = this.value === 'county' ? 'block' : 'none';
+      }
+    });
+  });
+}
+
+// Initializes the triage queue and renders the first card.
+// schoolIds is an array of school IDs to triage in order.
+function startTriage(schoolIds) {
+  triageQueue  = schoolIds;
+  triageIndex  = 0;
+  // Switch the directory view to triage mode so the back button works
+  dirView = 'triage';
+  renderTriageCard();
+}
+
+// Renders the current triage card inside directory-content.
+// Shows school name, county, current priority, and the 4 action buttons.
+function renderTriageCard() {
+  var container = document.getElementById('directory-content');
+  if (!container) return;
+
+  // Hide the standard directory controls - triage has its own UI
+  showDirectoryControls(false);
+
+  // Check if we have finished all schools in the queue
+  if (triageIndex >= triageQueue.length) {
+    container.innerHTML = `
+      <div class="triage-done">
+        <div class="triage-done-icon">&#10003;</div>
+        <h2 class="triage-done-title">All done!</h2>
+        <p class="triage-done-sub">You reviewed ${triageQueue.length} school${triageQueue.length !== 1 ? 's' : ''}.</p>
+        <button class="btn btn-primary-solid" onclick="closeTriage()">Back to Directory</button>
+      </div>
+    `;
+    return;
+  }
+
+  var schools   = getSchools();
+  var counties  = getCounties();
+  var schoolId  = triageQueue[triageIndex];
+  var school    = schools.find(function(s) { return s.id === schoolId; });
+
+  // School may have been deleted mid-session - skip it silently
+  if (!school) {
+    triageIndex++;
+    renderTriageCard();
+    return;
+  }
+
+  var county = counties.find(function(c) { return c.id === school.countyId; });
+  var countyName = county ? county.name : 'Unknown County';
+
+  // Current priority badge HTML - shows "None" if not set
+  var currentPriority = school.priority || 'None';
+  var priorityClass = {
+    'Primary':   'priority-primary',
+    'Secondary': 'priority-secondary',
+    'Tertiary':  'priority-tertiary',
+  }[school.priority] || 'priority-none';
+
+  // Progress: how many done out of total
+  var done  = triageIndex;
+  var total = triageQueue.length;
+  var pct   = Math.round((done / total) * 100);
+
+  container.innerHTML = `
+    <div class="triage-wrapper">
+
+      <!-- Progress bar at the top -->
+      <div class="triage-progress-bar-wrap">
+        <div class="triage-progress-bar" style="width:${pct}%"></div>
+      </div>
+      <div class="triage-progress-label">${done} of ${total} schools</div>
+
+      <!-- The school card -->
+      <div class="triage-card">
+        <div class="triage-county-label">${escapeHtml(countyName)}</div>
+        <h2 class="triage-school-name">${escapeHtml(school.name)}</h2>
+        <div class="triage-current-priority">
+          Current: <span class="priority-badge ${priorityClass}">${currentPriority}</span>
+        </div>
+
+        <!-- Priority action buttons - big and tap-friendly -->
+        <div class="triage-btn-grid">
+          <button class="triage-btn triage-primary"   onclick="setTriagePriority('Primary')">Primary</button>
+          <button class="triage-btn triage-secondary" onclick="setTriagePriority('Secondary')">Secondary</button>
+          <button class="triage-btn triage-tertiary"  onclick="setTriagePriority('Tertiary')">Tertiary</button>
+          <button class="triage-btn triage-skip"      onclick="setTriagePriority(null)">Skip</button>
+        </div>
+      </div>
+
+      <!-- Back link to exit triage -->
+      <button class="btn btn-ghost triage-exit-btn" onclick="closeTriage()">&#8592; Exit Triage</button>
+    </div>
+  `;
+}
+
+// Saves the chosen priority (or leaves unchanged if null) and advances
+// to the next school. Called when any priority button is tapped.
+function setTriagePriority(priority) {
+  var schools  = getSchools();
+  var schoolId = triageQueue[triageIndex];
+  var school   = schools.find(function(s) { return s.id === schoolId; });
+
+  if (school && priority !== null) {
+    // Only write to localStorage if the user picked a priority (not Skip)
+    school.priority = priority;
+    saveSchools(schools);
+  }
+
+  // Advance to the next school
+  triageIndex++;
+  renderTriageCard();
+}
+
+// Exits triage mode and returns to the normal directory county view.
+function closeTriage() {
+  triageQueue = [];
+  triageIndex = 0;
+  dirView     = 'counties';
+  showDirectoryControls(true);
+  renderDirectory();
+}
