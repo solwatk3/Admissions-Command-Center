@@ -573,6 +573,110 @@ a {
 }
 
 /* =============================================
+   PRIMARY SCHOOLS CARD - COUNTY DROPDOWNS
+   Groups primary schools by county, collapsible.
+   psc- prefix = primary school card.
+============================================== */
+
+/* Scrollable wrapper so the card never grows huge */
+#dashboard-primary-schools {
+  max-height: 320px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+#dashboard-primary-schools::-webkit-scrollbar { width: 5px; }
+#dashboard-primary-schools::-webkit-scrollbar-track { background: transparent; }
+#dashboard-primary-schools::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+/* One collapsible group per county */
+.psc-county-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+/* Clickable county header row */
+.psc-county-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #1a0a28;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.psc-county-header:hover {
+  background: #240f38;
+}
+
+.psc-county-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Arrow rotates to indicate open/closed state */
+.psc-county-arrow {
+  font-size: 0.6rem;
+  color: var(--accent-light);
+  opacity: 0.7;
+  width: 10px;
+  flex-shrink: 0;
+}
+
+.psc-county-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Purple badge showing school count */
+.psc-county-badge {
+  font-size: 0.72rem;
+  color: var(--accent-light);
+  background: rgba(155, 48, 255, 0.12);
+  border: 1px solid rgba(155, 48, 255, 0.3);
+  border-radius: 20px;
+  padding: 2px 9px;
+  white-space: nowrap;
+}
+
+/* School list shown when county is expanded */
+.psc-county-schools {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+
+/* Individual school row */
+.psc-school-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 14px 9px 28px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.psc-school-row:last-child {
+  border-bottom: none;
+}
+
+.psc-school-row:hover {
+  background: #1a0a2e;
+}
+
+.psc-school-name {
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+/* =============================================
    COMING SOON PLACEHOLDER
 ============================================== */
 .coming-soon {

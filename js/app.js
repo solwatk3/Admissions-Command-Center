@@ -185,41 +185,105 @@ function renderUpcomingVisits() {
 // Filters schools marked as Primary and renders
 // them as quick-access chips on the dashboard
 // =============================================
+// Tracks which county groups are expanded in the Primary Schools card.
+// Keyed by countyId - true = expanded, missing/false = collapsed.
+var primaryCountyOpen = {};
+
+// Toggle a county open or closed and re-render the card.
+function togglePrimaryCounty(countyId) {
+  primaryCountyOpen[countyId] = !primaryCountyOpen[countyId];
+  renderPrimarySchools(loadData('schools', []));
+}
+
 function renderPrimarySchools(schools) {
   const container = document.getElementById('dashboard-primary-schools');
   if (!container) return;
 
-  // Load counties so we can look up the name by countyId
   const counties = loadData('counties', []);
+  const visits   = loadData('visits',   []);
 
-  // Load visits so we can flag schools that need a return visit
-  const visits = loadData('visits', []);
-
-  // Filter down to only Primary-priority schools
-  const primaries = schools.filter(s => s.priority === 'Primary');
+  // Only show Primary-priority schools
+  const primaries = schools.filter(function(s) { return s.priority === 'Primary'; });
 
   if (primaries.length === 0) {
     container.innerHTML = '<p class="empty-state">No primary schools yet. Add schools in the School Directory and mark them as Primary.</p>';
     return;
   }
 
-  // Build a grid of chips, one per primary school
-  const html = '<div class="primary-school-list">' +
-    primaries.map(s => {
-      // Look up county name from the countyId stored on the school
-      const county     = counties.find(c => c.id === s.countyId);
-      const countyName = county ? county.name + ' County' : '';
-      // Check if any visit for this school has the return-visit flag set
+  // Group primary schools by county, preserving county sort order (A-Z)
+  const sortedCounties = counties.slice().sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+  // Build a map of countyId -> array of primary schools in that county
+  const byCounty = {};
+  primaries.forEach(function(s) {
+    if (!byCounty[s.countyId]) byCounty[s.countyId] = [];
+    byCounty[s.countyId].push(s);
+  });
+
+  // Schools with no matching county fall into an "Unknown" bucket
+  const unknownSchools = primaries.filter(function(s) { return !counties.find(function(c) { return c.id === s.countyId; }); });
+
+  // Render one collapsible group per county that has primary schools
+  var html = '';
+
+  sortedCounties.forEach(function(county) {
+    const countySchools = byCounty[county.id];
+    if (!countySchools || countySchools.length === 0) return;
+
+    const isOpen = !!primaryCountyOpen[county.id];
+    const arrow  = isOpen ? '&#9660;' : '&#9654;';
+
+    // Build the list of school rows shown when the county is expanded
+    const schoolRows = countySchools.map(function(s) {
       const needsReturn = visits.some(function(v) { return v.schoolId === s.id && v.returnVisit; });
       return `
-        <div class="primary-school-chip" onclick="navigateTo('directory'); openSchoolDetail('${s.id}')">
-          <span>${escapeHtml(s.name)}</span>
-          <span class="chip-county">${escapeHtml(countyName)}</span>
+        <div class="psc-school-row" onclick="navigateTo('directory'); openSchoolDetail('${s.id}')">
+          <span class="psc-school-name">${escapeHtml(s.name)}</span>
           ${needsReturn ? '<span class="chip-return-tag">&#8617; Revisit</span>' : ''}
         </div>
       `;
-    }).join('') +
-  '</div>';
+    }).join('');
+
+    html += `
+      <div class="psc-county-group">
+        <div class="psc-county-header" onclick="togglePrimaryCounty('${county.id}')">
+          <div class="psc-county-header-left">
+            <span class="psc-county-arrow">${arrow}</span>
+            <span class="psc-county-name">${escapeHtml(county.name)}</span>
+          </div>
+          <span class="psc-county-badge">${countySchools.length} school${countySchools.length !== 1 ? 's' : ''}</span>
+        </div>
+        ${isOpen ? `<div class="psc-county-schools">${schoolRows}</div>` : ''}
+      </div>
+    `;
+  });
+
+  // Handle any schools that have no valid county
+  if (unknownSchools.length > 0) {
+    const isOpen = !!primaryCountyOpen['__unknown__'];
+    const arrow  = isOpen ? '&#9660;' : '&#9654;';
+    const schoolRows = unknownSchools.map(function(s) {
+      const needsReturn = visits.some(function(v) { return v.schoolId === s.id && v.returnVisit; });
+      return `
+        <div class="psc-school-row" onclick="navigateTo('directory'); openSchoolDetail('${s.id}')">
+          <span class="psc-school-name">${escapeHtml(s.name)}</span>
+          ${needsReturn ? '<span class="chip-return-tag">&#8617; Revisit</span>' : ''}
+        </div>
+      `;
+    }).join('');
+    html += `
+      <div class="psc-county-group">
+        <div class="psc-county-header" onclick="togglePrimaryCounty('__unknown__')">
+          <div class="psc-county-header-left">
+            <span class="psc-county-arrow">${arrow}</span>
+            <span class="psc-county-name">Unknown County</span>
+          </div>
+          <span class="psc-county-badge">${unknownSchools.length}</span>
+        </div>
+        ${isOpen ? `<div class="psc-county-schools">${schoolRows}</div>` : ''}
+      </div>
+    `;
+  }
 
   container.innerHTML = html;
 }
