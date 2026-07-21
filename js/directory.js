@@ -1368,6 +1368,137 @@ function copyCountyEmails(countyId) {
 }
 
 // =============================================
+// BY PRIORITY VIEW
+// Shows all schools filtered by priority level.
+// Filter pills at the top let Sol switch between
+// Primary, Secondary, and Tertiary.
+// Includes a Copy All Emails button per tier.
+// =============================================
+
+// Tracks which priority filter is active in this view.
+// Defaults to Primary when the tab is first opened.
+var activePriorityFilter = 'Primary';
+
+// Switches to the By Priority tab and renders the view.
+function showDirectoryPriority() {
+  const content     = document.getElementById('directory-content');
+  const mapWrap     = document.getElementById('directory-map-wrap');
+  const alphaBtn    = document.getElementById('dir-alpha-btn');
+  const mapBtn      = document.getElementById('dir-map-btn');
+  const regionBtn   = document.getElementById('dir-region-btn');
+  const priorityBtn = document.getElementById('dir-priority-btn');
+
+  if (content)     content.style.display   = '';
+  if (mapWrap)     mapWrap.style.display   = 'none';
+  if (alphaBtn)    alphaBtn.classList.remove('active-toggle');
+  if (mapBtn)      mapBtn.classList.remove('active-toggle');
+  if (regionBtn)   regionBtn.classList.remove('active-toggle');
+  if (priorityBtn) priorityBtn.classList.add('active-toggle');
+
+  renderPriorityView(activePriorityFilter);
+}
+
+// Renders the priority view for the given tier (Primary/Secondary/Tertiary).
+// Stores the active filter so switching tabs and back remembers the choice.
+function renderPriorityView(priority) {
+  activePriorityFilter = priority;
+
+  const container = document.getElementById('directory-content');
+  if (!container) return;
+
+  showDirectoryControls(true);
+
+  const schools  = getSchools();
+  const counties = getCounties();
+
+  // Filter to the selected priority, sorted A-Z by name
+  const filtered = schools
+    .filter(function(s) { return s.priority === priority; })
+    .sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+  // Build the three filter pills at the top
+  var pillsHtml = ['Primary', 'Secondary', 'Tertiary'].map(function(tier) {
+    const count     = schools.filter(function(s) { return s.priority === tier; }).length;
+    const isActive  = tier === priority;
+    const cssClass  = isActive ? 'pv-pill pv-pill-active pv-pill-' + tier.toLowerCase() : 'pv-pill pv-pill-' + tier.toLowerCase();
+    return `<button class="${cssClass}" onclick="renderPriorityView('${tier}')">${tier} <span class="pv-pill-count">${count}</span></button>`;
+  }).join('');
+
+  // Empty state
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="pv-filter-row">${pillsHtml}</div>
+      <p class="empty-state" style="padding:40px; text-align:center;">No ${priority} schools yet.</p>
+    `;
+    return;
+  }
+
+  // Build school rows
+  var rowsHtml = filtered.map(function(school) {
+    const county     = counties.find(function(c) { return c.id === school.countyId; });
+    const countyName = county ? county.name : '';
+    return `
+      <div class="pv-school-row" onclick="openSchoolDetail('${school.id}')">
+        <div class="pv-school-name">${escapeHtml(school.name)}</div>
+        <div class="pv-school-county">${escapeHtml(countyName)}</div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="pv-filter-row">${pillsHtml}</div>
+    <div class="pv-toolbar">
+      <span class="pv-count-label">${filtered.length} school${filtered.length !== 1 ? 's' : ''}</span>
+      <button class="btn btn-ghost btn-sm" id="pv-copy-emails-btn" onclick="copyPriorityEmails('${priority}')">&#9993; Copy All Emails</button>
+    </div>
+    <div class="pv-school-list">${rowsHtml}</div>
+  `;
+}
+
+// Copies all contact emails from schools of the given priority to the clipboard.
+// Reuses the same pattern as copyCountyEmails() in the county detail view.
+function copyPriorityEmails(priority) {
+  const schools = getSchools().filter(function(s) { return s.priority === priority; });
+
+  const emails = [];
+  schools.forEach(function(school) {
+    getSchoolContacts(school).forEach(function(c) {
+      if (c.email && c.email.trim()) emails.push(c.email.trim());
+    });
+  });
+
+  if (emails.length === 0) {
+    alert('No contact emails found for ' + priority + ' schools.');
+    return;
+  }
+
+  const emailList = emails.join(', ');
+  const btn       = document.getElementById('pv-copy-emails-btn');
+
+  navigator.clipboard.writeText(emailList).then(function() {
+    if (btn) {
+      const original = btn.innerHTML;
+      btn.innerHTML  = '&#10003; Copied ' + emails.length + ' email' + (emails.length !== 1 ? 's' : '') + '!';
+      btn.style.color = 'var(--success)';
+      setTimeout(function() {
+        btn.innerHTML   = original;
+        btn.style.color = '';
+      }, 2500);
+    }
+  }).catch(function() {
+    openModal(
+      'Copy Emails',
+      `<p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:12px;">
+        Clipboard access was denied. Select all the text below and copy it manually.
+      </p>
+      <textarea rows="4" style="width:100%; font-family:monospace; font-size:0.8rem; resize:vertical;"
+        onclick="this.select()">${escapeHtml(emailList)}</textarea>`,
+      null
+    );
+  });
+}
+
+// =============================================
 // INIT DIRECTORY
 // =============================================
 function initDirectory() {
