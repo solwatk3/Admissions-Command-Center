@@ -1867,7 +1867,7 @@ function printMap() {
 
   // Wait for tiles to finish loading after the bounds change
   setTimeout(function() {
-    var mapEl = document.getElementById('map-container');
+    var mapEl = document.getElementById('school-map');
     if (!mapEl) {
       alert('Map not found. Make sure you are on the Map tab and try again.');
       return;
@@ -1896,6 +1896,16 @@ function printMap() {
       console.error('html2canvas error:', err);
     });
   }, 1200); // 1.2s gives tiles time to load after fitBounds
+}
+
+// =============================================
+// INIT DIRECTORY
+// Called by app.js whenever the user navigates
+// to the directory tab. Resets to county pills view.
+// =============================================
+function initDirectory() {
+  dirView = 'counties';
+  renderDirectory();
 }
 
 // =============================================
