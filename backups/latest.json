@@ -113,6 +113,102 @@
       "name": "Greene",
       "region": "East TN",
       "notes": ""
+    },
+    {
+      "id": "mruplcar84t2",
+      "name": "Cumberland",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mruuhy5wnd16",
+      "name": "Hamblen",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mruvcgs1toxe",
+      "name": "Hancock",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mruvdgw173ql",
+      "name": "Hawkins",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mruvixzkac2g",
+      "name": "Johnson",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mruxq2se0rc9",
+      "name": "Loudon",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mruxuzo6umc1",
+      "name": "McMinn",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mruxzq9qd60x",
+      "name": "Meigs",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mruy0jweqcjj",
+      "name": "Monroe",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mruycsbs91pk",
+      "name": "Morgan",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mruywi4yy1ww",
+      "name": "Polk",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mrv2b60xewz8",
+      "name": "Roane",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mrv2kt1qeal2",
+      "name": "Scott",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mrv2mmxaw9nw",
+      "name": "Sevier",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mrv2t4s7b1cf",
+      "name": "Sullivan",
+      "region": "East TN",
+      "notes": ""
+    },
+    {
+      "id": "mrv3l7tpi51m",
+      "name": "Washington",
+      "region": "East TN",
+      "notes": ""
     }
   ],
   "acc_schools": [
@@ -121,7 +217,7 @@
       "countyId": "c2",
       "name": "Crocket County HS",
       "address": "402 TN-88, Alamo, TN",
-      "priority": "",
+      "priority": "Primary",
       "notes": "",
       "contacts": [
         {
@@ -138,7 +234,7 @@
       "countyId": "c4",
       "name": "South Gibson HS",
       "address": "100 Mount Zion Rd, Medina, TN 38355",
-      "priority": "",
+      "priority": "Primary",
       "contact": "Melanie Morales",
       "contactEmail": "Moralesm@gcssd.org",
       "contactPhone": "",
@@ -149,7 +245,7 @@
       "countyId": "c4",
       "name": "Gibson County HS",
       "address": "130 Trenton Hwy, Dyer, TN 38330",
-      "priority": "",
+      "priority": "Primary",
       "notes": "",
       "contacts": [
         {
@@ -173,7 +269,7 @@
       "countyId": "c4",
       "name": "Bradford HS",
       "address": "136 Old Hwy 45 S, Bradford, TN 38316",
-      "priority": "",
+      "priority": "Primary",
       "contact": "",
       "contactEmail": "",
       "contactPhone": "",
@@ -184,7 +280,7 @@
       "countyId": "c4",
       "name": "Humboldt HS",
       "address": "2600 Viking Dr, Humboldt, TN 38343",
-      "priority": "",
+      "priority": "Primary",
       "notes": "",
       "contacts": []
     },
@@ -193,7 +289,7 @@
       "countyId": "c4",
       "name": "Milan HS",
       "address": "7060 E Van Hook St, Milan, TN 38358",
-      "priority": "",
+      "priority": "Primary",
       "contact": "",
       "contactEmail": "parkinsc@milanssd.org",
       "contactPhone": "",
@@ -204,7 +300,7 @@
       "countyId": "c4",
       "name": "Peabody HS",
       "address": "2069 U.S. 45 Bypass, Trenton, TN 38382",
-      "priority": "",
+      "priority": "Primary",
       "contact": "",
       "contactEmail": "",
       "contactPhone": "",
@@ -215,18 +311,16 @@
       "countyId": "mrpvndctmimt",
       "name": "Baylor School",
       "address": "171 Baylor School Rd, Chattanooga, TN",
-      "priority": "",
-      "contact": "",
-      "contactEmail": "",
-      "contactPhone": "",
-      "notes": ""
+      "priority": "Tertiary",
+      "notes": "",
+      "contacts": []
     },
     {
       "id": "mrpvovo8gady",
       "countyId": "mrpvndctmimt",
       "name": "Boyd Buchanan School",
       "address": "4650 Buccaneer Trl Chattanooga, TN 37411, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contact": "",
       "contactEmail": "",
       "contactPhone": "",
@@ -237,7 +331,7 @@
       "countyId": "mrpvndctmimt",
       "name": "Brainerd High School",
       "address": "1020 N Moore Rd Chattanooga, TN 37411, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contact": "",
       "contactEmail": "",
       "contactPhone": "",
@@ -248,7 +342,7 @@
       "countyId": "mrpvndctmimt",
       "name": "Chattanooga Girls Leadership Academy",
       "address": "1802 Bailey Ave Chattanooga, TN 37404, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contact": "",
       "contactEmail": "",
       "contactPhone": "",
@@ -259,7 +353,7 @@
       "countyId": "mrpvndctmimt",
       "name": "Chattanooga High School Center for Creative Arts",
       "address": "1301 Dallas Rd Chattanooga, TN 37405, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contact": "",
       "contactEmail": "",
       "contactPhone": "",
@@ -270,7 +364,7 @@
       "countyId": "mrpvndctmimt",
       "name": "Chattanooga Preparatory School",
       "address": "1815 Union Ave Chattanooga, TN 37404, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contact": "",
       "contactEmail": "",
       "contactPhone": "",
@@ -281,7 +375,7 @@
       "countyId": "mrpvndctmimt",
       "name": "Chattanooga School for the Liberal Arts",
       "address": "4850 Jersey Pike Chattanooga, TN 37416, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contact": "",
       "contactEmail": "",
       "contactPhone": "",
@@ -292,18 +386,16 @@
       "countyId": "mrpvndctmimt",
       "name": "Girls Preparatory School",
       "address": "205 Island Ave Chattanooga, TN 37405, TN",
-      "priority": "",
-      "contact": "",
-      "contactEmail": "",
-      "contactPhone": "",
-      "notes": ""
+      "priority": "Tertiary",
+      "notes": "",
+      "contacts": []
     },
     {
       "id": "mrpvr3xgrai6",
       "countyId": "mrpvndctmimt",
       "name": "Notre Dame High School",
       "address": "2701 Vermont Ave Chattanooga, TN 37404, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contact": "",
       "contactEmail": "",
       "contactPhone": "",
@@ -314,7 +406,7 @@
       "countyId": "mrpvndctmimt",
       "name": "The Howard School",
       "address": "2500 South Market St Chattanooga, TN 37408, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contact": "",
       "contactEmail": "",
       "contactPhone": "",
@@ -325,7 +417,7 @@
       "countyId": "mrpvndctmimt",
       "name": "Tyner Academy",
       "address": "6836 Tyner Rd Chattanooga, TN 37421, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contact": "",
       "contactEmail": "",
       "contactPhone": "",
@@ -336,7 +428,7 @@
       "countyId": "mrr52dpxzhye",
       "name": "Norris Academy",
       "address": "101 First Quality Dr, Andersonville, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contact": "",
       "contactEmail": "",
       "contactPhone": "",
@@ -347,7 +439,7 @@
       "countyId": "c3",
       "name": "Clarksville Academy",
       "address": "710 N 2nd St, Clarksville, TN 37040, TN",
-      "priority": "",
+      "priority": "Primary",
       "contacts": [
         {
           "id": "mrtd3m9k8j1v",
@@ -364,7 +456,7 @@
       "countyId": "c3",
       "name": "Clarksville Christian School",
       "address": "505 TN-76, Clarksville, TN 37043, TN",
-      "priority": "",
+      "priority": "Primary",
       "contacts": [],
       "notes": ""
     },
@@ -373,7 +465,7 @@
       "countyId": "c3",
       "name": "Clarksville High School",
       "address": "151 Richview Rd, Clarksville, TN 37043, TN",
-      "priority": "",
+      "priority": "Primary",
       "contacts": [
         {
           "id": "mrtd4qy7gpqd",
@@ -390,7 +482,7 @@
       "countyId": "c3",
       "name": "Kenwood High School",
       "address": "251 E Pine Mountain Rd, Clarksville, TN 37042, TN",
-      "priority": "",
+      "priority": "Primary",
       "contacts": [],
       "notes": ""
     },
@@ -399,7 +491,7 @@
       "countyId": "c3",
       "name": "Montgomery Central High School",
       "address": "3955 TN-13, Cunningham, TN 37052, TN",
-      "priority": "",
+      "priority": "Primary",
       "contacts": [
         {
           "id": "mrtd5kk3kzim",
@@ -416,7 +508,7 @@
       "countyId": "c3",
       "name": "Rossview High School",
       "address": "1237 Rossview Rd, Clarksville, TN 37043, TN",
-      "priority": "",
+      "priority": "Primary",
       "contacts": [
         {
           "id": "mrtd5yi4mks7",
@@ -433,7 +525,7 @@
       "countyId": "c3",
       "name": "West Creek High School",
       "address": "1210 W Creek Coyote Trail, Clarksville, TN 37042, TN",
-      "priority": "",
+      "priority": "Primary",
       "contacts": [
         {
           "id": "mrtd6jfmo2jr",
@@ -450,7 +542,7 @@
       "countyId": "mrpvndctmimt",
       "name": "Chattanooga Central HS",
       "address": "5728 TN-58, Harrison, TN 37341",
-      "priority": "",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
@@ -459,7 +551,7 @@
       "countyId": "mrpvndctmimt",
       "name": "East Hamilton HS",
       "address": "2015 Ooltewah Ringgold Rd, Ooltewah, TN 37363, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
@@ -468,7 +560,7 @@
       "countyId": "mrpvndctmimt",
       "name": "East Ridge HS",
       "address": "4320 Bennett Road, Chattanooga, TN 37412, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
@@ -477,7 +569,7 @@
       "countyId": "mrpvndctmimt",
       "name": "Hixson High School",
       "address": "5705 Middle Valley Rd, Hixson, TN 37343, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
@@ -486,7 +578,7 @@
       "countyId": "mrpvndctmimt",
       "name": "Ooltewah High School",
       "address": "6123 Mountain View Rd, Collegedale, TN 37363, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
@@ -495,7 +587,7 @@
       "countyId": "mrpvndctmimt",
       "name": "Red Bank High School",
       "address": "640 Morrison Springs Rd, Red Bank, TN 37415, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
@@ -504,7 +596,7 @@
       "countyId": "mrpvndctmimt",
       "name": "Soddy Daisy High School",
       "address": "618 Sequoyah Access Rd, Soddy-Daisy, TN 37379, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
@@ -513,7 +605,7 @@
       "countyId": "mrpvndctmimt",
       "name": "Stem School Chattanooga",
       "address": "4353 Amnicola Hwy, Chattanooga, TN 37406, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
@@ -522,7 +614,7 @@
       "countyId": "mrtf3qwxm20k",
       "name": "Jefferson County HS",
       "address": "115 W Dumplin Valley Rd, Dandridge, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
@@ -531,7 +623,7 @@
       "countyId": "mrtf5zbtvtzv",
       "name": "Bearden High School",
       "address": "8352 Kingston Pike, Knoxville, TN 37919, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
@@ -540,7 +632,7 @@
       "countyId": "mrtf5zbtvtzv",
       "name": "Farragut HS",
       "address": "11237 Kingston Pike, Knoxville, TN 37934, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
@@ -549,7 +641,7 @@
       "countyId": "mrtf5zbtvtzv",
       "name": "Hardin Valley Academy",
       "address": "11345 Hardin Valley Rd, Knoxville, TN 37932, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
@@ -558,7 +650,7 @@
       "countyId": "mrtf5zbtvtzv",
       "name": "Knoxville Catholic HS",
       "address": "9245 Fox Lonas Rd NW, Knoxville, TN 37923, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
@@ -567,43 +659,43 @@
       "countyId": "mrtf5zbtvtzv",
       "name": "Knoxville West HS",
       "address": "3300 Sutherland Ave, Knoxville, TN 37919, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
     {
       "id": "mrtfq00b5u20",
-      "countyId": "mrtf5zbtvtzv",
+      "countyId": "c3",
       "name": "Middle College Austin Peay",
-      "address": "601 College St, Clarksville, TN 37044, TN",
-      "priority": "",
+      "address": "601 College St, Clarksville, TN",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
     {
       "id": "mrtfr8nfcif6",
-      "countyId": "mrtf5zbtvtzv",
+      "countyId": "c3",
       "name": "Clarksville Northeast HS",
       "address": "3701 Trenton Rd, Clarksville, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
     {
       "id": "mrtfst3687ut",
-      "countyId": "mrtf5zbtvtzv",
+      "countyId": "c3",
       "name": "Clarksville Northwest HS",
-      "address": "800 Lafayette Rd, Clarksville, TN 37042, TN",
-      "priority": "",
+      "address": "800 Lafayette Rd, Clarksville, TN",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
     {
       "id": "mrtftyo361m2",
-      "countyId": "mrtf5zbtvtzv",
+      "countyId": "c3",
       "name": "Wild Wood Academy",
-      "address": "1017 S Riverside Dr Ste 244, Clarksville, TN 37040, TN",
-      "priority": "",
+      "address": "1017 S Riverside Dr Ste 244, Clarksville, TN",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
@@ -612,7 +704,7 @@
       "countyId": "mrtfvq8bafel",
       "name": "Rhea County HS",
       "address": "885 Eagle Ln, Evensville, TN 37332, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
@@ -620,8 +712,8 @@
       "id": "mrtg2fkkyyj7",
       "countyId": "mrtg23wjimij",
       "name": "Unicoi County High School",
-      "address": "700 S Mohawk Dr, Erwin, TN 37650, TN",
-      "priority": "",
+      "address": "700 S Mohawk Dr, Erwin, TN",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
@@ -630,7 +722,7 @@
       "countyId": "mrtggvcxjhaf",
       "name": "Union County High School",
       "address": "150 Main St, Maynardville, TN",
-      "priority": "",
+      "priority": "Secondary",
       "contacts": [],
       "notes": ""
     },
@@ -639,7 +731,7 @@
       "countyId": "mrqzj50n5s6o",
       "name": "Anderson County HS",
       "address": "130 Maverick Cir, Clinton, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -648,7 +740,7 @@
       "countyId": "mrqzj50n5s6o",
       "name": "Clinton Senior HS",
       "address": "425 Dragon Dr, Clinton, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -657,7 +749,7 @@
       "countyId": "mrqzj50n5s6o",
       "name": "Oak Ridge HS",
       "address": "1450 Oak Ridge Turnpike, Oak Ridge, TN 37830, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -666,7 +758,7 @@
       "countyId": "mrtjy1meyq4y",
       "name": "Alcoa High School",
       "address": "1205 Lodge St, Alcoa, TN 37701, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -675,7 +767,7 @@
       "countyId": "mrtjy1meyq4y",
       "name": "Clayton-Bradley Academy",
       "address": "425 Alcoa Trail, Maryville, TN 37804, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -684,7 +776,7 @@
       "countyId": "mrtjy1meyq4y",
       "name": "Heritage HS",
       "address": "3741 E Lamar Alexander Pkwy, Maryville, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -693,7 +785,7 @@
       "countyId": "mrtjy1meyq4y",
       "name": "Maryville Christian School",
       "address": "2525 Morganton Rd, Maryville, TN 37801, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -702,7 +794,7 @@
       "countyId": "mrtjy1meyq4y",
       "name": "Maryville HS",
       "address": "825 Lawrence Ave, Maryville, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -711,7 +803,7 @@
       "countyId": "mrtjy1meyq4y",
       "name": "Samuel Everett School of Innovation",
       "address": "1500 Jett Rd, Maryville, TN 37804, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -720,7 +812,7 @@
       "countyId": "mrtjy1meyq4y",
       "name": "William Blount HS",
       "address": "219 County Farm Road Maryville, TN 37801, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -729,7 +821,7 @@
       "countyId": "mrtklda12uvk",
       "name": "Bradley Central HS",
       "address": "1000 S Lee Hwy, Cleveland, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -738,7 +830,7 @@
       "countyId": "mrtklda12uvk",
       "name": "Bradley County Virtual School",
       "address": "2369 Parker St NE Unit 109, Cleveland, TN 37311, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -747,7 +839,7 @@
       "countyId": "mrtklda12uvk",
       "name": "Cleveland HS",
       "address": "850 Raider Dr, Cleveland, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -756,7 +848,7 @@
       "countyId": "mrtklda12uvk",
       "name": "Landmark Christian School",
       "address": "1802 Lois St SE, Cleveland, TN 37311, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -765,7 +857,7 @@
       "countyId": "mrtklda12uvk",
       "name": "Tennessee Christian Preparatory School",
       "address": "1100 Stuart Rd NE, Cleveland, TN 37312, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -774,7 +866,7 @@
       "countyId": "mrtklda12uvk",
       "name": "Walker Valley HS",
       "address": "750 Lauderdale Memorial Hwy, Cleveland, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -783,7 +875,7 @@
       "countyId": "mrtodlof1prg",
       "name": "Campbell County High School",
       "address": "150 Cougar Ln, Jacksboro, TN 37757, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -792,7 +884,7 @@
       "countyId": "mrtodlof1prg",
       "name": "Jellico High School",
       "address": "141 High School Ln, Jellico, TN 37762, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -801,7 +893,7 @@
       "countyId": "mrtoh8j3km51",
       "name": "Cloudland High School",
       "address": "476 Cloudland Dr, Roan Mountain, TN 37687, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -810,7 +902,7 @@
       "countyId": "mrtoh8j3km51",
       "name": "Elizabethton High School",
       "address": "907 Jason Witten Way, Elizabethton, TN 37643, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -819,7 +911,7 @@
       "countyId": "mrtoh8j3km51",
       "name": "Hampton High School",
       "address": "766 1st Ave, Hampton, TN 37658, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -828,7 +920,7 @@
       "countyId": "mrtoh8j3km51",
       "name": "Happy Valley High School",
       "address": "121 Warpath Ln, Elizabethton, TN 37643, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -837,7 +929,7 @@
       "countyId": "mrtoh8j3km51",
       "name": "Unaka High School",
       "address": "119 Robinson Ln, Elizabethton, TN 37643, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -846,16 +938,16 @@
       "countyId": "mrtoxgjufd4y",
       "name": "Claiborne County HS",
       "address": "815 Davis Dr, New Tazewell, TN 37825, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
     {
       "id": "mrtp0bbavatp",
-      "countyId": "mrtoxgjufd4y",
+      "countyId": "mrtodlof1prg",
       "name": "Cumberland County HS",
-      "address": "660 Stanley St, Crossville, TN 38555, TN TN, TN TN",
-      "priority": "",
+      "address": "660 Stanley St, Crossville, TN TN",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -864,7 +956,7 @@
       "countyId": "mrtoxgjufd4y",
       "name": "J Frank White Academy",
       "address": "6965 Cumberland Gap Pkwy, Harrogate, TN 37752, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -873,7 +965,7 @@
       "countyId": "mrtp51ehem8o",
       "name": "Cocke County HS",
       "address": "216 Hedrick Dr, Newport, TN 37821, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -882,7 +974,7 @@
       "countyId": "mrtp51ehem8o",
       "name": "Cosby High School",
       "address": "3318 Cosby Hwy, Cosby, TN 37722, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -891,7 +983,7 @@
       "countyId": "mrtpiadtlaz7",
       "name": "Grainger High School",
       "address": "2201 US-11W, Rutledge, TN 37861, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -900,7 +992,7 @@
       "countyId": "mrtpiadtlaz7",
       "name": "Washburn High School",
       "address": "7925 TN-131, Washburn, TN 37888, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -909,7 +1001,7 @@
       "countyId": "mrtptmn87jy5",
       "name": "Chuckey Doak HS",
       "address": "365 Ripley Island Rd, Afton, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -918,7 +1010,7 @@
       "countyId": "mrtptmn87jy5",
       "name": "North Greene HS",
       "address": "4675 Old Baileyton Rd, Greeneville, TN 37745, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -927,7 +1019,7 @@
       "countyId": "mrtptmn87jy5",
       "name": "South Greene HS",
       "address": "7469 Asheville Hwy, Greeneville, TN",
-      "priority": "",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     },
@@ -936,7 +1028,772 @@
       "countyId": "mrtptmn87jy5",
       "name": "West Greene HS",
       "address": "275 W Greene Dr, Mosheim, TN 37818, TN",
-      "priority": "",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruugye4y5do",
+      "countyId": "mrtptmn87jy5",
+      "name": "Greeneville High School",
+      "address": "210 Tusculum Blvd, Greeneville, TN 37745, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruuljotibor",
+      "countyId": "mruuhy5wnd16",
+      "name": "Faith Christian Academy",
+      "address": "1826 Ivy Ln, Morristown, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruuncua4vrd",
+      "countyId": "mruuhy5wnd16",
+      "name": "Morristown Hamblen East HS",
+      "address": "1 Hurricane Ln, Morristown, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruuo1qi4vs1",
+      "countyId": "mruuhy5wnd16",
+      "name": "Morristown Hamblen West HS",
+      "address": "1 Trojan Trl, Morristown, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruuu1z9h66r",
+      "countyId": "mrpvndctmimt",
+      "name": "Chattanooga Christian",
+      "address": "3354 Charger Dr, Chattanooga, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruuvc368eao",
+      "countyId": "mrpvndctmimt",
+      "name": "Collegedale Academy",
+      "address": "4855 College Dr E, Collegedale, TN 37315, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruuydcttlqd",
+      "countyId": "mrpvndctmimt",
+      "name": "Grace Baptist Academy",
+      "address": "7815 Shallowford Rd, Chattanooga, TN 37421, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruuz1sgosca",
+      "countyId": "mrpvndctmimt",
+      "name": "Hamilton County Mid College",
+      "address": "7815 Shallowford Rd, Chattanooga, TN 37421, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruv00ww11s0",
+      "countyId": "mrpvndctmimt",
+      "name": "Ivy Academy",
+      "address": "8520 Dayton Pike, Soddy-Daisy, TN 37379, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruv0qe3lfce",
+      "countyId": "mrpvndctmimt",
+      "name": "Lookout Valley High School",
+      "address": "350 Lookout High St, Chattanooga, TN 37419, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruv1jwminkg",
+      "countyId": "mrpvndctmimt",
+      "name": "McCallie School",
+      "address": "500 Dodds Ave, Chattanooga, TN 37404, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruv2avzgjvd",
+      "countyId": "mrpvndctmimt",
+      "name": "Sale Creek High School",
+      "address": "211 Patterson Rd, Sale Creek, TN 37373, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruv4i1f49yp",
+      "countyId": "mrpvndctmimt",
+      "name": "Sequoyah Vo-Tech High School",
+      "address": "9517 W Ridge Trail Rd, Soddy-Daisy, TN 37379, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruv5cgxggv3",
+      "countyId": "mrpvndctmimt",
+      "name": "Signal Mountain High School",
+      "address": "2650 Sam Powell Dr, Signal Mountain, TN 37377, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruv8ap4h56h",
+      "countyId": "mrpvndctmimt",
+      "name": "Silverdale Baptist Academy",
+      "address": "7236 Bonny Oaks Dr, Chattanooga, TN 37421, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruv956p4l8x",
+      "countyId": "mruvcgs1toxe",
+      "name": "Hancock County High School",
+      "address": "2700 Main St, Sneedville, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruva140wmz1",
+      "countyId": "mruvdgw173ql",
+      "name": "Cherokee Comp. High School",
+      "address": "2927 TN-66, Rogersville, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruvgk60cqwd",
+      "countyId": "mruvdgw173ql",
+      "name": "Volunteer High School",
+      "address": "1050 Volunteer St, Church Hill, TN 37642, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruvhqhkuk58",
+      "countyId": "mrtf3qwxm20k",
+      "name": "Lakeway Christian Academy",
+      "address": "3720 Roy Messer Hwy, White Pine, TN 37890, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruvj8m83xnx",
+      "countyId": "mruvixzkac2g",
+      "name": "Johnson County High School",
+      "address": "290 Fairground Ln, Mountain City, TN 37683, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruvl7qxfvgw",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Apostolic Christian School",
+      "address": "5020 Pleasant Ridge Rd, Knoxville, TN 37912, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruvlwhsfuy5",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Austin-East Magnet High School",
+      "address": "2800 Martin Luther King Jr Ave, Knoxville, TN 37914, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruvmm6g6bu0",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Berean Christian High School",
+      "address": "2329 Prosser Rd, Knoxville, TN 37914, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruvpwwgqc5q",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Career Magnet Academy",
+      "address": "7171 Strawberry Plains Pike, Knoxville, TN 37914, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruvqq94kspu",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Carter High School",
+      "address": "210 N Carter School Rd, Strawberry Plains, TN 37871, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruvtnp4dh5q",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Christian Academy of Knoxville",
+      "address": "529 Academy Way, Knoxville, TN 37923, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruvujqg1dl5",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Concord Christian School",
+      "address": "11704 Kingston Pike #3850, Knoxville, TN 37934, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruw7ttulrun",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Family Chrstn Ac of East TN",
+      "address": "124 E Inskip Dr, Knoxville, TN 37912, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruw95vvpgid",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "First Baptist Academy",
+      "address": "7706 Ewing Rd, Powell, TN 37849, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruw9vnvwi38",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Fulton County HS",
+      "address": "2509 N Broadway St, Knoxville, TN 37917, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruwehlgnze9",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Gibbs High School",
+      "address": "7628 Tazewell Pike, Corryton, TN 37721, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruwf1kztos2",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Grace Christian Academy",
+      "address": "5914 Beaver Ridge Rd, Knoxville, TN 37931, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruwyfnip33i",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Halls High School-Knoxville",
+      "address": "4321 E Emory Rd, Knoxville, TN 37938, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrux3vqumzli",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Karns High School",
+      "address": "2710 Byington Solway Rd, Knoxville, TN 37931, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrux7sw66dqy",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Knoxville Central High School",
+      "address": "5321 Jacksboro Pike, Knoxville, TN 37918, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrux8pp30jo5",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Knoxville Christian School",
+      "address": "11549 Snyder Rd, Knoxville, TN 37932, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruxgkiw66gb",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "L and M Stem Academy",
+      "address": "800 Worlds Fair Park Dr, Knoxville, TN 37902, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruxh7w0zx9r",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Paideia Academy",
+      "address": "10825 Yarnell Rd, Knoxville, TN 37932, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruxl1urblsk",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Powell High School",
+      "address": "2136 W Emory Rd, Powell, TN 37849, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruxluq44wpl",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "South Doyle High School",
+      "address": "2020 Tipton Station Rd, Knoxville, TN 37920, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruxo6046y81",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Temple Baptist High School",
+      "address": "1700 W Beaver Creek Dr, Powell, TN 37849, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruxp5xh35zi",
+      "countyId": "mrtf5zbtvtzv",
+      "name": "Webb High School Knoxville",
+      "address": "WVFJ+78, 9800 Webb School Ln, Knoxville, TN 37923, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruxqj99euj0",
+      "countyId": "mruxq2se0rc9",
+      "name": "Greenback High School",
+      "address": "6945 Morganton Rd, Greenback, TN 37742, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruxr933we52",
+      "countyId": "mruxq2se0rc9",
+      "name": "Lenoir City High School",
+      "address": "1485 Old Hwy 95, Lenoir City, TN 37771, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruxubcejins",
+      "countyId": "mruxq2se0rc9",
+      "name": "Loudon High School",
+      "address": "1039 Mulberry St, Loudon, TN 37774, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruxxamuq4h2",
+      "countyId": "mruxuzo6umc1",
+      "name": "McMinn Central High School",
+      "address": "145 Co Rd 461, Englewood, TN 37329, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruy03ja1trd",
+      "countyId": "mruxzq9qd60x",
+      "name": "Meigs County High School",
+      "address": "105 Abel Ave, Decatur, TN 37322, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruy0xemcnvd",
+      "countyId": "mruy0jweqcjj",
+      "name": "Cross Creek Christian",
+      "address": "501 Sweetwater Vonore Rd, Sweetwater, TN 37874, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruy1v7av699",
+      "countyId": "mruy0jweqcjj",
+      "name": "Sequoyah High School",
+      "address": "3128 US-411, Madisonville, TN 37354, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruy5mbrk8ch",
+      "countyId": "mruy0jweqcjj",
+      "name": "Sweetwater High School",
+      "address": "414 S High St, Sweetwater, TN 37874, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruy7s6ufoks",
+      "countyId": "mruy0jweqcjj",
+      "name": "Tellico Plains High School",
+      "address": "9180 TN-68, Tellico Plains, TN 37385, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruydfo064q0",
+      "countyId": "mruycsbs91pk",
+      "name": "Coalfield High School",
+      "address": "1720 Coal Hill Rd, Coalfield, TN 37719, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruytiwimywn",
+      "countyId": "mruycsbs91pk",
+      "name": "Oakdale High School",
+      "address": "225 Clifty Creek Rd, Oakdale, TN 37829, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruyuu2bzstr",
+      "countyId": "mruycsbs91pk",
+      "name": "Sunbright High School",
+      "address": "205 Burrville Rd, Sunbright, TN 37872, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruyvp1u18px",
+      "countyId": "mruycsbs91pk",
+      "name": "Wartburg Central High School",
+      "address": "1119 Knoxville Hwy, Wartburg, TN 37887, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruyx35lllhk",
+      "countyId": "mruywi4yy1ww",
+      "name": "Copper Basin High School",
+      "address": "300 Cougar Dr, Copperhill, TN 37317, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mruyymo9pgao",
+      "countyId": "mruywi4yy1ww",
+      "name": "Polk County High School",
+      "address": "266 Cougar Dr, Copperhill, TN 37317, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2boiyiiay",
+      "countyId": "mrv2b60xewz8",
+      "name": "Harriman High School",
+      "address": "920 N Roane St, Harriman, TN 37748, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2c7yqlhgu",
+      "countyId": "mrv2b60xewz8",
+      "name": "Midway High School",
+      "address": "530 Loudon Hwy, Kingston, TN 37763, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2f4jipkp1",
+      "countyId": "mrv2b60xewz8",
+      "name": "Mount Pisgah Christian Academy",
+      "address": "160 Patriot Dr, Oliver Springs, TN 37840, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2j51il4wj",
+      "countyId": "mrv2b60xewz8",
+      "name": "Roane County High School",
+      "address": "540 W Cumberland St, Kingston, TN 37763, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2jmwe5f0o",
+      "countyId": "mrv2b60xewz8",
+      "name": "Rockwood High School",
+      "address": "512 W Rockwood St, Rockwood, TN 37854, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2kaxjakhs",
+      "countyId": "mrv2b60xewz8",
+      "name": "Sailaway Learning and Academy",
+      "address": "106 Armour Rd, Kingston, TN 37763, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2l35i50hx",
+      "countyId": "mrv2kt1qeal2",
+      "name": "Oneida High School",
+      "address": "372 N Main St, Oneida, TN 37841, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2lh4lgsm0",
+      "countyId": "mrv2kt1qeal2",
+      "name": "Scott High School",
+      "address": "400 Scott High Dr, Huntsville, TN 37756, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2mw26mzzx",
+      "countyId": "mrv2mmxaw9nw",
+      "name": "Gary Hardin Academy",
+      "address": "2540 Boyds Creek Hwy, Sevierville, TN 37876, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2otjbx2dw",
+      "countyId": "mrv2mmxaw9nw",
+      "name": "Gatlinburg-Pittman High School",
+      "address": "150 Proffitt Rd, Gatlinburg, TN 37738, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2p5c5rq2p",
+      "countyId": "mrv2mmxaw9nw",
+      "name": "Northview Academy",
+      "address": "2719 Northview Academy Wy, Kodak, TN 37764, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2r5km9c73",
+      "countyId": "mrv2mmxaw9nw",
+      "name": "Pigeon Forge High School",
+      "address": "414 Tiger Dr, Pigeon Forge, TN 37863, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2rne7qaxr",
+      "countyId": "mrv2mmxaw9nw",
+      "name": "Sevier County High School",
+      "address": "1200 Dolly Parton Pkwy, Sevierville, TN 37862, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2s3b3shzm",
+      "countyId": "mrv2mmxaw9nw",
+      "name": "Seymour High School",
+      "address": "732 Boyds Creek Hwy, Seymour, TN 37865, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2siulb0j1",
+      "countyId": "mrv2mmxaw9nw",
+      "name": "The King's Academy",
+      "address": "202 Smothers Rd, Seymour, TN 37865, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2teauegqi",
+      "countyId": "mrv2t4s7b1cf",
+      "name": "Dobyns Bennett HS",
+      "address": "1 Tribe Way, Kingsport, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2wbps5e9f",
+      "countyId": "mrv2t4s7b1cf",
+      "name": "New Hope Academy",
+      "address": "4924 Fort Henry Dr, Kingsport, TN 37663, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2x2kor7t2",
+      "countyId": "mrv2t4s7b1cf",
+      "name": "Sullivan Central HS",
+      "address": "131 Shipley Ferry Rd, Blountville, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv2zr9472f4",
+      "countyId": "mrv2t4s7b1cf",
+      "name": "Sullivan East HS",
+      "address": "4180 Weaver Pike, Bluff City, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv3ert5gj73",
+      "countyId": "mrv2t4s7b1cf",
+      "name": "Sullivan North HS",
+      "address": "2533 N John B Dennis Hwy, Kingsport, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv3h7tvbt5w",
+      "countyId": "mrv2t4s7b1cf",
+      "name": "Sullivan South HS",
+      "address": "1236 Moreland Dr, Kingsport, TN 37664, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv3i6f84q1w",
+      "countyId": "mrv2t4s7b1cf",
+      "name": "West Ridge HS",
+      "address": "380 Lynn Rd, Blountville, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv3lmfgs0r0",
+      "countyId": "mrv3l7tpi51m",
+      "name": "Asbury Optional HS",
+      "address": "2002 Indian Ridge Rd, Johnson City, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv3m763at0b",
+      "countyId": "mrv3l7tpi51m",
+      "name": "Daniel Boone HS",
+      "address": "1440 Suncrest Dr, Gray, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv3mqzp4bkz",
+      "countyId": "mrv3l7tpi51m",
+      "name": "David Crockett HS",
+      "address": "684 Old State Rte 34, Jonesborough, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv3ot4uuu19",
+      "countyId": "mrv3l7tpi51m",
+      "name": "ETSU University School",
+      "address": "68 Martha Culp Ave, Johnson City, TN 37614, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv3qwz1zn9l",
+      "countyId": "mrv3l7tpi51m",
+      "name": "Providence Academy",
+      "address": "2788 Carroll Creek Rd, Johnson City, TN 37615, TN",
+      "priority": "Tertiary",
+      "contacts": [],
+      "notes": ""
+    },
+    {
+      "id": "mrv3rafg84lq",
+      "countyId": "mrv3l7tpi51m",
+      "name": "Science Hill HS",
+      "address": "1509 John Exum Pkwy, Johnson City, TN",
+      "priority": "Tertiary",
       "contacts": [],
       "notes": ""
     }
