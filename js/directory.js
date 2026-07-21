@@ -1849,7 +1849,10 @@ function printByCounty() {
 }
 
 // Prints the Leaflet map fitted to all of Tennessee.
-// Hides all app chrome with CSS, resets map bounds to TN, then window.print().
+// Uses html2canvas to capture the map as an image first - needed because
+// OpenStreetMap tiles are cross-origin and browsers block them from printing
+// directly. html2canvas screenshots the rendered canvas, then we open that
+// image in a new tab and print it.
 function printMap() {
   // Make sure the map tab is active so the Leaflet instance is visible
   showDirectoryMap();
@@ -1862,10 +1865,37 @@ function printMap() {
     leafletMap.fitBounds(tnBounds, { animate: false });
   }
 
-  // Give tiles a moment to load before the print dialog opens
+  // Wait for tiles to finish loading after the bounds change
   setTimeout(function() {
-    window.print();
-  }, 800);
+    var mapEl = document.getElementById('map-container');
+    if (!mapEl) {
+      alert('Map not found. Make sure you are on the Map tab and try again.');
+      return;
+    }
+
+    // html2canvas screenshots the map div and returns a canvas element
+    html2canvas(mapEl, {
+      useCORS: true,       // attempt to load cross-origin tiles
+      allowTaint: true,    // allow tainted canvas (cross-origin tiles will render)
+      logging: false,
+      scale: 2             // 2x resolution for sharper print output
+    }).then(function(canvas) {
+      var imgData = canvas.toDataURL('image/png');
+
+      var html = `
+        <h1 class="print-title">Tennessee Coverage Map</h1>
+        <div class="print-date">${getPrintDate()}</div>
+        <div style="margin-top:12px;">
+          <img src="${imgData}" style="width:100%; height:auto; border:1px solid #ddd; border-radius:6px;" />
+        </div>
+      `;
+
+      openPrintWindow('Tennessee Coverage Map', html);
+    }).catch(function(err) {
+      alert('Could not capture the map. Try zooming out to show all of Tennessee first, then print again.');
+      console.error('html2canvas error:', err);
+    });
+  }, 1200); // 1.2s gives tiles time to load after fitBounds
 }
 
 // =============================================
