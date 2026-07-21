@@ -618,13 +618,8 @@ function filterDirectory(term) {
   } else if (mapBtn && mapBtn.classList.contains('active-toggle')) {
     // Map tab - search doesn't apply to the Leaflet map; no-op
   } else {
-    // List tab (county pills) - show/hide pills by county name
-    const pills = document.querySelectorAll('.county-pill');
-    pills.forEach(function(pill) {
-      const name  = pill.dataset.countyName || '';
-      const match = !q || name.includes(q);
-      pill.style.display = match ? '' : 'none';
-    });
+    // Default county pills view - delegate to the shared search renderer
+    renderAlphaCountyView(q);
   }
 }
 
@@ -1055,15 +1050,76 @@ function showDirectoryAlpha() {
 }
 
 function renderAlphaCountyView(q) {
-  // The county pills view IS now the A-Z view (renderCountyPills sorts A-Z).
-  // Re-render pills fresh then apply the search filter via DOM show/hide.
-  renderCountyPills();
-  if (q) {
-    document.querySelectorAll('.county-pill').forEach(function(pill) {
-      const name  = pill.dataset.countyName || '';
-      pill.style.display = name.includes(q) ? '' : 'none';
+  // With no search term, show the normal county pill grid.
+  // With a term, show a flat results list of matching counties AND schools.
+  if (!q) {
+    renderCountyPills();
+    return;
+  }
+
+  const container = document.getElementById('directory-content');
+  if (!container) return;
+
+  const counties = getCounties();
+  const schools  = getSchools();
+
+  // Find counties whose name contains the search term
+  const matchedCounties = counties.filter(function(c) {
+    return c.name.toLowerCase().includes(q);
+  }).sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+  // Find schools whose name contains the search term
+  const matchedSchools = schools.filter(function(s) {
+    return s.name.toLowerCase().includes(q);
+  }).sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+  // Nothing matched at all
+  if (matchedCounties.length === 0 && matchedSchools.length === 0) {
+    container.innerHTML = '<p class="empty-state" style="padding:40px; text-align:center;">No counties or schools match "' + escapeHtml(q) + '".</p>';
+    return;
+  }
+
+  var html = '<div class="dir-search-results">';
+
+  // -- County results --
+  if (matchedCounties.length > 0) {
+    html += '<p class="dir-search-section-label">Counties</p>';
+    matchedCounties.forEach(function(county) {
+      const schoolCount = schools.filter(function(s) { return s.countyId === county.id; }).length;
+      html += `
+        <div class="dir-search-row" onclick="openCountyView('${county.id}')">
+          <span class="dir-search-row-name">${escapeHtml(county.name)}</span>
+          <span class="dir-search-row-meta">${schoolCount} school${schoolCount !== 1 ? 's' : ''}</span>
+        </div>
+      `;
     });
   }
+
+  // -- School results --
+  if (matchedSchools.length > 0) {
+    html += '<p class="dir-search-section-label">Schools</p>';
+    matchedSchools.forEach(function(school) {
+      const county     = counties.find(function(c) { return c.id === school.countyId; });
+      const countyName = county ? county.name : '';
+      const priorityClass = {
+        'Primary':   'priority-primary',
+        'Secondary': 'priority-secondary',
+        'Tertiary':  'priority-tertiary',
+      }[school.priority] || '';
+      html += `
+        <div class="dir-search-row" onclick="openSchoolDetail('${school.id}')">
+          <span class="dir-search-row-name">${escapeHtml(school.name)}</span>
+          <span class="dir-search-row-meta">
+            ${countyName ? escapeHtml(countyName) + ' &nbsp;' : ''}
+            ${school.priority ? '<span class="priority-badge ' + priorityClass + '">' + school.priority + '</span>' : ''}
+          </span>
+        </div>
+      `;
+    });
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
 }
 
 // =============================================

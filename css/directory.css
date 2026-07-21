@@ -1388,3 +1388,59 @@
     font-size: 0.9rem;
   }
 }
+
+/* =============================================
+   DIRECTORY SEARCH RESULTS
+   Shown when the search box has a term - lists
+   matching counties and schools in one flat view.
+   ============================================= */
+
+.dir-search-results {
+  padding: 4px 0;
+}
+
+/* Section headers - "Counties" / "Schools" */
+.dir-search-section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-light);
+  padding: 12px 4px 6px;
+  margin: 0;
+}
+
+/* One result row - county or school */
+.dir-search-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.dir-search-row:hover {
+  background: #1a0a2e;
+  border-color: var(--accent);
+}
+
+.dir-search-row-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* County name / priority badge on the right */
+.dir-search-row-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
