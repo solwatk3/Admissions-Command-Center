@@ -1229,6 +1229,36 @@
    Runs entirely inside the existing modal.
    ============================================= */
 
+/* Clickable scope option boxes - replace radio buttons */
+.triage-option-box {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.15s, background 0.15s;
+  box-sizing: border-box;
+}
+
+.triage-option-box:hover {
+  border-color: var(--accent-light);
+  background: #1a0a2e;
+}
+
+/* Highlighted state when the option is selected */
+.triage-option-active {
+  border-color: var(--accent) !important;
+  background: rgba(155, 48, 255, 0.1) !important;
+  color: #fff;
+}
+
 /* Thin progress bar at the top of the modal body */
 .triage-progress-bar-wrap {
   width: 100%;

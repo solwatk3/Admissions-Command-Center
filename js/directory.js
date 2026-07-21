@@ -1344,32 +1344,40 @@ function openTriagePrompt() {
     return '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>';
   }).join('');
 
+  // Three clickable option boxes - no radio dots.
+  // Clicking a box sets it as selected (highlighted border).
+  // The county dropdown only appears when "county" box is active.
   var body = `
-    <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:16px;">
+    <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">
       Choose which schools to go through. Tap a priority to assign it - saves instantly and moves to the next school.
     </p>
-    <div class="form-group" style="margin-bottom:10px;">
-      <label><input type="radio" name="triage-scope" value="unset" checked style="margin-right:6px;">Schools with no priority set</label>
+
+    <div class="triage-option-box triage-option-active" data-scope="unset" onclick="selectTriageOption(this)">
+      Schools with no priority set
     </div>
-    <div class="form-group" style="margin-bottom:10px;">
-      <label><input type="radio" name="triage-scope" value="county" style="margin-right:6px;">One county</label>
+
+    <div class="triage-option-box" data-scope="county" onclick="selectTriageOption(this)">
+      One county
     </div>
-    <div class="form-group" id="triage-county-wrap" style="margin-bottom:10px; display:none;">
-      <select id="triage-county-select" class="form-control" style="margin-top:6px;">
+
+    <!-- County dropdown - hidden until "One county" is selected -->
+    <div id="triage-county-wrap" style="display:none; margin-bottom:8px;">
+      <select id="triage-county-select" class="form-control">
         ${countyOptions}
       </select>
     </div>
-    <div class="form-group" style="margin-bottom:0;">
-      <label><input type="radio" name="triage-scope" value="all" style="margin-right:6px;">All schools</label>
+
+    <div class="triage-option-box" data-scope="all" onclick="selectTriageOption(this)">
+      All schools
     </div>
   `;
 
-  // Use "Start Triage" as the save action - it does NOT close the modal,
-  // it swaps the modal body to the first school card instead.
+  // Save button kicks off the triage - stays inside the modal
   openModal('Triage Priorities', body, function() {
-    var scope   = document.querySelector('input[name="triage-scope"]:checked').value;
-    var schools = getSchools();
-    var queue   = [];
+    var activeBox = document.querySelector('.triage-option-active');
+    var scope     = activeBox ? activeBox.getAttribute('data-scope') : 'unset';
+    var schools   = getSchools();
+    var queue     = [];
 
     if (scope === 'unset') {
       queue = schools.filter(function(s) { return !s.priority; });
@@ -1385,27 +1393,31 @@ function openTriagePrompt() {
       return;
     }
 
-    // Change the Save button label to signal we are now in card mode
-    var saveBtn = document.getElementById('modal-save-btn');
-    if (saveBtn) saveBtn.style.display = 'none';
-
-    // Hide the Cancel button - use the X or Done button to exit
+    // Hide the footer - priority buttons replace Save/Cancel from here on
     var footer = document.querySelector('#acc-modal .modal-footer');
     if (footer) footer.style.display = 'none';
 
-    // Store queue and kick off the in-modal card flow
     triageQueue = queue.map(function(s) { return s.id; });
     triageIndex = 0;
     renderTriageInModal();
   });
+}
 
-  // Show/hide county dropdown when radio changes
-  document.querySelectorAll('input[name="triage-scope"]').forEach(function(radio) {
-    radio.addEventListener('change', function() {
-      var wrap = document.getElementById('triage-county-wrap');
-      if (wrap) wrap.style.display = this.value === 'county' ? 'block' : 'none';
-    });
+// Highlights the clicked option box and deselects the others.
+// Shows the county dropdown only when the "county" box is active.
+function selectTriageOption(el) {
+  // Remove active state from all boxes
+  document.querySelectorAll('.triage-option-box').forEach(function(box) {
+    box.classList.remove('triage-option-active');
   });
+  // Activate the clicked one
+  el.classList.add('triage-option-active');
+
+  // Show/hide county dropdown based on which option is active
+  var wrap = document.getElementById('triage-county-wrap');
+  if (wrap) {
+    wrap.style.display = el.getAttribute('data-scope') === 'county' ? 'block' : 'none';
+  }
 }
 
 // Updates the modal title and body to show the current school card.
