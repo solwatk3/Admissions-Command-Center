@@ -1877,7 +1877,23 @@ function printMap(showMarkers) {
     return;
   }
 
-  mapInstance.fitBounds(tnBounds, { animate: false, padding: [10, 10] });
+  // Resize the map container to a TN-shaped aspect ratio before fitBounds.
+  // The live map is 100% wide x 560px tall - much wider than TN's shape.
+  // If we fitBounds on a wide container, Leaflet zooms out to fill the height
+  // and shows a lot of surrounding states. A 900x300 container (3:1) matches
+  // TN's proportions and keeps the crop tight.
+  var mapEl = document.getElementById('school-map');
+  if (!mapEl) {
+    alert('Map element not found. Make sure the Map tab is active.');
+    return;
+  }
+  var origWidth  = mapEl.style.width;
+  var origHeight = mapEl.style.height;
+  mapEl.style.width  = '900px';
+  mapEl.style.height = '300px';
+  mapInstance.invalidateSize({ animate: false }); // tell Leaflet about the new size
+
+  mapInstance.fitBounds(tnBounds, { animate: false, padding: [12, 12] });
 
   // Find the active tile layer so we can listen for its load event
   // instead of guessing with a fixed timeout.
@@ -1886,14 +1902,21 @@ function printMap(showMarkers) {
     if (layer instanceof L.TileLayer) tileLayer = layer;
   });
 
+  // Restores the map container to its original size after capture.
+  function restoreMapSize() {
+    mapEl.style.width  = origWidth;
+    mapEl.style.height = origHeight;
+    mapInstance.invalidateSize({ animate: false });
+    mapInstance.fitBounds(tnBounds, { animate: false });
+  }
+
   // Captures the map div with html2canvas and opens a print window.
   // Called either by the tile load event or the fallback timeout below.
   function doCapture() {
-    var mapEl = document.getElementById('school-map');
-    if (!mapEl) {
-      alert('Map element not found. Make sure the Map tab is active.');
-      return;
-    }
+    // Hide Leaflet controls (zoom buttons, layer toggle) so they don't
+    // appear in the captured image.
+    var controls = mapEl.querySelector('.leaflet-control-container');
+    if (controls) controls.style.visibility = 'hidden';
 
     // If hiding markers: save each CircleMarker's opacity and set to 0
     var savedStyles = [];
@@ -1918,10 +1941,12 @@ function printMap(showMarkers) {
       scale:      2       // 2x for sharper output when printing
     }).then(function(canvas) {
 
-      // Restore marker visibility if we hid them
+      // Restore controls, markers, and map size
+      if (controls) controls.style.visibility = '';
       savedStyles.forEach(function(s) {
         s.layer.setStyle({ opacity: s.opacity, fillOpacity: s.fillOpacity });
       });
+      restoreMapSize();
 
       var imgData    = canvas.toDataURL('image/png');
       var markerNote = showMarkers ? '' : '<p style="font-size:9pt; color:#666; margin-top:6px;">School markers hidden.</p>';
@@ -1938,10 +1963,12 @@ function printMap(showMarkers) {
       openPrintWindow('Tennessee Coverage Map', html);
 
     }).catch(function(err) {
-      // Restore markers even if capture failed
+      // Restore everything even if capture failed
+      if (controls) controls.style.visibility = '';
       savedStyles.forEach(function(s) {
         s.layer.setStyle({ opacity: s.opacity, fillOpacity: s.fillOpacity });
       });
+      restoreMapSize();
       alert('Map capture failed. Try again after the map fully loads.');
       console.error('html2canvas error:', err);
     });
