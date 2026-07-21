@@ -1879,8 +1879,16 @@ function printMap(showMarkers) {
 
   mapInstance.fitBounds(tnBounds, { animate: false, padding: [10, 10] });
 
-  // Wait for tiles to render after the bounds change
-  setTimeout(function() {
+  // Find the active tile layer so we can listen for its load event
+  // instead of guessing with a fixed timeout.
+  var tileLayer = null;
+  mapInstance.eachLayer(function(layer) {
+    if (layer instanceof L.TileLayer) tileLayer = layer;
+  });
+
+  // Captures the map div with html2canvas and opens a print window.
+  // Called either by the tile load event or the fallback timeout below.
+  function doCapture() {
     var mapEl = document.getElementById('school-map');
     if (!mapEl) {
       alert('Map element not found. Make sure the Map tab is active.');
@@ -1915,7 +1923,7 @@ function printMap(showMarkers) {
         s.layer.setStyle({ opacity: s.opacity, fillOpacity: s.fillOpacity });
       });
 
-      var imgData   = canvas.toDataURL('image/png');
+      var imgData    = canvas.toDataURL('image/png');
       var markerNote = showMarkers ? '' : '<p style="font-size:9pt; color:#666; margin-top:6px;">School markers hidden.</p>';
 
       var html = `
@@ -1937,8 +1945,28 @@ function printMap(showMarkers) {
       alert('Map capture failed. Try again after the map fully loads.');
       console.error('html2canvas error:', err);
     });
+  }
 
-  }, 1400); // 1.4s for tiles to load after fitBounds
+  if (tileLayer) {
+    // Wait for the tile layer to signal all visible tiles are loaded,
+    // then add a tiny extra delay so SVG county polygons finish painting.
+    // _done prevents both the event and the fallback from firing.
+    var _done = false;
+    tileLayer.once('load', function() {
+      if (_done) return;
+      _done = true;
+      setTimeout(doCapture, 200); // 200ms for county polygon SVG to settle
+    });
+    // Fallback: if tiles haven't loaded after 6s, capture whatever is there
+    setTimeout(function() {
+      if (_done) return;
+      _done = true;
+      doCapture();
+    }, 6000);
+  } else {
+    // No tile layer found - fall back to a longer fixed delay
+    setTimeout(doCapture, 3000);
+  }
 }
 
 // =============================================
