@@ -667,6 +667,14 @@ function openModal(title, bodyHtml, onSave) {
   modal.addEventListener('click', function(e) {
     if (e.target === modal) closeModal();
   });
+
+  // Auto-focus the first text input or textarea in the modal body
+  // so the user can start typing immediately without tapping the field.
+  // Timeout needed to let the DOM finish rendering before focusing.
+  setTimeout(function() {
+    const firstInput = modal.querySelector('.modal-body input[type="text"], .modal-body input[type="email"], .modal-body input[type="tel"], .modal-body textarea');
+    if (firstInput) firstInput.focus();
+  }, 50);
 }
 
 function closeModal() {
