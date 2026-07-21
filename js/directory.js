@@ -1536,7 +1536,16 @@ function openPrintMenu() {
 
     <p class="dir-search-section-label">Map</p>
     <div style="display:flex; flex-direction:column; gap:8px;">
-      <button class="print-menu-btn" onclick="closeModal(); printMap()">&#128205; Tennessee Coverage Map</button>
+      <!-- Toggle row for school markers - read before closing modal -->
+      <label class="print-map-toggle-row">
+        <span>Show school markers on map</span>
+        <div class="print-map-toggle-wrap">
+          <input type="checkbox" id="print-map-markers" checked>
+          <span class="print-map-toggle-slider"></span>
+        </div>
+      </label>
+      <!-- Read toggle value before closeModal() removes the DOM -->
+      <button class="print-menu-btn" onclick="var show = document.getElementById('print-map-markers').checked; closeModal(); printMap(show);">&#128205; Print Tennessee Map</button>
     </div>
   `;
 
@@ -1848,54 +1857,88 @@ function printByCounty() {
   openPrintWindow('All Schools by County', html);
 }
 
-// Prints the Leaflet map fitted to all of Tennessee.
-// Uses html2canvas to capture the map as an image first - needed because
-// OpenStreetMap tiles are cross-origin and browsers block them from printing
-// directly. html2canvas screenshots the rendered canvas, then we open that
-// image in a new tab and print it.
-function printMap() {
-  // Make sure the map tab is active so the Leaflet instance is visible
+// Prints the Leaflet map fitted to Tennessee.
+// showMarkers = true  -> school dots are visible in the capture
+// showMarkers = false -> dots are hidden before capture, restored after
+// Uses html2canvas because cross-origin OpenStreetMap tiles can't print directly.
+function printMap(showMarkers) {
+  // Default to showing markers if called without argument
+  if (showMarkers === undefined) showMarkers = true;
+
+  // Switch to the map tab so the Leaflet instance is rendered and visible
   showDirectoryMap();
 
-  // Tennessee approximate bounds - covers the full state
-  var tnBounds = [[34.98, -90.31], [36.68, -81.65]];
+  // Tighter Tennessee bounds - just enough to show the full state
+  var tnBounds = [[35.00, -90.10], [36.68, -81.70]];
 
-  // leafletMap is the global Leaflet map instance created in map.js
-  if (typeof leafletMap !== 'undefined' && leafletMap) {
-    leafletMap.fitBounds(tnBounds, { animate: false });
+  // mapInstance is the global Leaflet map created in map.js
+  if (typeof mapInstance === 'undefined' || !mapInstance) {
+    alert('Map not ready. Open the Map tab and wait for it to load, then try again.');
+    return;
   }
 
-  // Wait for tiles to finish loading after the bounds change
+  mapInstance.fitBounds(tnBounds, { animate: false, padding: [10, 10] });
+
+  // Wait for tiles to render after the bounds change
   setTimeout(function() {
     var mapEl = document.getElementById('school-map');
     if (!mapEl) {
-      alert('Map not found. Make sure you are on the Map tab and try again.');
+      alert('Map element not found. Make sure the Map tab is active.');
       return;
     }
 
-    // html2canvas screenshots the map div and returns a canvas element
+    // If hiding markers: save each CircleMarker's opacity and set to 0
+    var savedStyles = [];
+    if (!showMarkers) {
+      mapInstance.eachLayer(function(layer) {
+        if (layer instanceof L.CircleMarker) {
+          savedStyles.push({
+            layer:       layer,
+            opacity:     layer.options.opacity,
+            fillOpacity: layer.options.fillOpacity
+          });
+          layer.setStyle({ opacity: 0, fillOpacity: 0 });
+        }
+      });
+    }
+
+    // Capture the map div as a high-resolution image
     html2canvas(mapEl, {
-      useCORS: true,       // attempt to load cross-origin tiles
-      allowTaint: true,    // allow tainted canvas (cross-origin tiles will render)
-      logging: false,
-      scale: 2             // 2x resolution for sharper print output
+      useCORS:    true,   // load cross-origin tile images
+      allowTaint: true,   // allow cross-origin content on the canvas
+      logging:    false,
+      scale:      2       // 2x for sharper output when printing
     }).then(function(canvas) {
-      var imgData = canvas.toDataURL('image/png');
+
+      // Restore marker visibility if we hid them
+      savedStyles.forEach(function(s) {
+        s.layer.setStyle({ opacity: s.opacity, fillOpacity: s.fillOpacity });
+      });
+
+      var imgData   = canvas.toDataURL('image/png');
+      var markerNote = showMarkers ? '' : '<p style="font-size:9pt; color:#666; margin-top:6px;">School markers hidden.</p>';
 
       var html = `
         <h1 class="print-title">Tennessee Coverage Map</h1>
         <div class="print-date">${getPrintDate()}</div>
-        <div style="margin-top:12px;">
+        ${markerNote}
+        <div style="margin-top:10px;">
           <img src="${imgData}" style="width:100%; height:auto; border:1px solid #ddd; border-radius:6px;" />
         </div>
       `;
 
       openPrintWindow('Tennessee Coverage Map', html);
+
     }).catch(function(err) {
-      alert('Could not capture the map. Try zooming out to show all of Tennessee first, then print again.');
+      // Restore markers even if capture failed
+      savedStyles.forEach(function(s) {
+        s.layer.setStyle({ opacity: s.opacity, fillOpacity: s.fillOpacity });
+      });
+      alert('Map capture failed. Try again after the map fully loads.');
       console.error('html2canvas error:', err);
     });
-  }, 1200); // 1.2s gives tiles time to load after fitBounds
+
+  }, 1400); // 1.4s for tiles to load after fitBounds
 }
 
 // =============================================

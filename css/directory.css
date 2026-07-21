@@ -1568,3 +1568,63 @@
   border-color: var(--accent);
   color: var(--accent);
 }
+
+/* Toggle row inside the Map section of the print menu */
+.print-map-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* Wrapper that holds the hidden checkbox + the visible slider */
+.print-map-toggle-wrap {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.print-map-toggle-wrap input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+/* The pill-shaped slider track */
+.print-map-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--border);
+  border-radius: 22px;
+  transition: background 0.2s;
+}
+
+/* The circular knob */
+.print-map-toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+/* Checked state - knob slides right, track turns accent */
+.print-map-toggle-wrap input:checked + .print-map-toggle-slider {
+  background: var(--accent);
+}
+
+.print-map-toggle-wrap input:checked + .print-map-toggle-slider::before {
+  transform: translateX(18px);
+}
