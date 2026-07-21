@@ -329,9 +329,9 @@ async function initSchoolMap() {
   // Priority colors for marker icons.
   // Matches the app's priority levels; anything unknown falls back to grey.
   const priorityColor = {
-    'Primary':   '#9b30ff',
-    'Secondary': '#5c6bc0',
-    'Tertiary':  '#546e7a',
+    'Primary':   '#9b30ff',  // purple - matches app accent
+    'Secondary': '#22d3ee',  // cyan - vivid, distinct from purple
+    'Tertiary':  '#f59e0b',  // amber - warm, distinct from both
   };
 
   // Load counties ONCE before the loop instead of re-reading
