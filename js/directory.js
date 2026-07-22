@@ -284,6 +284,18 @@ function renderSchoolsList(countyId) {
         </div>` : ''}
     </div>
 
+    <!-- Search bar for filtering within this county only -->
+    <div style="margin-bottom: 16px;">
+      <input
+        type="text"
+        class="directory-search"
+        id="county-school-search"
+        placeholder="Search schools in ${county ? escapeHtml(county.name) : 'this county'}..."
+        oninput="filterCountySchools('${countyId}', this.value)"
+        autocomplete="off"
+      />
+    </div>
+
     <!-- Schools grid, grouped under A-Z letter headers -->
     <div class="schools-pill-grid">
       ${countySchools.length === 0
@@ -327,6 +339,61 @@ function renderSchoolPill(school) {
       </div>
     </div>
   `;
+}
+
+// =============================================
+// COUNTY SCHOOL SEARCH
+// Filters schools within a single county view.
+// Only re-renders the grid - does not reload the
+// whole page so the back button and header stay intact.
+// =============================================
+function filterCountySchools(countyId, term) {
+  const grid = document.querySelector('.schools-pill-grid');
+  if (!grid) return;
+
+  const q = term.trim().toLowerCase();
+
+  // Get all schools for this county, sorted A-Z
+  var countySchools = getSchools()
+    .filter(function(s) { return s.countyId === countyId; })
+    .sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+  // Narrow to matching names when a search term is present
+  if (q) {
+    countySchools = countySchools.filter(function(s) {
+      return s.name.toLowerCase().includes(q);
+    });
+  }
+
+  // Empty state - no schools in county or nothing matched the search
+  if (countySchools.length === 0) {
+    grid.innerHTML = '<p class="empty-state" style="padding:40px; text-align:center;">' +
+      (q ? 'No schools match &ldquo;' + escapeHtml(q) + '&rdquo;.' : 'No schools in this county yet. Add one above.') +
+      '</p>';
+    return;
+  }
+
+  // During a search, show a flat list - no letter dividers (cleaner to scan)
+  // With no search term, restore the full A-Z list with letter dividers
+  var html = '';
+  if (q) {
+    countySchools.forEach(function(s) {
+      html += renderSchoolPill(s);
+    });
+  } else {
+    var currentLetter = '';
+    countySchools.forEach(function(s) {
+      var letter = s.name.trim()[0].toUpperCase();
+      if (!/[A-Z]/.test(letter)) letter = '#';
+      if (letter !== currentLetter) {
+        currentLetter = letter;
+        html += '<div class="school-alpha-divider">' + letter + '</div>';
+      }
+      html += renderSchoolPill(s);
+    });
+  }
+
+  grid.innerHTML = html;
 }
 
 // =============================================
@@ -605,9 +672,10 @@ function toggleInlineNotes(id) {
 function filterDirectory(term) {
   const q = term.trim().toLowerCase();
 
-  const alphaBtn  = document.getElementById('dir-alpha-btn');
-  const regionBtn = document.getElementById('dir-region-btn');
-  const mapBtn    = document.getElementById('dir-map-btn');
+  const alphaBtn    = document.getElementById('dir-alpha-btn');
+  const regionBtn   = document.getElementById('dir-region-btn');
+  const mapBtn      = document.getElementById('dir-map-btn');
+  const priorityBtn = document.getElementById('dir-priority-btn');
 
   if (alphaBtn && alphaBtn.classList.contains('active-toggle')) {
     // A-Z tab - re-render with filter
@@ -617,6 +685,9 @@ function filterDirectory(term) {
     renderRegionView(q);
   } else if (mapBtn && mapBtn.classList.contains('active-toggle')) {
     // Map tab - search doesn't apply to the Leaflet map; no-op
+  } else if (priorityBtn && priorityBtn.classList.contains('active-toggle')) {
+    // By Priority tab - re-render the current priority tier filtered by the search term
+    renderPriorityView(activePriorityFilter, q);
   } else {
     // Default county pills view - delegate to the shared search renderer
     renderAlphaCountyView(q);
@@ -1408,7 +1479,11 @@ function showDirectoryPriority() {
 
 // Renders the priority view for the given tier (Primary/Secondary/Tertiary).
 // Stores the active filter so switching tabs and back remembers the choice.
-function renderPriorityView(priority) {
+// priority: which tier to show (Primary/Secondary/Tertiary)
+// q: optional search term passed from filterDirectory(); if omitted,
+//    the function reads the current search input so clicking a priority
+//    pill preserves any active search without needing extra wiring.
+function renderPriorityView(priority, q) {
   activePriorityFilter = priority;
 
   const container = document.getElementById('directory-content');
@@ -1419,9 +1494,19 @@ function renderPriorityView(priority) {
   const schools  = getSchools();
   const counties = getCounties();
 
-  // Filter to the selected priority, sorted A-Z by name
+  // Resolve the search term - prefer the passed value, fall back to the input
+  const filterTerm = (q !== undefined
+    ? q
+    : ((document.getElementById('directory-search') || {}).value || '')
+  ).trim().toLowerCase();
+
+  // Filter to the selected priority, then narrow by search term if one exists, sorted A-Z
   const filtered = schools
-    .filter(function(s) { return s.priority === priority; })
+    .filter(function(s) {
+      if (s.priority !== priority) return false;
+      if (filterTerm && !s.name.toLowerCase().includes(filterTerm)) return false;
+      return true;
+    })
     .sort(function(a, b) { return a.name.localeCompare(b.name); });
 
   // Build the three filter pills at the top
@@ -1432,11 +1517,15 @@ function renderPriorityView(priority) {
     return `<button class="${cssClass}" onclick="renderPriorityView('${tier}')">${tier} <span class="pv-pill-count">${count}</span></button>`;
   }).join('');
 
-  // Empty state
+  // Empty state - either no schools at all or search returned nothing
   if (filtered.length === 0) {
     container.innerHTML = `
       <div class="pv-filter-row">${pillsHtml}</div>
-      <p class="empty-state" style="padding:40px; text-align:center;">No ${priority} schools yet.</p>
+      <p class="empty-state" style="padding:40px; text-align:center;">
+        ${filterTerm
+          ? 'No ' + priority + ' schools match &ldquo;' + escapeHtml(filterTerm) + '&rdquo;.'
+          : 'No ' + priority + ' schools yet.'}
+      </p>
     `;
     return;
   }
@@ -1456,7 +1545,7 @@ function renderPriorityView(priority) {
   container.innerHTML = `
     <div class="pv-filter-row">${pillsHtml}</div>
     <div class="pv-toolbar">
-      <span class="pv-count-label">${filtered.length} school${filtered.length !== 1 ? 's' : ''}</span>
+      <span class="pv-count-label">${filtered.length} school${filtered.length !== 1 ? 's' : ''}${filterTerm ? ' matching &ldquo;' + escapeHtml(filterTerm) + '&rdquo;' : ''}</span>
       <button class="btn btn-ghost btn-sm" id="pv-copy-emails-btn" onclick="copyPriorityEmails('${priority}')">&#9993; Copy All Emails</button>
     </div>
     <div class="pv-school-list">${rowsHtml}</div>

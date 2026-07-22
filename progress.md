@@ -23,6 +23,9 @@
 - [x] Auto-focus modal inputs - cursor lands in first field on any modal open (2026-07-21)
 - [x] Print / Export system - 7 options: by priority tier, A-Z, by county, TN map (2026-07-21)
 - [x] Map print - html2canvas capture, tighter TN crop, marker toggle (2026-07-21)
+- [x] Map print timing fix - wait for tile load event instead of fixed timeout (2026-07-22)
+- [x] Map print crop fix - resize container to TN aspect ratio before fitBounds (2026-07-22)
+- [x] Map print controls fix - hide Leaflet zoom/layer buttons before capture (2026-07-22)
 
 ---
 
@@ -34,7 +37,7 @@
 
 ## Up Next
 
-- [ ] Test all 7 print options end-to-end and confirm school cards show all fields
+- [ ] Test all 7 print options end-to-end with real data and confirm school cards show all fields
 - [ ] Consider adding a "Notes" field to county records (currently only schools have notes)
 - [ ] Explore adding a visit history timeline view per school
 
@@ -48,3 +51,4 @@
 | Anonymous GitHub Gist for backup storage | Sol wanted their own repo instead | 2026-07-20 |
 | `@media print` CSS to print Leaflet map | Cross-origin OSM tiles render blank in browser print | 2026-07-21 |
 | `window.print()` directly after fitBounds for map | Same cross-origin tile issue - blank output | 2026-07-21 |
+| Fixed 1.4s timeout before html2canvas map capture | Tiles not always loaded in time - replaced with tile load event | 2026-07-22 |
