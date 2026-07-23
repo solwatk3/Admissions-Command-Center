@@ -270,10 +270,16 @@
       "name": "Bradford HS",
       "address": "136 Old Hwy 45 S, Bradford, TN 38316",
       "priority": "Primary",
-      "contact": "",
-      "contactEmail": "",
-      "contactPhone": "",
-      "notes": ""
+      "notes": "",
+      "contacts": [
+        {
+          "id": "mrwbzc23efz1",
+          "title": "Guidance Counselor",
+          "name": "Marcy Tahmazian",
+          "email": "mtahmazian@bradfordspecial.com",
+          "phone": ""
+        }
+      ]
     },
     {
       "id": "mrp4uhluu4qf",
@@ -282,7 +288,15 @@
       "address": "2600 Viking Dr, Humboldt, TN 38343",
       "priority": "Primary",
       "notes": "",
-      "contacts": []
+      "contacts": [
+        {
+          "id": "mrwcc810mi3r",
+          "title": "Guidance Counselor",
+          "name": "Ericka Hamilton",
+          "email": "ericka.hamilton@hcsvikings.org",
+          "phone": ""
+        }
+      ]
     },
     {
       "id": "mrp4uwtuw9wp",
@@ -290,10 +304,16 @@
       "name": "Milan HS",
       "address": "7060 E Van Hook St, Milan, TN 38358",
       "priority": "Primary",
-      "contact": "",
-      "contactEmail": "parkinsc@milanssd.org",
-      "contactPhone": "",
-      "notes": ""
+      "notes": "",
+      "contacts": [
+        {
+          "id": "legacy",
+          "title": "Guidance Counselor",
+          "name": "Carol Parkins",
+          "email": "parkinsc@milanssd.org",
+          "phone": ""
+        }
+      ]
     },
     {
       "id": "mrp4vspss11a",
@@ -301,10 +321,16 @@
       "name": "Peabody HS",
       "address": "2069 U.S. 45 Bypass, Trenton, TN 38382",
       "priority": "Primary",
-      "contact": "",
-      "contactEmail": "",
-      "contactPhone": "",
-      "notes": ""
+      "notes": "",
+      "contacts": [
+        {
+          "id": "mrwcjs2cuepg",
+          "title": "Guidance Counselor",
+          "name": "Jana Spencer",
+          "email": "jana.spencer@trentonssd.org",
+          "phone": ""
+        }
+      ]
     },
     {
       "id": "mrpvnywr5acc",
@@ -524,15 +550,22 @@
       "id": "mrtd6usxicnq",
       "countyId": "c3",
       "name": "West Creek High School",
-      "address": "1210 W Creek Coyote Trail, Clarksville, TN 37042, TN",
+      "address": "1210 W Creek Coyote Trail, Clarksville, TN",
       "priority": "Primary",
       "contacts": [
         {
           "id": "mrtd6jfmo2jr",
-          "title": "",
+          "title": "School Counselor",
           "name": "Bill Shehy",
           "email": "william.shehy@cmcss.net",
           "phone": ""
+        },
+        {
+          "id": "mry1izmmfp0x",
+          "title": "School Counselor, Seniors M-Z,",
+          "name": "Amy Wilson",
+          "email": "amy.wilson@cmcss.net",
+          "phone": "(931) 503-1788 ext:2900"
         }
       ],
       "notes": ""
@@ -1913,6 +1946,16 @@
       "time": "12:45",
       "endTime": "14:45",
       "notes": ""
+    },
+    {
+      "id": "mry1i230yg9i",
+      "name": "Senior Orientation Night @ WCHS",
+      "type": "College Fair",
+      "date": "2026-08-06",
+      "endDate": "",
+      "time": "16:30",
+      "endTime": "19:30",
+      "notes": "Event Details:\n\nDate: Thursday, August 6th\nTime: 4:30 PM – 7:30 PM (set up will begin at 4:00 pm)\nLocation: WCHS Gymnasium"
     }
   ],
   "acc_event_types": [
