@@ -51,29 +51,72 @@ function makeId() {
 // both formats so no migration script is needed.
 // =============================================
 
-// Returns the contacts array for a school, migrating old
-// single-contact fields on the fly if the new format isn't present.
+// Returns the contacts array for a school, migrating old formats on the fly.
+// Two migrations handled here:
+// 1. Legacy single-contact fields (contact, contactEmail, contactPhone) -> contacts array
+// 2. Old contacts that stored a single email string -> emails array
+// Nothing is written back to localStorage here - migrations happen on read only.
 function getSchoolContacts(school) {
+  var contacts;
+
   if (Array.isArray(school.contacts) && school.contacts.length > 0) {
-    return school.contacts;
-  }
-  // Migrate legacy single-contact fields
-  if (school.contact || school.contactEmail || school.contactPhone) {
-    return [{
+    contacts = school.contacts;
+  } else if (school.contact || school.contactEmail || school.contactPhone) {
+    // Migrate very old single-contact fields into a one-item array
+    contacts = [{
       id:    'legacy',
       title: '',
       name:  school.contact      || '',
       email: school.contactEmail || '',
       phone: school.contactPhone || '',
+      ext:   '',
     }];
+  } else {
+    return [];
   }
-  return [];
+
+  // For each contact, ensure emails is an array.
+  // Old records stored a single string in c.email - convert it to c.emails = [c.email].
+  return contacts.map(function(c) {
+    if (Array.isArray(c.emails)) {
+      // Already new format - nothing to do
+      return c;
+    }
+    // Convert old single email string to array
+    var emailArr = (c.email && c.email.trim()) ? [c.email.trim()] : [];
+    return {
+      id:     c.id    || makeId(),
+      title:  c.title || '',
+      name:   c.name  || '',
+      emails: emailArr,
+      phone:  c.phone || '',
+      ext:    c.ext   || '',
+    };
+  });
 }
 
 // Returns the HTML for one contact entry row inside the add/edit modal.
 // prefill is an optional existing contact object to pre-populate the fields.
+// Supports multiple emails per contact (c.emails array) and a phone extension (c.ext).
 function contactRowHtml(prefill) {
   const c = prefill || {};
+
+  // Build one email row per existing email, or one blank row if none yet
+  const emailArr = (Array.isArray(c.emails) && c.emails.length > 0) ? c.emails : [''];
+  const emailRowsHtml = emailArr.map(function(em, idx) {
+    return `
+      <div class="c-email-row">
+        <input type="email" class="c-email" value="${escapeHtml(em)}"
+          placeholder="jsmith@school.edu">
+        ${idx === 0
+          // First row gets the "+ Add Email" button
+          ? `<button type="button" class="btn-icon btn-icon-add" onclick="addEmailRow(this)" title="Add another email">+</button>`
+          // Extra rows get an "x" remove button
+          : `<button type="button" class="btn-icon btn-icon-danger" onclick="removeEmailRow(this)" title="Remove this email">&#10005;</button>`
+        }
+      </div>`;
+  }).join('');
+
   return `
     <div class="contact-entry">
       <div class="contact-entry-header">
@@ -94,16 +137,41 @@ function contactRowHtml(prefill) {
       </div>
       <div class="form-group">
         <label>Email</label>
-        <input type="email" class="c-email" value="${escapeHtml(c.email || '')}"
-          placeholder="jsmith@school.edu">
+        <div class="c-email-list">${emailRowsHtml}</div>
       </div>
       <div class="form-group">
         <label>Phone</label>
-        <input type="tel" class="c-phone" value="${escapeHtml(c.phone || '')}"
-          placeholder="(555) 000-0000">
+        <div class="c-phone-ext-row">
+          <input type="tel" class="c-phone" value="${escapeHtml(c.phone || '')}"
+            placeholder="(555) 000-0000" style="flex:1;">
+          <div class="c-ext-group">
+            <label class="c-ext-label">Ext</label>
+            <input type="text" class="c-ext" value="${escapeHtml(c.ext || '')}"
+              placeholder="e.g. 204" style="width:72px;">
+          </div>
+        </div>
       </div>
     </div>
   `;
+}
+
+// Adds a new blank email input row inside the contact block that contains the clicked "+" button.
+// The new row gets an "x" remove button instead of another "+".
+function addEmailRow(btn) {
+  const emailList = btn.closest('.c-email-list');
+  if (!emailList) return;
+  const newRow = document.createElement('div');
+  newRow.className = 'c-email-row';
+  newRow.innerHTML = `
+    <input type="email" class="c-email" value="" placeholder="jsmith@school.edu">
+    <button type="button" class="btn-icon btn-icon-danger" onclick="removeEmailRow(this)" title="Remove this email">&#10005;</button>`;
+  emailList.appendChild(newRow);
+}
+
+// Removes the email row that contains the clicked "x" button.
+function removeEmailRow(btn) {
+  const row = btn.closest('.c-email-row');
+  if (row) row.remove();
 }
 
 // Appends a new contact row to the contacts list inside the modal.
@@ -123,18 +191,26 @@ function removeSchoolContact(btn) {
 }
 
 // Reads all contact rows from the modal and returns a clean array.
-// Rows with no name and no email are silently dropped.
+// Rows with no name and no emails are silently dropped.
+// Each contact now stores c.emails (array) and c.ext instead of a single c.email string.
 function readSchoolContacts() {
   const entries = document.querySelectorAll('#contacts-list .contact-entry');
   return Array.from(entries).map(function(entry) {
+    // Collect all email inputs in this contact block, filter out blanks
+    const emailInputs = Array.from(entry.querySelectorAll('.c-email'));
+    const emails = emailInputs
+      .map(function(inp) { return inp.value.trim(); })
+      .filter(function(v) { return v.length > 0; });
+
     return {
-      id:    entry.querySelector('.c-id').value  || makeId(),
-      title: entry.querySelector('.c-title').value.trim(),
-      name:  entry.querySelector('.c-name').value.trim(),
-      email: entry.querySelector('.c-email').value.trim(),
-      phone: formatPhone(entry.querySelector('.c-phone').value.trim()),
+      id:     entry.querySelector('.c-id').value  || makeId(),
+      title:  entry.querySelector('.c-title').value.trim(),
+      name:   entry.querySelector('.c-name').value.trim(),
+      emails: emails,
+      phone:  formatPhone(entry.querySelector('.c-phone').value.trim()),
+      ext:    entry.querySelector('.c-ext') ? entry.querySelector('.c-ext').value.trim() : '',
     };
-  }).filter(function(c) { return c.name || c.email; });
+  }).filter(function(c) { return c.name || c.emails.length > 0; });
 }
 
 // =============================================
@@ -511,17 +587,27 @@ function renderSchoolDetail(schoolId) {
                 </div>`;
             }
             return contacts.map(function(c, i) {
+              // Build one clickable email row per address in c.emails
+              const emailsHtml = (Array.isArray(c.emails) ? c.emails : []).map(function(em) {
+                return `<div class="detail-contact-row">
+                  <span class="copy-value" data-copy="${escapeHtml(em)}" onclick="copyToClipboard(this.dataset.copy, this)" title="Click to copy">
+                    &#9993; ${escapeHtml(em)}
+                  </span></div>`;
+              }).join('');
+
+              // Show phone and extension together if ext exists
+              const phoneDisplay = c.phone
+                ? escapeHtml(c.phone) + (c.ext ? ' <span style="opacity:0.7;">x' + escapeHtml(c.ext) + '</span>' : '')
+                : '';
+
               return `
                 <div class="detail-contact-block${i > 0 ? ' detail-contact-block-sep' : ''}">
                   <div class="detail-contact-title">${c.title ? escapeHtml(c.title) : 'Contact ' + (i + 1)}</div>
-                  ${c.name  ? `<div class="detail-contact-row">&#128100; ${escapeHtml(c.name)}</div>` : ''}
-                  ${c.email ? `<div class="detail-contact-row">
-                    <span class="copy-value" data-copy="${escapeHtml(c.email)}" onclick="copyToClipboard(this.dataset.copy, this)" title="Click to copy">
-                      &#9993; ${escapeHtml(c.email)}
-                    </span></div>` : ''}
-                  ${c.phone ? `<div class="detail-contact-row">
+                  ${c.name        ? `<div class="detail-contact-row">&#128100; ${escapeHtml(c.name)}</div>` : ''}
+                  ${emailsHtml}
+                  ${c.phone       ? `<div class="detail-contact-row">
                     <span class="copy-value" data-copy="${escapeHtml(c.phone)}" onclick="copyToClipboard(this.dataset.copy, this)" title="Click to copy">
-                      &#128222; ${escapeHtml(c.phone)}
+                      &#128222; ${phoneDisplay}
                     </span></div>` : ''}
                 </div>`;
             }).join('');
@@ -1402,12 +1488,15 @@ function renderRegionView(q) {
 function copyCountyEmails(countyId) {
   const schools = getSchools().filter(function(s) { return s.countyId === countyId; });
 
-  // Pull all email addresses across all contacts in the county,
-  // using getSchoolContacts() to handle both old and new contact formats.
+  // Pull all email addresses across all contacts in the county.
+  // Each contact now stores c.emails (array), so flatten them all.
+  // getSchoolContacts() handles migration from old single-email format.
   const emails = [];
   schools.forEach(function(school) {
     getSchoolContacts(school).forEach(function(c) {
-      if (c.email && c.email.trim()) emails.push(c.email.trim());
+      (Array.isArray(c.emails) ? c.emails : []).forEach(function(em) {
+        if (em && em.trim()) emails.push(em.trim());
+      });
     });
   });
 
@@ -1557,10 +1646,13 @@ function renderPriorityView(priority, q) {
 function copyPriorityEmails(priority) {
   const schools = getSchools().filter(function(s) { return s.priority === priority; });
 
+  // Flatten all emails arrays from all contacts across all priority schools.
   const emails = [];
   schools.forEach(function(school) {
     getSchoolContacts(school).forEach(function(c) {
-      if (c.email && c.email.trim()) emails.push(c.email.trim());
+      (Array.isArray(c.emails) ? c.emails : []).forEach(function(em) {
+        if (em && em.trim()) emails.push(em.trim());
+      });
     });
   });
 
@@ -1660,8 +1752,12 @@ function buildSchoolPrintCard(school, countyName) {
       var parts = [];
       if (c.title) parts.push('<span class="pc-contact-title">' + escapeHtml(c.title) + '</span>');
       if (c.name)  parts.push(escapeHtml(c.name));
-      if (c.email) parts.push('<a href="mailto:' + escapeHtml(c.email) + '">' + escapeHtml(c.email) + '</a>');
-      if (c.phone) parts.push(escapeHtml(c.phone));
+      // Loop all emails in the c.emails array
+      (Array.isArray(c.emails) ? c.emails : []).forEach(function(em) {
+        if (em) parts.push('<a href="mailto:' + escapeHtml(em) + '">' + escapeHtml(em) + '</a>');
+      });
+      // Show phone with extension if present
+      if (c.phone) parts.push(escapeHtml(c.phone) + (c.ext ? ' x' + escapeHtml(c.ext) : ''));
       contactsHtml += '<div class="pc-contact-row">' + parts.join(' &nbsp;|&nbsp; ') + '</div>';
     });
     contactsHtml += '</div>';
