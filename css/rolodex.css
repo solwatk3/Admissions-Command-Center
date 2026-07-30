@@ -275,3 +275,30 @@
     right: auto;
   }
 }
+
+/* =============================================
+   Multi-phone rows in the Add/Edit colleague modal
+   Each row: label dropdown + number input + add/remove button
+============================================== */
+.c-phones-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.c-phone-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Label dropdown - compact width, doesn't need to be wide */
+.c-phone-row .c-phone-label {
+  flex: 0 0 90px;
+  font-size: 0.85rem;
+}
+
+/* Number input fills remaining space */
+.c-phone-row .c-phone-number {
+  flex: 1;
+}

@@ -943,13 +943,22 @@ function runGlobalSearch(q) {
   });
 
   // --- Colleagues ---
-  // Searches: name, institution, email, phone, notes
+  // Searches: name, title, institution, acronym, email, any phone number, notes
   var colleagueHits = colleagues.filter(function(c) {
+    // Check all phone numbers in the phones array (new format)
+    var phoneMatch = (Array.isArray(c.phones) ? c.phones : []).some(function(p) {
+      return (p.number || '').toLowerCase().includes(query);
+    });
+    // Also check legacy single phone string for old records not yet edited
+    var legacyPhone = (c.phone || '').toLowerCase().includes(query);
     return (
       (c.name        || '').toLowerCase().includes(query) ||
+      (c.title       || '').toLowerCase().includes(query) ||
       (c.institution || '').toLowerCase().includes(query) ||
+      (c.acronym     || '').toLowerCase().includes(query) ||
       (c.email       || '').toLowerCase().includes(query) ||
-      (c.phone       || '').toLowerCase().includes(query) ||
+      phoneMatch ||
+      legacyPhone ||
       (c.notes       || '').toLowerCase().includes(query)
     );
   });
@@ -1073,7 +1082,7 @@ function runGlobalSearch(q) {
           <span class="gs-result-icon">&#128100;</span>
           <div class="gs-result-text">
             <span class="gs-result-name">${escapeHtml(c.name || 'Unnamed')}</span>
-            ${c.institution ? `<span class="gs-result-sub">${escapeHtml(c.institution)}</span>` : ''}
+            ${(c.acronym || c.institution) ? `<span class="gs-result-sub">${escapeHtml(c.acronym || c.institution)}</span>` : ''}
           </div>
         </div>
       `;
