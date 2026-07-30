@@ -38,7 +38,7 @@ function normalizeColleague(c) {
     acronym:     c.acronym     || '',
     email:       c.email       || '',
     phones:      phones,
-    address:     c.address     || { street: '', city: '', zip: '' },
+    address:     c.address     || { street: '', city: '', zip: '', building: '', office: '' },
     notes:       c.notes       || '',
   };
 }
@@ -218,6 +218,12 @@ function openColleagueDetail(id) {
     ? addrParts.join(', ')
     : '';
 
+  // Build building/office line separately
+  const buildingDisplay = [
+    c.address.building,
+    c.address.office ? 'Office ' + c.address.office : '',
+  ].filter(Boolean).join(', ');
+
   const body = `
     <div class="colleague-detail-view">
       ${c.title ? `
@@ -246,6 +252,11 @@ function openColleagueDetail(id) {
       <div class="colleague-detail-row">
         <span class="detail-label">Address</span>
         <span class="detail-value">&#128205; ${escapeHtml(addrDisplay)}</span>
+      </div>` : ''}
+      ${buildingDisplay ? `
+      <div class="colleague-detail-row">
+        <span class="detail-label">Building</span>
+        <span class="detail-value">&#127970; ${escapeHtml(buildingDisplay)}</span>
       </div>` : ''}
       ${c.notes ? `
       <div class="colleague-detail-row">
@@ -326,6 +337,16 @@ function openAddColleague() {
         <input type="text" id="f-zip" placeholder="37403" maxlength="5" />
       </div>
     </div>
+    <div class="address-city-zip-row">
+      <div class="form-group" style="flex:1;">
+        <label>Building</label>
+        <input type="text" id="f-building" placeholder="e.g. Founders Hall" />
+      </div>
+      <div class="form-group" style="flex:0 0 110px;">
+        <label>Office #</label>
+        <input type="text" id="f-office" placeholder="e.g. 204" />
+      </div>
+    </div>
     <div class="form-group">
       <label>Notes</label>
       <textarea id="f-notes" rows="3" placeholder="e.g. Covers same territory, met at Gibson County Fair 2024..."></textarea>
@@ -348,9 +369,11 @@ function openAddColleague() {
       email:       document.getElementById('f-email').value.trim(),
       phones:      readColleaguePhones(document.querySelector('.modal-body')),
       address: {
-        street: document.getElementById('f-street').value.trim(),
-        city:   document.getElementById('f-city').value.trim(),
-        zip:    document.getElementById('f-zip').value.trim(),
+        street:   document.getElementById('f-street').value.trim(),
+        city:     document.getElementById('f-city').value.trim(),
+        zip:      document.getElementById('f-zip').value.trim(),
+        building: document.getElementById('f-building').value.trim(),
+        office:   document.getElementById('f-office').value.trim(),
       },
       notes:       document.getElementById('f-notes').value.trim(),
     });
@@ -420,6 +443,16 @@ function openEditColleague(id) {
         <input type="text" id="f-zip" value="${escapeHtml(c.address.zip)}" placeholder="37403" maxlength="5" />
       </div>
     </div>
+    <div class="address-city-zip-row">
+      <div class="form-group" style="flex:1;">
+        <label>Building</label>
+        <input type="text" id="f-building" value="${escapeHtml(c.address.building || '')}" placeholder="e.g. Founders Hall" />
+      </div>
+      <div class="form-group" style="flex:0 0 110px;">
+        <label>Office #</label>
+        <input type="text" id="f-office" value="${escapeHtml(c.address.office || '')}" placeholder="e.g. 204" />
+      </div>
+    </div>
     <div class="form-group">
       <label>Notes</label>
       <textarea id="f-notes" rows="3">${escapeHtml(c.notes)}</textarea>
@@ -442,9 +475,11 @@ function openEditColleague(id) {
       email:       document.getElementById('f-email').value.trim(),
       phones:      readColleaguePhones(document.querySelector('.modal-body')),
       address: {
-        street: document.getElementById('f-street').value.trim(),
-        city:   document.getElementById('f-city').value.trim(),
-        zip:    document.getElementById('f-zip').value.trim(),
+        street:   document.getElementById('f-street').value.trim(),
+        city:     document.getElementById('f-city').value.trim(),
+        zip:      document.getElementById('f-zip').value.trim(),
+        building: document.getElementById('f-building').value.trim(),
+        office:   document.getElementById('f-office').value.trim(),
       },
       notes:       document.getElementById('f-notes').value.trim(),
       // Clear old single-phone field so migrated data doesn't linger
