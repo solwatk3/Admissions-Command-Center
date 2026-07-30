@@ -34,6 +34,7 @@ function normalizeColleague(c) {
   return {
     id:          c.id          || '',
     name:        c.name        || '',
+    title:       c.title       || '',
     institution: c.institution || '',
     acronym:     c.acronym     || '',
     email:       c.email       || '',
