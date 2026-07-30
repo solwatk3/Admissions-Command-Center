@@ -38,7 +38,7 @@ function normalizeColleague(c) {
     acronym:     c.acronym     || '',
     email:       c.email       || '',
     phones:      phones,
-    address:     c.address     || { street: '', city: '', zip: '', building: '', office: '' },
+    address:     c.address     || { street: '', city: '', state: '', zip: '', building: '', office: '' },
     notes:       c.notes       || '',
   };
 }
@@ -212,8 +212,14 @@ function openColleagueDetail(id) {
       </div>`;
   }).join('');
 
-  // Build address line if any part is filled in
-  const addrParts = [c.address.street, c.address.city, c.address.zip ? 'TN ' + c.address.zip : 'TN'].filter(Boolean);
+  // Build address line if any part is filled in.
+  // State defaults to TN for old records that didn't store it.
+  const addrState = c.address.state || 'TN';
+  const addrParts = [
+    c.address.street,
+    c.address.city,
+    c.address.zip ? addrState + ' ' + c.address.zip : addrState,
+  ].filter(Boolean);
   const addrDisplay = (c.address.street || c.address.city || c.address.zip)
     ? addrParts.join(', ')
     : '';
@@ -330,7 +336,7 @@ function openAddColleague() {
       </div>
       <div class="form-group address-state-box">
         <label>State</label>
-        <input type="text" value="TN" disabled style="opacity:0.5; cursor:not-allowed;" />
+        <input type="text" id="f-state" placeholder="TN" maxlength="2" style="text-transform:uppercase;" />
       </div>
       <div class="form-group" style="flex:0 0 90px;">
         <label>ZIP</label>
@@ -371,6 +377,7 @@ function openAddColleague() {
       address: {
         street:   document.getElementById('f-street').value.trim(),
         city:     document.getElementById('f-city').value.trim(),
+        state:    document.getElementById('f-state').value.trim().toUpperCase(),
         zip:      document.getElementById('f-zip').value.trim(),
         building: document.getElementById('f-building').value.trim(),
         office:   document.getElementById('f-office').value.trim(),
@@ -436,7 +443,7 @@ function openEditColleague(id) {
       </div>
       <div class="form-group address-state-box">
         <label>State</label>
-        <input type="text" value="TN" disabled style="opacity:0.5; cursor:not-allowed;" />
+        <input type="text" id="f-state" value="${escapeHtml(c.address.state || '')}" placeholder="TN" maxlength="2" style="text-transform:uppercase;" />
       </div>
       <div class="form-group" style="flex:0 0 90px;">
         <label>ZIP</label>
@@ -477,6 +484,7 @@ function openEditColleague(id) {
       address: {
         street:   document.getElementById('f-street').value.trim(),
         city:     document.getElementById('f-city').value.trim(),
+        state:    document.getElementById('f-state').value.trim().toUpperCase(),
         zip:      document.getElementById('f-zip').value.trim(),
         building: document.getElementById('f-building').value.trim(),
         office:   document.getElementById('f-office').value.trim(),
