@@ -19,6 +19,18 @@ function saveVisits(visits) {
   saveData('visits', visits);
 }
 
+// Planned (future) visits - stored separately from logged visits
+// so there is no risk of mixing past records with upcoming plans.
+// Key: acc_planned_visits
+// Each record: { id, schoolId, schoolName, date, notes }
+function getPlannedVisits() {
+  return loadData('planned_visits', []);
+}
+
+function savePlannedVisits(planned) {
+  saveData('planned_visits', planned);
+}
+
 // =============================================
 // INIT VISITS
 // Called when navigating to the Visit Log page
@@ -463,6 +475,111 @@ function openLogVisit(preselectedSchoolId) {
 
   // Wire up the custom school dropdown after the modal HTML is in the DOM
   setTimeout(() => initSchoolDropdown('f-school-name', 'school-dd-list', schools), 0);
+}
+
+// =============================================
+// SCHEDULE VISIT FORM
+// Opens a modal to plan a future visit to a school.
+// preselectedSchoolId - if called from the school detail page,
+//   the school is pre-filled and locked so the user cannot change it.
+// =============================================
+function openScheduleVisit(preselectedSchoolId) {
+  const schools = getSchools().sort((a, b) => a.name.localeCompare(b.name));
+
+  // Pre-fill school name if a school was passed in
+  const preselectedSchool = preselectedSchoolId
+    ? schools.find(function(s) { return s.id === preselectedSchoolId; })
+    : null;
+  const preselectedName = preselectedSchool ? preselectedSchool.name : '';
+
+  // Default date to tomorrow so it is obviously a future visit
+  var tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  var tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+  // If called from a school detail page the school field is read-only (hidden input + label).
+  // If called standalone the user gets the full searchable dropdown.
+  var schoolField = preselectedSchool
+    ? `<div class="form-group">
+         <label>School</label>
+         <input type="text" value="${escapeHtml(preselectedName)}" disabled style="opacity:0.7;" />
+         <input type="hidden" id="f-planned-school-id" value="${escapeHtml(preselectedSchool.id)}" />
+       </div>`
+    : `<div class="form-group">
+         <label>School <span class="required">*</span></label>
+         <div class="school-dropdown-wrapper">
+           <input type="text" id="f-school-name" placeholder="Type to search schools..." value="" autocomplete="off" />
+           <ul class="school-dropdown-list hidden" id="school-dd-list"></ul>
+         </div>
+       </div>`;
+
+  const body = `
+    ${schoolField}
+    <div class="form-group">
+      <label>Planned Date <span class="required">*</span></label>
+      <input type="date" id="f-planned-date" value="${tomorrowStr}" />
+    </div>
+    <div class="form-group">
+      <label>Notes / Purpose <span class="form-optional">(optional)</span></label>
+      <textarea id="f-planned-notes" rows="3" placeholder="What is the goal of this visit?"></textarea>
+    </div>
+  `;
+
+  openModal('Schedule a Visit', body, function() {
+    var date  = document.getElementById('f-planned-date').value;
+    var notes = document.getElementById('f-planned-notes').value.trim();
+
+    // Resolve the school - either from hidden input (pre-selected) or from dropdown
+    var schoolId, schoolName;
+    var hiddenId = document.getElementById('f-planned-school-id');
+    if (hiddenId) {
+      // School was pre-filled and locked
+      schoolId   = hiddenId.value;
+      schoolName = preselectedName;
+    } else {
+      // User typed a school name - look it up
+      var typedName = document.getElementById('f-school-name').value.trim();
+      var match     = schools.find(function(s) { return s.name.toLowerCase() === typedName.toLowerCase(); });
+      if (!typedName || !match) { alert('Please select a valid school from the list.'); return; }
+      schoolId   = match.id;
+      schoolName = match.name;
+    }
+
+    if (!date) { alert('Please enter a date.'); return; }
+
+    var planned = getPlannedVisits();
+    planned.push({
+      id:         makeId(),
+      schoolId:   schoolId,
+      schoolName: schoolName,
+      date:       date,
+      notes:      notes,
+    });
+    savePlannedVisits(planned);
+    closeModal();
+
+    // Refresh whichever view is currently showing
+    if (typeof renderDirectory === 'function') renderDirectory();
+    if (typeof updateDashboardStats === 'function') updateDashboardStats();
+  });
+
+  // Wire up dropdown only if it is present (standalone mode)
+  if (!preselectedSchoolId) {
+    setTimeout(function() { initSchoolDropdown('f-school-name', 'school-dd-list', schools); }, 0);
+  }
+}
+
+// =============================================
+// DELETE PLANNED VISIT
+// Called from the school detail page via an inline button.
+// =============================================
+function deletePlannedVisit(plannedId) {
+  if (!confirm('Remove this planned visit?')) return;
+  var planned = getPlannedVisits().filter(function(p) { return p.id !== plannedId; });
+  savePlannedVisits(planned);
+  // Re-render the directory detail page to update the list
+  if (typeof renderDirectory === 'function') renderDirectory();
+  if (typeof updateDashboardStats === 'function') updateDashboardStats();
 }
 
 // =============================================

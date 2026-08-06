@@ -1281,6 +1281,22 @@ function getCalendarItems(expandMultiDay) {
     });
   });
 
+  // Planned (future) visits - orange, so they are visually distinct from
+  // grey logged visits and purple routes.
+  var plannedVisits = loadData('planned_visits', []);
+  plannedVisits.forEach(function(p) {
+    if (!p.date) return;
+    items.push({
+      type:    'planned',
+      date:    p.date,
+      title:   p.schoolName || 'Planned Visit',
+      meta:    'Planned visit' + (p.notes ? ' - ' + p.notes : ''),
+      id:      p.id,
+      color:   '#f97316',   // orange - planned/upcoming
+      spanPos: null,
+    });
+  });
+
   // GCal items are no longer pulled back - routes and events already appear above.
   // Fetching them back caused duplicates on the calendar grid.
 

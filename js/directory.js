@@ -631,7 +631,16 @@ function renderSchoolDetail(schoolId) {
 
     </div>
 
-    <!-- Visit history for this school -->
+    <!-- Planned (future) visits for this school -->
+    <div class="school-visit-history">
+      <div class="school-visit-history-header">
+        <h3>Upcoming Visits</h3>
+        <button class="btn btn-accent btn-sm" onclick="openScheduleVisit('${school.id}')">+ Schedule Visit</button>
+      </div>
+      ${renderSchoolPlannedVisits(school.id)}
+    </div>
+
+    <!-- Past visit history for this school -->
     <div class="school-visit-history">
       <div class="school-visit-history-header">
         <h3>Visit History</h3>
@@ -648,6 +657,50 @@ function renderSchoolDetail(schoolId) {
       initSchoolDetailMap(school.address, school);
     }, 0);
   }
+}
+
+// =============================================
+// SCHOOL PLANNED VISITS
+// Shows upcoming (future) visits scheduled for a school.
+// Data lives in acc_planned_visits (separate from logged visits).
+// Each card has a delete button - no detail view needed for a simple plan.
+// =============================================
+function renderSchoolPlannedVisits(schoolId) {
+  // getPlannedVisits is defined in visits.js which loads before directory.js
+  var planned = getPlannedVisits().filter(function(p) { return p.schoolId === schoolId; });
+
+  // Only show upcoming dates - filter out anything in the past
+  var today   = new Date().toISOString().split('T')[0];
+  var upcoming = planned.filter(function(p) { return p.date >= today; });
+
+  // Sort soonest first
+  upcoming.sort(function(a, b) { return a.date < b.date ? -1 : 1; });
+
+  if (upcoming.length === 0) {
+    return '<p class="empty-state">No upcoming visits scheduled.</p>';
+  }
+
+  return upcoming.map(function(p) {
+    var d       = new Date(p.date);
+    // Offset fix - date strings are UTC midnight, shift to local so the day is correct
+    var dateStr = new Date(d.getTime() + d.getTimezoneOffset() * 60000)
+      .toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+
+    return `
+      <div class="school-visit-card planned">
+        <div class="school-visit-card-left">
+          <span class="visit-mood-icon">&#128197;</span>
+          <div class="school-visit-card-info">
+            <span class="school-visit-card-title">${dateStr}</span>
+            ${p.notes ? `<span class="school-visit-card-meta">${escapeHtml(p.notes)}</span>` : ''}
+          </div>
+        </div>
+        <div class="school-visit-card-right">
+          <button class="btn-icon-danger" onclick="deletePlannedVisit('${p.id}')" title="Remove planned visit">&#10005;</button>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 // =============================================
