@@ -549,41 +549,6 @@ async function exportAllData() {
   saveData('last_backup', new Date().toISOString());
   renderBackupStatus();
 
-  const json = JSON.stringify(snapshot, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-
-  // ---- MOBILE: NATIVE SHARE SHEET ----
-  // The Web Share API with files lets iOS/Android open the system share sheet,
-  // so the user can pick AirDrop, Files, email attachment, etc.
-  // This avoids the URL-length problem entirely.
-  const shareFile = new File([blob], filename, { type: 'application/json' });
-  let shared = false;
-
-  if (navigator.share && navigator.canShare && navigator.canShare({ files: [shareFile] })) {
-    try {
-      await navigator.share({ title: 'ACC Backup ' + dateStr, files: [shareFile] });
-      shared = true;
-    } catch (err) {
-      // AbortError means the user dismissed the share sheet - that is fine, no message needed.
-      // Any other error falls through to the regular download below.
-      if (err.name !== 'AbortError') {
-        console.warn('ACC: share sheet failed, falling back to download -', err);
-      }
-    }
-  }
-
-  // ---- DESKTOP / FALLBACK: FILE DOWNLOAD ----
-  if (!shared) {
-    const url    = URL.createObjectURL(blob);
-    const dlLink = document.createElement('a');
-    dlLink.href     = url;
-    dlLink.download = filename;
-    document.body.appendChild(dlLink);
-    dlLink.click();
-    document.body.removeChild(dlLink);
-    URL.revokeObjectURL(url);
-  }
-
   // ---- SAVE TO ACC REPO (tap-to-restore) ----
   // If a GitHub token is configured, write the core backup data to
   // backups/latest.json in the ACC repo. The email then includes a short
