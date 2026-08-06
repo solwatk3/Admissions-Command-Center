@@ -71,9 +71,11 @@ function renderRouteList() {
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   // Build the 48-hour reminder banner (shows above everything else)
-  const reminderHtml = buildReminderBanner(routes);
+  const reminderHtml  = buildReminderBanner(routes);
+  // Build "days with 2+ planned items and no route yet" prompts
+  const buildPromptHtml = buildRoutePrompts(routes);
 
-  if (routes.length === 0) {
+  if (routes.length === 0 && !buildPromptHtml) {
     container.innerHTML = `
       ${reminderHtml}
       <div class="routes-empty">
@@ -103,7 +105,180 @@ function renderRouteList() {
     `);
   }
 
-  container.innerHTML = reminderHtml + sections.join('');
+  // Show empty state only if there are also no build prompts to show
+  if (routes.length === 0) {
+    sections.push(`<div class="routes-empty"><p>No routes saved yet. Hit "+ New Route" above to plan your first one.</p></div>`);
+  }
+
+  container.innerHTML = reminderHtml + buildPromptHtml + sections.join('');
+}
+
+// =============================================
+// BUILD ROUTE PROMPTS
+// Scans planned visits and boss events for days that have 2 or more
+// items but no existing route. Shows a card per day with a Build Route button.
+// =============================================
+function buildRoutePrompts(routes) {
+  var today         = new Date();
+  today.setHours(0, 0, 0, 0);
+  var todayStr      = today.toISOString().split('T')[0];
+
+  // Collect all planned visits from today onward
+  var planned = (typeof getPlannedVisits === 'function' ? getPlannedVisits() : [])
+    .filter(function(p) { return p.date >= todayStr; });
+
+  // Collect all boss-assigned events from today onward
+  var events = (typeof getEvents === 'function' ? getEvents() : [])
+    .filter(function(e) { return e.date >= todayStr; });
+
+  // Dates that already have a route - skip those
+  var routeDates = new Set(routes.map(function(r) { return r.date; }));
+
+  // Group items by date
+  var byDate = {};
+
+  planned.forEach(function(p) {
+    if (routeDates.has(p.date)) return;
+    if (!byDate[p.date]) byDate[p.date] = [];
+    byDate[p.date].push({ kind: 'planned', item: p });
+  });
+
+  events.forEach(function(e) {
+    if (routeDates.has(e.date)) return;
+    if (!byDate[e.date]) byDate[e.date] = [];
+    byDate[e.date].push({ kind: 'event', item: e });
+  });
+
+  // Only keep dates with 2+ items
+  var eligibleDates = Object.keys(byDate)
+    .filter(function(d) { return byDate[d].length >= 2; })
+    .sort();
+
+  if (eligibleDates.length === 0) return '';
+
+  var cards = eligibleDates.map(function(dateStr) {
+    var d       = new Date(dateStr);
+    var dateLabel = new Date(d.getTime() + d.getTimezoneOffset() * 60000)
+      .toLocaleDateString('default', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+
+    var items   = byDate[dateStr];
+    var itemList = items.map(function(entry) {
+      var label = entry.kind === 'planned'
+        ? (entry.item.title || entry.item.schoolName || 'Planned Visit')
+        : (entry.item.name || 'Event');
+      var time  = entry.item.time
+        ? formatStopTime(entry.item.time)
+        : '';
+      return '<li>' + escapeHtml(label) + (time ? ' <span class="build-prompt-time">' + time + '</span>' : '') + '</li>';
+    }).join('');
+
+    return `
+      <div class="build-route-prompt">
+        <div class="build-prompt-left">
+          <span class="build-prompt-icon">&#128205;</span>
+          <div class="build-prompt-info">
+            <span class="build-prompt-date">${dateLabel}</span>
+            <ul class="build-prompt-list">${itemList}</ul>
+          </div>
+        </div>
+        <button class="btn btn-accent btn-sm build-prompt-btn" onclick="buildRouteFromDay('${dateStr}')">
+          Build Route
+        </button>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="route-group">
+      <div class="route-group-label">&#9889; Days needing a route</div>
+      ${cards}
+    </div>
+  `;
+}
+
+// =============================================
+// BUILD ROUTE FROM DAY
+// Pre-loads all planned visits and events for a specific date
+// as stops in the route builder, sorted by time.
+// Items with no time go at the end.
+// =============================================
+function buildRouteFromDay(dateStr) {
+  var planned = (typeof getPlannedVisits === 'function' ? getPlannedVisits() : [])
+    .filter(function(p) { return p.date === dateStr; });
+  var events  = (typeof getEvents === 'function' ? getEvents() : [])
+    .filter(function(e) { return e.date === dateStr; });
+  var schools = (typeof getSchools === 'function' ? getSchools() : []);
+
+  // Combine into a unified list with a sort key from time (HH:MM or empty)
+  var combined = [];
+
+  planned.forEach(function(p) {
+    combined.push({ time: p.time || '', kind: 'planned', item: p });
+  });
+  events.forEach(function(e) {
+    combined.push({ time: e.time || '', kind: 'event', item: e });
+  });
+
+  // Sort by time string ascending; empty time strings sort to the end
+  combined.sort(function(a, b) {
+    if (!a.time && !b.time) return 0;
+    if (!a.time) return 1;
+    if (!b.time) return -1;
+    return a.time < b.time ? -1 : 1;
+  });
+
+  // Convert to route builder stops
+  builderStops = combined.map(function(entry) {
+    if (entry.kind === 'planned') {
+      var p      = entry.item;
+      var school = schools.find(function(s) { return s.id === p.schoolId; });
+      return {
+        id:        makeId(),
+        type:      'school',
+        schoolId:  p.schoolId,
+        name:      p.schoolName || (school ? school.name : 'School'),
+        address:   school ? (school.address || '') : '',
+        startTime: p.time || '',
+        endTime:   '',
+      };
+    } else {
+      var e = entry.item;
+      return {
+        id:        makeId(),
+        type:      'custom',
+        name:      e.name || 'Event',
+        address:   e.location || '',
+        startTime: e.time || '',
+        endTime:   '',
+      };
+    }
+  });
+
+  // Pre-fill the builder with a name and date so the user just reviews and saves
+  var d = new Date(dateStr);
+  var dateLabel = new Date(d.getTime() + d.getTimezoneOffset() * 60000)
+    .toLocaleDateString('default', { month: 'short', day: 'numeric' });
+
+  builderPreFill = {
+    name:   'Route - ' + dateLabel,
+    date:   dateStr,
+    origin: DEFAULT_ORIGIN,
+  };
+
+  editingRouteId = null;
+  routesView     = 'builder';
+  renderRoutes();
+}
+
+// Formats a HH:MM time string into a readable 12-hour label (e.g. "9:30 AM")
+function formatStopTime(timeStr) {
+  if (!timeStr) return '';
+  var parts = timeStr.split(':');
+  var h = parseInt(parts[0], 10);
+  var m = parts[1] || '00';
+  var ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return h + ':' + m + ' ' + ampm;
 }
 
 // =============================================

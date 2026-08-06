@@ -1254,8 +1254,8 @@ function getCalendarItems(expandMultiDay) {
     items.push({
       type:    'planned',
       date:    p.date,
-      title:   p.schoolName || 'Planned Visit',
-      meta:    'Planned visit' + (p.notes ? ' - ' + p.notes : ''),
+      title:   p.title || p.schoolName || 'Planned Visit',
+      meta:    'Planned - ' + (p.schoolName || '') + (p.notes ? ' - ' + p.notes : ''),
       id:      p.id,
       color:   '#f97316',   // orange - planned/upcoming
       spanPos: null,

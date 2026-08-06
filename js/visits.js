@@ -516,8 +516,18 @@ function openScheduleVisit(preselectedSchoolId) {
   const body = `
     ${schoolField}
     <div class="form-group">
-      <label>Planned Date <span class="required">*</span></label>
-      <input type="date" id="f-planned-date" value="${tomorrowStr}" />
+      <label>Title <span class="form-optional">(optional)</span></label>
+      <input type="text" id="f-planned-title" placeholder="e.g. Fall Recruitment, College Fair..." />
+    </div>
+    <div class="form-row-split">
+      <div class="form-group">
+        <label>Planned Date <span class="required">*</span></label>
+        <input type="date" id="f-planned-date" value="${tomorrowStr}" />
+      </div>
+      <div class="form-group">
+        <label>Time <span class="form-optional">(optional)</span></label>
+        <input type="time" id="f-planned-time" />
+      </div>
     </div>
     <div class="form-group">
       <label>Notes / Purpose <span class="form-optional">(optional)</span></label>
@@ -547,12 +557,17 @@ function openScheduleVisit(preselectedSchoolId) {
 
     if (!date) { alert('Please enter a date.'); return; }
 
+    var title = document.getElementById('f-planned-title').value.trim();
+    var time  = document.getElementById('f-planned-time').value;
+
     var planned = getPlannedVisits();
     planned.push({
       id:         makeId(),
       schoolId:   schoolId,
       schoolName: schoolName,
+      title:      title,
       date:       date,
+      time:       time,   // stored as HH:MM string, empty string if not set
       notes:      notes,
     });
     savePlannedVisits(planned);

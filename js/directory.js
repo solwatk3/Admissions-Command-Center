@@ -686,12 +686,27 @@ function renderSchoolPlannedVisits(schoolId) {
     var dateStr = new Date(d.getTime() + d.getTimezoneOffset() * 60000)
       .toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 
+    // Format time as 12-hour if present
+    var timeStr = '';
+    if (p.time) {
+      var parts = p.time.split(':');
+      var h = parseInt(parts[0], 10);
+      var m = parts[1];
+      var ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      timeStr = h + ':' + m + ' ' + ampm;
+    }
+
+    var cardTitle = p.title ? escapeHtml(p.title) : dateStr;
+    var cardSub   = p.title ? dateStr + (timeStr ? ' at ' + timeStr : '') : (timeStr ? timeStr : '');
+
     return `
       <div class="school-visit-card planned">
         <div class="school-visit-card-left">
           <span class="visit-mood-icon">&#128197;</span>
           <div class="school-visit-card-info">
-            <span class="school-visit-card-title">${dateStr}</span>
+            <span class="school-visit-card-title">${cardTitle}</span>
+            ${cardSub ? `<span class="school-visit-card-date">${cardSub}</span>` : ''}
             ${p.notes ? `<span class="school-visit-card-meta">${escapeHtml(p.notes)}</span>` : ''}
           </div>
         </div>

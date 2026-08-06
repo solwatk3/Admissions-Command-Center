@@ -13,6 +13,78 @@
 }
 
 /* =============================================
+   BUILD ROUTE PROMPTS
+   Cards shown when a day has 2+ planned items but no route yet.
+   Orange border to match the planned visit color on the calendar.
+============================================== */
+.build-route-prompt {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  background: #1a1007;
+  border: 1px solid #f97316;
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+.build-prompt-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.build-prompt-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.build-prompt-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.build-prompt-date {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f97316;
+}
+
+.build-prompt-list {
+  margin: 0;
+  padding: 0 0 0 16px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.build-prompt-time {
+  color: var(--text-muted);
+  opacity: 0.8;
+  font-size: 0.78rem;
+}
+
+.build-prompt-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .build-route-prompt {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .build-prompt-btn {
+    width: 100%;
+  }
+}
+
+/* =============================================
    48-HOUR REMINDER BANNER
 ============================================== */
 .route-reminder-banner {
