@@ -221,18 +221,15 @@
       "notes": "",
       "contacts": [
         {
-          "id": "ms7jlsv3mdxl",
-          "title": "Guidance Counselor, 11th & 12th Grades,",
-          "name": "Elizabeth Ciechan",
-          "email": "",
-          "phone": ""
-        },
-        {
           "id": "ms7joob0yxq9",
           "title": "College Advisor, Advise TN",
           "name": "Madeline Kilpatrick",
-          "email": "madeline.kilpatrick@tn.gov",
-          "phone": ""
+          "emails": [
+            "madeline.kilpatrick@tn.gov",
+            "madeline.kilpatrick@crockettcavs.net"
+          ],
+          "phone": "",
+          "ext": ""
         }
       ]
     },
@@ -300,8 +297,21 @@
           "id": "mrwcc810mi3r",
           "title": "Guidance Counselor",
           "name": "Ericka Hamilton",
-          "email": "ericka.hamilton@hcsvikings.org",
-          "phone": ""
+          "emails": [
+            "ericka.hamilton@hcsvikings.org"
+          ],
+          "phone": "",
+          "ext": ""
+        },
+        {
+          "id": "msda5ld67eun",
+          "title": "Teacher (FFA Contact)",
+          "name": "Jason Wiles",
+          "emails": [
+            "jason.wiles@hcsvikings.org"
+          ],
+          "phone": "(731)-618-1292",
+          "ext": ""
         }
       ]
     },
@@ -564,8 +574,11 @@
           "id": "mry1izmmfp0x",
           "title": "School Counselor, Seniors M-Z,",
           "name": "Amy Wilson",
-          "email": "amy.wilson@cmcss.net",
-          "phone": "(931) 503-1788 ext:2900"
+          "emails": [
+            "amy.wilson@cmcss.net"
+          ],
+          "phone": "(931)-503-1788",
+          "ext": "2900"
         }
       ],
       "notes": ""
@@ -601,9 +614,20 @@
       "id": "mrtepzgowclo",
       "countyId": "mrpvndctmimt",
       "name": "Hixson High School",
-      "address": "5705 Middle Valley Rd, Hixson, TN 37343, TN",
+      "address": "5705 Middle Valley Rd, Hixson, TN",
       "priority": "Secondary",
-      "contacts": [],
+      "contacts": [
+        {
+          "id": "msda7ubwemtz",
+          "title": "Teacher (FFA Contact)",
+          "name": "Lee Friedlander",
+          "emails": [
+            "friedlander_l@hcde.org"
+          ],
+          "phone": "(423)-463-1434",
+          "ext": ""
+        }
+      ],
       "notes": ""
     },
     {
@@ -673,9 +697,20 @@
       "id": "mrtf7wh6w0do",
       "countyId": "mrtf5zbtvtzv",
       "name": "Hardin Valley Academy",
-      "address": "11345 Hardin Valley Rd, Knoxville, TN 37932, TN",
+      "address": "11345 Hardin Valley Rd, Knoxville, TN",
       "priority": "Secondary",
-      "contacts": [],
+      "contacts": [
+        {
+          "id": "mshnp8hils9f",
+          "title": "HVA Freshman Counselor, Last Names L-Z",
+          "name": "Sam Burkhalter",
+          "emails": [
+            "sam.burkhalter@knoxschools.org"
+          ],
+          "phone": "",
+          "ext": ""
+        }
+      ],
       "notes": ""
     },
     {
@@ -720,7 +755,18 @@
       "name": "Clarksville Northwest HS",
       "address": "800 Lafayette Rd, Clarksville, TN",
       "priority": "Secondary",
-      "contacts": [],
+      "contacts": [
+        {
+          "id": "msda8tv5uwz6",
+          "title": "Teacher (FFA Contact)",
+          "name": "Megan Clegg",
+          "emails": [
+            "megan.clegg@cmcss.net"
+          ],
+          "phone": "(931)-278-9092",
+          "ext": ""
+        }
+      ],
       "notes": ""
     },
     {
@@ -906,10 +952,21 @@
     {
       "id": "mrtofobrmao9",
       "countyId": "mrtodlof1prg",
-      "name": "Campbell County High School",
-      "address": "150 Cougar Ln, Jacksboro, TN 37757, TN",
+      "name": "Campbell County HS",
+      "address": "150 Cougar Ln, Jacksboro, TN",
       "priority": "Tertiary",
-      "contacts": [],
+      "contacts": [
+        {
+          "id": "msda6j613uzs",
+          "title": "Teacher (FFA Contact)",
+          "name": "Rachael Teague",
+          "emails": [
+            "rachael.teague@ccpstn.net"
+          ],
+          "phone": "(423)-494-2656",
+          "ext": ""
+        }
+      ],
       "notes": ""
     },
     {
@@ -1195,9 +1252,20 @@
       "id": "mruv8ap4h56h",
       "countyId": "mrpvndctmimt",
       "name": "Silverdale Baptist Academy",
-      "address": "7236 Bonny Oaks Dr, Chattanooga, TN 37421, TN",
+      "address": "7236 Bonny Oaks Dr, Chattanooga, TN",
       "priority": "Tertiary",
-      "contacts": [],
+      "contacts": [
+        {
+          "id": "mshlj7jobt2r",
+          "title": "Director of College & Career",
+          "name": "Suzanne Bayne",
+          "emails": [
+            "sbayne@silverdaleba.org"
+          ],
+          "phone": "(423)-892-2319",
+          "ext": "2278"
+        }
+      ],
       "notes": ""
     },
     {
@@ -1240,9 +1308,20 @@
       "id": "mruvj8m83xnx",
       "countyId": "mruvixzkac2g",
       "name": "Johnson County High School",
-      "address": "290 Fairground Ln, Mountain City, TN 37683, TN",
+      "address": "290 Fairground Ln, Mountain City, TN",
       "priority": "Tertiary",
-      "contacts": [],
+      "contacts": [
+        {
+          "id": "msda3q8x07lm",
+          "title": "Teacher(FFA Contact)",
+          "name": "Cody Osborne",
+          "emails": [
+            "cosborne@jocoed.net"
+          ],
+          "phone": "(423)-440-1561",
+          "ext": ""
+        }
+      ],
       "notes": ""
     },
     {
@@ -1836,10 +1915,79 @@
     {
       "id": "mrr6gxv8wnsf",
       "name": "Naveah Morriss",
-      "institution": "UT Chattanooga",
+      "institution": "University of Tennessee at Chattanooga",
       "email": "",
-      "phone": "865-748-4400",
-      "notes": ""
+      "notes": "",
+      "title": "Admissions Counselor",
+      "acronym": "UTC",
+      "phones": [
+        {
+          "label": "Office",
+          "number": "(865)-748-4400"
+        }
+      ],
+      "address": {
+        "street": "",
+        "city": "",
+        "state": "",
+        "zip": "",
+        "building": "",
+        "office": ""
+      }
+    },
+    {
+      "id": "ms7kixwh7tdk",
+      "name": "Ashley Gordon",
+      "institution": "Eastern Kentucky University",
+      "email": "ashley.gordon@eku.edu",
+      "notes": "",
+      "title": "Associate Director of Recruitment Office of Admissions",
+      "acronym": "EKU",
+      "phones": [
+        {
+          "label": "Office",
+          "number": "(859)-622-1556"
+        }
+      ],
+      "address": {
+        "street": "521 Lancaster Ave",
+        "city": "Richmond",
+        "state": "",
+        "zip": "",
+        "building": "Whitlock CPO",
+        "office": "54"
+      }
+    },
+    {
+      "id": "ms7km9sclben",
+      "name": "Emma Bruner",
+      "institution": "University of Tennessee at Martin",
+      "email": "ebruner3@utm.edu",
+      "notes": "",
+      "title": "Social Media Coordinator",
+      "acronym": "UTM",
+      "phones": [
+        {
+          "label": "Office",
+          "number": "(731)-881-3453"
+        },
+        {
+          "label": "Fax",
+          "number": "(731)-881-7618"
+        },
+        {
+          "label": "Personal",
+          "number": "(731)-514-1960"
+        }
+      ],
+      "address": {
+        "street": "554 University Street",
+        "city": "Martin",
+        "state": "TN",
+        "zip": "3823",
+        "building": "Administration Building",
+        "office": "304"
+      }
     }
   ],
   "acc_routes": [],
