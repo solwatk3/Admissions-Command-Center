@@ -1,31 +1,43 @@
 # ACC Session Handoff
-**Date:** 2026-07-22
-**Status:** All changes coded and pushed to GitHub. Ready to test.
+**Date:** 2026-08-09
+**Status:** Schedule Visit feature built and in code. Map print fixes from prior session pushed. Need end-to-end testing of both.
 
 ---
 
-## What Was Built This Session
+## What Was Built - Prior Session (2026-07-22)
 
-### 1. Map Print - Tile Load Event (timing fix)
-Replaced the fixed 1.4s `setTimeout` in `printMap()` with a listener on the tile layer's `load` event. Leaflet fires this event the moment all visible tiles finish loading. Added a 200ms buffer after the event so SVG county polygons finish painting before html2canvas captures. 6-second fallback in case the event never fires.
-
-**File:** `js/directory.js` - `printMap()`
-
----
-
-### 2. Map Print - TN Crop Fix
-The live map container is 100% wide x 560px tall. On a typical screen this is much wider than TN's shape, so `fitBounds` zoomed out to fill the height and showed a lot of surrounding states.
-
-Fix: before `fitBounds`, the map container is temporarily resized to 900x300px (3:1 ratio matching TN's proportions). `mapInstance.invalidateSize()` tells Leaflet about the new size, then `fitBounds` recalculates and fills the container tightly with Tennessee. After capture, the container is restored to its original dimensions and `invalidateSize()` is called again.
-
-**File:** `js/directory.js` - `printMap()`
+### Map Print Fixes
+Three fixes to the map print feature in `js/directory.js` - `printMap()` / `doCapture()`:
+1. **Tile load timing** - replaced fixed setTimeout with a Leaflet tile `load` event listener + 200ms buffer + 6s fallback
+2. **TN crop** - temporarily resizes map container to 900x300px before fitBounds so Tennessee fills the frame tightly, then restores original size
+3. **Hide controls** - sets `visibility: hidden` on `.leaflet-control-container` before capture, restores after (in both success and catch paths)
 
 ---
 
-### 3. Map Print - Hide Controls
-Leaflet's zoom buttons and layer toggle (`.leaflet-control-container`) were appearing in the html2canvas capture. Fix: set `visibility: hidden` on that element immediately before the capture, restore to `''` after. Hidden and restored in both the success path and the catch path so controls always come back even if capture fails.
+## What Was Built - After That Session
 
-**File:** `js/directory.js` - `printMap()` / `doCapture()`
+### Schedule Visit (Planned Visits)
+A way to plan a future visit to a school before it happens, separate from the Visit Log which records visits that already occurred.
+
+**How it works:**
+- "+ Schedule Visit" button appears on every school's detail page in the directory
+- Clicking it opens a modal (via `openScheduleVisit(schoolId)` in `visits.js`) with the school pre-filled and locked
+- Fields: title (optional), planned date (defaults to tomorrow), time (optional), notes/purpose
+- On save, the record goes into `acc_planned_visits` in localStorage - completely separate from `acc_visits` so real visit history is never mixed with plans
+- Planned visits render as orange cards directly on the school detail page (via `renderSchoolPlannedVisits()` in `directory.js`)
+- Each planned visit card has an X button to delete it (`deletePlannedVisit()` in `visits.js`)
+- Planned visits also appear on the calendar view as orange markers (color `#f97316`) alongside routes
+
+**Key functions:**
+| Function | File | What it does |
+|---|---|---|
+| `openScheduleVisit(schoolId)` | `visits.js` | Opens the schedule modal, pre-fills school if id passed |
+| `getPlannedVisits()` | `visits.js` | Reads `acc_planned_visits` from localStorage |
+| `savePlannedVisits(arr)` | `visits.js` | Writes `acc_planned_visits` to localStorage |
+| `renderSchoolPlannedVisits(schoolId)` | `directory.js` | Renders orange planned visit cards on school detail page |
+| `deletePlannedVisit(plannedId)` | `visits.js` | Removes one planned visit and re-renders directory |
+
+**localStorage key:** `acc_planned_visits` - `[{id, schoolId, schoolName, title, date, time, notes}]`
 
 ---
 
@@ -39,7 +51,7 @@ Leaflet's zoom buttons and layer toggle (`.leaflet-control-container`) were appe
 | `primaryCountyOpen` | `js/app.js` | Tracks which county dropdowns are open on the dashboard |
 | `openModal(title, body, onSave)` | `js/directory.js` | Pass `null` for onSave to hide the Save button |
 | `getSchoolContacts(school)` | `js/directory.js` | Handles both legacy single-contact and new contacts array |
-| `escapeHtml(str)` | `js/directory.js` | Always use on user data before inserting into innerHTML |
+| `escapeHtml(str)` | `js/visits.js` | Always use on user data before inserting into innerHTML |
 
 ---
 
@@ -49,9 +61,12 @@ Leaflet's zoom buttons and layer toggle (`.leaflet-control-container`) were appe
 - html2canvas CDN loaded from cloudflare - if offline, map print will silently fail
 - The secondary priority color was changed from cyan to green (#22c55e) - if the map marker color looks wrong, check `priorityColor` in map.js vs the CSS badge color
 - `initDirectory()` must exist in directory.js - it's called by app.js every time the directory tab is opened
+- Planned visits are NOT cleared by the season archive (archive only clears `acc_visits` and `acc_routes`) - decide if this is intentional
 
 ---
 
 ## Start Here Next Session
 
-Test all 7 print options end-to-end with real data. Confirm school cards show all fields (name, county, priority badge, address, contacts, notes). Map print should now show a tight TN crop with no control buttons visible.
+Test two things end-to-end:
+1. **Schedule Visit** - open a school detail page, click "+ Schedule Visit", fill in a date and notes, save. Confirm the orange card appears below the school. Confirm the X button removes it. Confirm it shows up on the calendar view.
+2. **Map Print** - run all 7 print options with real data. Map print should show tight TN crop with no zoom/layer controls visible.

@@ -1,7 +1,7 @@
 # ACC - Admissions Command Center
 ## Project Memory
 
-Last updated: 2026-07-20
+Last updated: 2026-08-09
 
 ---
 
@@ -115,6 +115,14 @@ Three tabs: A-Z Counties (default), Map, By Region
 - Filter panel (toggled by Filters button): school dropdown, mood, date from, date to, return-flagged-only checkbox
 - Filters and search combine; reset on navigate away
 
+### Scheduled (Planned) Visits
+- "+ Schedule Visit" button on every school detail page in the directory
+- Opens a modal with the school pre-filled and locked; fields: title (optional), date (required, defaults to tomorrow), time (optional), notes/purpose
+- Saved to `acc_planned_visits` - completely separate from `acc_visits` so planned and logged visits never mix
+- Planned visits appear as orange cards on the school detail page with an X to delete
+- Also appear on the calendar view as orange markers (color `#f97316`)
+- Key functions: `openScheduleVisit(schoolId)`, `getPlannedVisits()`, `savePlannedVisits()`, `renderSchoolPlannedVisits(schoolId)`, `deletePlannedVisit(plannedId)`
+
 ### Colleague Rolodex
 - Add/edit/delete colleagues
 - Fields: name, institution, email, phone, notes
@@ -170,6 +178,7 @@ Three tabs: A-Z Counties (default), Map, By Region
 | `acc_gcal_calendar_id` | ID of the "Admissions Work" calendar |
 | `acc_gcal_event_map` | Route ID -> Calendar event ID |
 | `acc_gcal_last_sync` | ISO timestamp of last calendar sync |
+| `acc_planned_visits` | `[{id, schoolId, schoolName, title, date, time, notes}]` - future visit plans, separate from logged visits |
 | `acc_last_backup` | ISO timestamp of last data export (powers the backup nudge) |
 
 ---
