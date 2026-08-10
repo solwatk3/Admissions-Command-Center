@@ -726,12 +726,16 @@ function renderSchoolPlannedVisits(schoolId) {
     var cardTitle = p.title ? escapeHtml(p.title) : dateStr;
     var cardSub   = p.title ? dateStr + (timeDisplay ? ' - ' + timeDisplay : '') : (timeDisplay ? timeDisplay : '');
 
+    // Add a CSS class and badge if this visit is marked tentative
+    var tentativeClass = p.tentative ? ' tentative' : '';
+    var tentativeBadge = p.tentative ? '<span class="tentative-badge">Tentative</span>' : '';
+
     return `
-      <div class="school-visit-card planned">
+      <div class="school-visit-card planned${tentativeClass}">
         <div class="school-visit-card-left">
           <span class="visit-mood-icon">&#128197;</span>
           <div class="school-visit-card-info">
-            <span class="school-visit-card-title">${cardTitle}</span>
+            <span class="school-visit-card-title">${cardTitle}${tentativeBadge}</span>
             ${cardSub ? `<span class="school-visit-card-date">${cardSub}</span>` : ''}
             ${p.notes ? `<span class="school-visit-card-meta">${escapeHtml(p.notes)}</span>` : ''}
           </div>

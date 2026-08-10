@@ -868,6 +868,53 @@
   background: #1a1007;
 }
 
+/* Tentative planned visit - dashed border to signal "not confirmed" */
+.school-visit-card.planned.tentative {
+  border-style: dashed;
+  opacity: 0.85;
+}
+
+/* Badge shown inline next to the card title */
+.tentative-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-radius: 30px;
+  background: #7c3a00;
+  color: #f97316;
+  vertical-align: middle;
+}
+
+/* Toggle pill group in the Schedule Visit modal */
+.tentative-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: 30px;
+  overflow: hidden;
+  border: 1px solid #4a2e6a;
+  width: fit-content;
+}
+
+.tentative-btn {
+  padding: 0.4rem 1.1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: #1a1a1a;
+  color: #aaa;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tentative-btn.active {
+  background: #9b30ff;
+  color: #fff;
+}
+
 /* Small red X button to remove a planned visit */
 .btn-icon-danger {
   background: transparent;

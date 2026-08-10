@@ -484,7 +484,29 @@ function openLogVisit(preselectedSchoolId) {
 // preselectedSchoolId - if called from the school detail page,
 //   the school is pre-filled and locked so the user cannot change it.
 // =============================================
+// Tracks whether the in-progress planned visit modal is marked tentative.
+// Reset to false each time the modal opens.
+var plannedVisitIsTentative = false;
+
+// Called by the Confirmed/Tentative toggle buttons inside the modal.
+// Updates the flag and swaps the active style on the buttons.
+function setPlannedTentative(isTentative) {
+  plannedVisitIsTentative = isTentative;
+  var btnConfirmed = document.getElementById('btn-confirmed');
+  var btnTentative = document.getElementById('btn-tentative');
+  if (!btnConfirmed || !btnTentative) return;
+  if (isTentative) {
+    btnConfirmed.classList.remove('active');
+    btnTentative.classList.add('active');
+  } else {
+    btnConfirmed.classList.add('active');
+    btnTentative.classList.remove('active');
+  }
+}
+
 function openScheduleVisit(preselectedSchoolId) {
+  // Reset tentative flag each time the modal opens - default is Confirmed
+  plannedVisitIsTentative = false;
   const schools = getSchools().sort((a, b) => a.name.localeCompare(b.name));
 
   // Pre-fill school name if a school was passed in
@@ -538,6 +560,13 @@ function openScheduleVisit(preselectedSchoolId) {
       <label>Notes / Purpose <span class="form-optional">(optional)</span></label>
       <textarea id="f-planned-notes" rows="3" placeholder="What is the goal of this visit?"></textarea>
     </div>
+    <div class="form-group">
+      <label>Status</label>
+      <div class="tentative-toggle" id="tentative-toggle-wrap">
+        <button type="button" class="tentative-btn active" id="btn-confirmed" onclick="setPlannedTentative(false)">Confirmed</button>
+        <button type="button" class="tentative-btn" id="btn-tentative" onclick="setPlannedTentative(true)">Tentative</button>
+      </div>
+    </div>
   `;
 
   openModal('Schedule a Visit', body, function() {
@@ -576,6 +605,7 @@ function openScheduleVisit(preselectedSchoolId) {
       time:       time,      // start time, HH:MM string, empty if not set
       endTime:    endTime,   // end time, HH:MM string, empty if not set
       notes:      notes,
+      tentative:  plannedVisitIsTentative, // true = not yet confirmed
     });
     savePlannedVisits(planned);
     closeModal();
