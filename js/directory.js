@@ -686,19 +686,30 @@ function renderSchoolPlannedVisits(schoolId) {
     var dateStr = new Date(d.getTime() + d.getTimezoneOffset() * 60000)
       .toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 
-    // Format time as 12-hour if present
-    var timeStr = '';
-    if (p.time) {
-      var parts = p.time.split(':');
+    // Format a HH:MM string into a readable 12-hour time (e.g. "9:30 AM")
+    function fmtTime(t) {
+      if (!t) return '';
+      var parts = t.split(':');
       var h = parseInt(parts[0], 10);
       var m = parts[1];
       var ampm = h >= 12 ? 'PM' : 'AM';
       h = h % 12 || 12;
-      timeStr = h + ':' + m + ' ' + ampm;
+      return h + ':' + m + ' ' + ampm;
+    }
+
+    var timeStr    = fmtTime(p.time);
+    var endTimeStr = fmtTime(p.endTime);
+
+    // Build the time display - show range if both times exist, just start if only one
+    var timeDisplay = '';
+    if (timeStr && endTimeStr) {
+      timeDisplay = timeStr + ' - ' + endTimeStr;
+    } else if (timeStr) {
+      timeDisplay = timeStr;
     }
 
     var cardTitle = p.title ? escapeHtml(p.title) : dateStr;
-    var cardSub   = p.title ? dateStr + (timeStr ? ' at ' + timeStr : '') : (timeStr ? timeStr : '');
+    var cardSub   = p.title ? dateStr + (timeDisplay ? ' - ' + timeDisplay : '') : (timeDisplay ? timeDisplay : '');
 
     return `
       <div class="school-visit-card planned">

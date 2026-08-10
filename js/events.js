@@ -127,6 +127,26 @@ function renderEventRow(ev) {
     ? '<div class="event-notes">' + escapeHtml(ev.notes).replace(/\n/g, '<br>') + '</div>'
     : '';
 
+  // Build the tagged school name list if any schools are associated
+  var schoolsHtml = '';
+  if (ev.schoolIds && ev.schoolIds.length > 0) {
+    var schools     = getSchools();
+    var schoolNames = ev.schoolIds.map(function(id) {
+      var s = schools.find(function(s) { return s.id === id; });
+      return s ? escapeHtml(s.name) : null;
+    }).filter(Boolean);
+    if (schoolNames.length > 0) {
+      schoolsHtml = '<div class="event-school-list">&#127979; ' + schoolNames.join(' &middot; ') + '</div>';
+    }
+  }
+
+  // Show "Create Route" button if this event has schools tagged
+  var createRouteBtn = (ev.schoolIds && ev.schoolIds.length > 0)
+    ? `<button class="btn btn-ghost btn-sm event-route-btn"
+         onclick="event.stopPropagation(); buildRouteFromEvent('${ev.id}')"
+         title="Create a route from the schools at this event">&#128205; Create Route</button>`
+    : '';
+
   return `
     <div class="event-row" onclick="openEditEvent('${ev.id}')">
       <div class="event-row-left">
@@ -134,16 +154,116 @@ function renderEventRow(ev) {
         <div class="event-row-info">
           <span class="event-name">${escapeHtml(ev.name)}</span>
           ${notesHtml}
+          ${schoolsHtml}
         </div>
       </div>
       <div class="event-row-right">
         <span class="event-date">${dateStr}${endDateLabel}${timeLabel}</span>
+        ${createRouteBtn}
         <button class="btn-icon btn-icon-danger event-delete-btn"
           onclick="event.stopPropagation(); confirmDeleteEvent('${ev.id}')"
           title="Delete event">&#128465;</button>
       </div>
     </div>
   `;
+}
+
+// =============================================
+// SCHOOL PICKER FOR EVENTS
+// Tracks which schools are selected in the
+// currently open add/edit event modal.
+// Stored as an array of school IDs.
+// =============================================
+
+// Holds the IDs of schools currently selected in the open modal
+var eventSchoolIds = [];
+
+// Builds the school multi-picker HTML - used in both add and edit forms
+function buildEventSchoolPicker(preselectedIds) {
+  eventSchoolIds = preselectedIds ? preselectedIds.slice() : [];
+  return `
+    <div class="form-group">
+      <label>Schools at This Event <span class="form-optional">(optional)</span></label>
+      <div class="event-school-picker">
+        <div class="event-school-chips" id="event-school-chips"></div>
+        <div class="school-dropdown-wrapper">
+          <input type="text" id="f-event-school-search"
+            placeholder="Type to search schools..."
+            autocomplete="off" />
+          <ul class="school-dropdown-list hidden" id="event-school-dd-list"></ul>
+        </div>
+      </div>
+      <small class="form-hint">Tag which schools will be represented at this event.</small>
+    </div>
+  `;
+}
+
+// Renders the selected school chips inside the picker
+function renderEventSchoolChips() {
+  var chipsEl = document.getElementById('event-school-chips');
+  if (!chipsEl) return;
+  var schools = getSchools();
+  chipsEl.innerHTML = eventSchoolIds.map(function(id) {
+    var school = schools.find(function(s) { return s.id === id; });
+    var name   = school ? school.name : 'Unknown';
+    return `<span class="event-school-chip">
+      ${escapeHtml(name)}
+      <button type="button" class="chip-remove" onclick="removeEventSchool('${id}')">&times;</button>
+    </span>`;
+  }).join('');
+}
+
+// Adds a school to the selection (ignores duplicates)
+function addEventSchool(schoolId) {
+  if (!eventSchoolIds.includes(schoolId)) {
+    eventSchoolIds.push(schoolId);
+    renderEventSchoolChips();
+  }
+  // Clear and close the dropdown after selection
+  var input = document.getElementById('f-event-school-search');
+  var list  = document.getElementById('event-school-dd-list');
+  if (input) input.value = '';
+  if (list)  list.classList.add('hidden');
+}
+
+// Removes a school from the selection
+function removeEventSchool(schoolId) {
+  eventSchoolIds = eventSchoolIds.filter(function(id) { return id !== schoolId; });
+  renderEventSchoolChips();
+}
+
+// Wires up the school search dropdown inside the event modal
+function initEventSchoolDropdown() {
+  var input = document.getElementById('f-event-school-search');
+  var list  = document.getElementById('event-school-dd-list');
+  if (!input || !list) return;
+
+  var schools = getSchools().sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+  function showOptions(filter) {
+    var q       = (filter || '').toLowerCase();
+    var matches = schools.filter(function(s) { return s.name.toLowerCase().includes(q); });
+    list.innerHTML = matches.length
+      ? matches.map(function(s) {
+          var selected = eventSchoolIds.includes(s.id) ? ' style="opacity:0.4"' : '';
+          return `<li class="school-dd-item" data-id="${s.id}" data-name="${escapeHtml(s.name)}"${selected}>${escapeHtml(s.name)}</li>`;
+        }).join('')
+      : '<li class="school-dd-item school-dd-no-match">No schools found</li>';
+    list.classList.remove('hidden');
+  }
+
+  input.addEventListener('input',  function() { showOptions(input.value); });
+  input.addEventListener('focus',  function() { showOptions(input.value); });
+  input.addEventListener('blur',   function() { setTimeout(function() { list.classList.add('hidden'); }, 150); });
+
+  list.addEventListener('mousedown', function(e) {
+    var item = e.target.closest('.school-dd-item');
+    if (!item || item.classList.contains('school-dd-no-match')) return;
+    addEventSchool(item.dataset.id);
+  });
+
+  // Render any pre-selected schools right away
+  renderEventSchoolChips();
 }
 
 // =============================================
@@ -187,9 +307,10 @@ function openAddEvent() {
         <input type="time" id="f-event-end-time" />
       </div>
     </div>
+    ${buildEventSchoolPicker([])}
     <div class="form-group">
       <label>Notes</label>
-      <textarea id="f-event-notes" rows="6" style="min-height:120px; resize:vertical;"
+      <textarea id="f-event-notes" rows="4" style="min-height:100px; resize:vertical;"
         placeholder="Optional: location, prep needed, who else is attending..."></textarea>
     </div>
   `;
@@ -212,14 +333,15 @@ function openAddEvent() {
 
     const events = getEvents();
     events.push({
-      id:      makeId(),
-      name:    name,
-      type:    type,
-      date:    date,
-      endDate: endDate,
-      time:    time,
-      endTime: endTime,
-      notes:   notes,
+      id:        makeId(),
+      name:      name,
+      type:      type,
+      date:      date,
+      endDate:   endDate,
+      time:      time,
+      endTime:   endTime,
+      notes:     notes,
+      schoolIds: eventSchoolIds.slice(), // copy of selected school IDs
     });
 
     saveEvents(events);
@@ -228,6 +350,9 @@ function openAddEvent() {
     // Refresh the unified dashboard calendar so the new event appears
     if (typeof renderDashboardCalendar === 'function') renderDashboardCalendar();
   });
+
+  // Wire up the school picker after the modal is in the DOM
+  setTimeout(initEventSchoolDropdown, 0);
 }
 
 // =============================================
@@ -272,9 +397,10 @@ function openEditEvent(id) {
         <input type="time" id="f-event-end-time" value="${ev.endTime || ''}" />
       </div>
     </div>
+    ${buildEventSchoolPicker(ev.schoolIds || [])}
     <div class="form-group">
       <label>Notes</label>
-      <textarea id="f-event-notes" rows="6" style="min-height:120px; resize:vertical;">${escapeHtml(ev.notes || '')}</textarea>
+      <textarea id="f-event-notes" rows="4" style="min-height:100px; resize:vertical;">${escapeHtml(ev.notes || '')}</textarea>
     </div>
   `;
 
@@ -295,14 +421,15 @@ function openEditEvent(id) {
 
     const idx = events.findIndex(function(e) { return e.id === id; });
     events[idx] = {
-      id:      events[idx].id,
-      name:    name,
-      type:    type,
-      date:    date,
-      endDate: endDate,
-      time:    time,
-      endTime: endTime,
-      notes:   notes,
+      id:        events[idx].id,
+      name:      name,
+      type:      type,
+      date:      date,
+      endDate:   endDate,
+      time:      time,
+      endTime:   endTime,
+      notes:     notes,
+      schoolIds: eventSchoolIds.slice(), // copy of selected school IDs
     };
 
     saveEvents(events);
@@ -311,6 +438,9 @@ function openEditEvent(id) {
     // Refresh the unified dashboard calendar so the edit appears
     if (typeof renderDashboardCalendar === 'function') renderDashboardCalendar();
   });
+
+  // Wire up the school picker after the modal is in the DOM
+  setTimeout(initEventSchoolDropdown, 0);
 }
 
 // =============================================

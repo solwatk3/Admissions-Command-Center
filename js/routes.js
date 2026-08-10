@@ -1384,3 +1384,161 @@ function printSelectedRoutes(routeIds) {
   win.onload = triggerPrint;
   setTimeout(triggerPrint, 400);
 }
+
+// =============================================
+// BUILD ROUTE FROM PLANNED VISITS
+// Opens a modal to pick a date or week, finds
+// matching planned visits, and pre-fills the
+// route builder with those schools as stops.
+// Triggered from the Route Planner, Visit Log,
+// and Events pages.
+// =============================================
+function openBuildRouteFromPlanned() {
+  var today = new Date().toISOString().split('T')[0];
+
+  var body = `
+    <p style="color:var(--text-muted);margin-bottom:1rem;">
+      Pick a date range and ACC will find all your scheduled visits in that window
+      and create a route from them.
+    </p>
+    <div class="form-row-split">
+      <div class="form-group">
+        <label>From <span class="required">*</span></label>
+        <input type="date" id="f-rbp-from" value="${today}" />
+      </div>
+      <div class="form-group">
+        <label>To <span class="required">*</span></label>
+        <input type="date" id="f-rbp-to" value="${today}" />
+      </div>
+    </div>
+    <div id="rbp-preview" style="margin-top:0.75rem;"></div>
+  `;
+
+  openModal('Build Route from Planned Visits', body, function() {
+    var from = document.getElementById('f-rbp-from').value;
+    var to   = document.getElementById('f-rbp-to').value;
+    if (!from || !to) { alert('Please pick a date range.'); return; }
+    if (from > to)    { alert('Start date must be before end date.'); return; }
+
+    var planned = (typeof getPlannedVisits === 'function' ? getPlannedVisits() : [])
+      .filter(function(p) { return p.date >= from && p.date <= to; })
+      .sort(function(a, b) { return a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || ''); });
+
+    if (planned.length === 0) {
+      alert('No scheduled visits found in that date range. Add some from a school detail page first.');
+      return;
+    }
+
+    var schools = getSchools();
+
+    // Build stops from each planned visit - use the school address as the stop address
+    builderStops = planned.map(function(p) {
+      var school  = schools.find(function(s) { return s.id === p.schoolId; });
+      var address = school && school.address ? school.address : '';
+      return {
+        id:        makeId(),
+        type:      'school',
+        schoolId:  p.schoolId,
+        name:      p.schoolName || (school ? school.name : 'Unknown School'),
+        address:   address,
+        startTime: p.time    || '',
+        endTime:   p.endTime || '',
+      };
+    });
+
+    closeModal();
+    // Switch to the route builder view with the stops pre-loaded
+    routesView     = 'builder';
+    editingRouteId = null;
+    navigateTo('routes');
+    // Small delay so the routes page finishes rendering before we call renderRouteBuilder
+    setTimeout(function() { renderRouteBuilder(); }, 50);
+  });
+
+  // Wire up a live preview that updates as the user changes dates
+  setTimeout(function() {
+    function updatePreview() {
+      var from    = (document.getElementById('f-rbp-from') || {}).value;
+      var to      = (document.getElementById('f-rbp-to')   || {}).value;
+      var preview = document.getElementById('rbp-preview');
+      if (!preview || !from || !to || from > to) return;
+
+      var planned = (typeof getPlannedVisits === 'function' ? getPlannedVisits() : [])
+        .filter(function(p) { return p.date >= from && p.date <= to; })
+        .sort(function(a, b) { return a.date.localeCompare(b.date); });
+
+      if (planned.length === 0) {
+        preview.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;">No scheduled visits in this range.</p>';
+        return;
+      }
+
+      preview.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:0.4rem;">'
+        + planned.length + ' visit' + (planned.length !== 1 ? 's' : '') + ' found:</p>'
+        + planned.map(function(p) {
+            var d      = new Date(p.date);
+            var offset = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+            var ds     = offset.toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric' });
+            return '<div style="font-size:0.85rem;padding:0.2rem 0;color:var(--text);">&#128205; '
+              + escapeHtml(p.schoolName || 'Unknown') + ' &middot; ' + ds + '</div>';
+          }).join('');
+    }
+
+    var fromEl = document.getElementById('f-rbp-from');
+    var toEl   = document.getElementById('f-rbp-to');
+    if (fromEl) fromEl.addEventListener('change', updatePreview);
+    if (toEl)   toEl.addEventListener('change', updatePreview);
+    updatePreview();
+  }, 0);
+}
+
+// =============================================
+// BUILD ROUTE FROM EVENT SCHOOLS
+// Called from the Events page when an event has
+// schools tagged. Pre-fills the route builder
+// with those schools as stops and uses the
+// event date as the route date.
+// =============================================
+function buildRouteFromEvent(eventId) {
+  var events = typeof getEvents === 'function' ? getEvents() : [];
+  var ev     = events.find(function(e) { return e.id === eventId; });
+  if (!ev || !ev.schoolIds || ev.schoolIds.length === 0) {
+    alert('No schools tagged on this event yet. Edit the event to add schools first.');
+    return;
+  }
+
+  var schools = getSchools();
+
+  // Build one stop per tagged school
+  builderStops = ev.schoolIds.map(function(id) {
+    var school  = schools.find(function(s) { return s.id === id; });
+    if (!school) return null;
+    return {
+      id:        makeId(),
+      type:      'school',
+      schoolId:  school.id,
+      name:      school.name,
+      address:   school.address || '',
+      startTime: '',
+      endTime:   '',
+    };
+  }).filter(Boolean);
+
+  if (builderStops.length === 0) {
+    alert('Could not find address info for the tagged schools. Make sure they have addresses in the Directory.');
+    return;
+  }
+
+  // Pre-set the route date to the event date and name to the event name
+  editingRouteId = null;
+  routesView     = 'builder';
+
+  navigateTo('routes');
+  setTimeout(function() {
+    renderRouteBuilder();
+    // Pre-fill name and date fields with the event details
+    var nameEl = document.getElementById('rb-name');
+    var dateEl = document.getElementById('rb-date');
+    if (nameEl) nameEl.value = ev.name;
+    if (dateEl) dateEl.value = ev.date;
+  }, 50);
+}

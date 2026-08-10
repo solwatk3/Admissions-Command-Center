@@ -560,7 +560,8 @@ async function exportAllData() {
   // The token only has write access to this repo's files, so including it is low-risk.
   const emailKeys = ['acc_counties', 'acc_schools', 'acc_visits',
                      'acc_colleagues', 'acc_routes', 'acc_archives',
-                     'acc_events', 'acc_event_types', 'acc_gh_token'];
+                     'acc_events', 'acc_event_types', 'acc_planned_visits',
+                     'acc_gh_token'];
   const emailSnap = {};
   emailKeys.forEach(function(k) {
     if (snapshot[k] !== undefined) emailSnap[k] = snapshot[k];

@@ -1183,3 +1183,82 @@ a {
   color: var(--text-muted);
 }
 
+/* =============================================
+   EVENT SCHOOL PICKER
+   Multi-select chip input used on the add/edit
+   event form to tag schools at an event.
+============================================== */
+
+.event-school-picker {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.5rem;
+  background: var(--surface-2, #111);
+  min-height: 2.4rem;
+}
+
+/* Row of selected school chips */
+.event-school-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.event-school-chips:empty {
+  margin-bottom: 0;
+}
+
+/* Individual chip */
+.event-school-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(155, 48, 255, 0.18);
+  border: 1px solid rgba(155, 48, 255, 0.4);
+  color: var(--text);
+  border-radius: 20px;
+  padding: 0.15rem 0.6rem 0.15rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+/* X button inside each chip */
+.chip-remove {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.chip-remove:hover {
+  color: var(--danger, #ef4444);
+}
+
+/* The search input inside the picker - no extra border since the wrapper has one */
+.event-school-picker input[type="text"] {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  color: var(--text);
+  font-size: 0.9rem;
+  padding: 0.2rem 0;
+}
+
+/* School name list shown on event rows */
+.event-school-list {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+/* Create Route button on event rows */
+.event-route-btn {
+  font-size: 0.78rem;
+  padding: 0.25rem 0.6rem;
+  white-space: nowrap;
+}
+

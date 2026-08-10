@@ -297,7 +297,8 @@
             <h1>Visit Log</h1>
             <p class="subtitle">Notes from your school and fair visits</p>
           </div>
-          <div style="display:flex;gap:0.5rem;">
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <button class="btn btn-ghost" onclick="openBuildRouteFromPlanned()">&#128197; From Planned Visits</button>
             <button class="btn btn-ghost" onclick="openVisitReport()">&#128202; Report</button>
             <button class="btn btn-accent" onclick="openLogVisit()">+ Log Visit</button>
           </div>
@@ -363,8 +364,11 @@
             <h1>Route Planner</h1>
             <p class="subtitle">Plan efficient school visit routes</p>
           </div>
-          <button class="btn btn-accent" onclick="openRouteBuilder()">+ New Route</button>
-          <button class="btn btn-ghost" onclick="openPrintRoutesSelector()">&#128438; Print Routes</button>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <button class="btn btn-ghost" onclick="openBuildRouteFromPlanned()">&#128197; From Planned Visits</button>
+            <button class="btn btn-ghost" onclick="openPrintRoutesSelector()">&#128438; Print Routes</button>
+            <button class="btn btn-accent" onclick="openRouteBuilder()">+ New Route</button>
+          </div>
         </div>
       </div>
       <div id="routes-content"></div>
@@ -378,7 +382,10 @@
             <h1>Events</h1>
             <p class="subtitle">Boss-assigned events: fairs, conferences, open houses, and more</p>
           </div>
-          <button class="btn btn-accent" onclick="openAddEvent()">+ Add Event</button>
+          <div style="display:flex;gap:0.5rem;">
+            <button class="btn btn-ghost" onclick="openBuildRouteFromPlanned()">&#128197; From Planned Visits</button>
+            <button class="btn btn-accent" onclick="openAddEvent()">+ Add Event</button>
+          </div>
         </div>
       </div>
       <div id="events-content"></div>

@@ -526,8 +526,12 @@ function openScheduleVisit(preselectedSchoolId) {
         <input type="date" id="f-planned-date" value="${tomorrowStr}" />
       </div>
       <div class="form-group">
-        <label>Time <span class="form-optional">(optional)</span></label>
+        <label>Start Time <span class="form-optional">(optional)</span></label>
         <input type="time" id="f-planned-time" />
+      </div>
+      <div class="form-group">
+        <label>End Time <span class="form-optional">(optional)</span></label>
+        <input type="time" id="f-planned-end-time" />
       </div>
     </div>
     <div class="form-group">
@@ -558,8 +562,9 @@ function openScheduleVisit(preselectedSchoolId) {
 
     if (!date) { alert('Please enter a date.'); return; }
 
-    var title = document.getElementById('f-planned-title').value.trim();
-    var time  = document.getElementById('f-planned-time').value;
+    var title   = document.getElementById('f-planned-title').value.trim();
+    var time    = document.getElementById('f-planned-time').value;
+    var endTime = document.getElementById('f-planned-end-time').value;
 
     var planned = getPlannedVisits();
     planned.push({
@@ -568,7 +573,8 @@ function openScheduleVisit(preselectedSchoolId) {
       schoolName: schoolName,
       title:      title,
       date:       date,
-      time:       time,   // stored as HH:MM string, empty string if not set
+      time:       time,      // start time, HH:MM string, empty if not set
+      endTime:    endTime,   // end time, HH:MM string, empty if not set
       notes:      notes,
     });
     savePlannedVisits(planned);
