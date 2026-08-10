@@ -63,10 +63,10 @@ function renderEvents() {
 
   const events = getEvents();
 
-  if (events.length === 0) {
+  if (events.length === 0 && getTentativeEvents().length === 0) {
     container.innerHTML = `
       <div class="events-empty">
-        <p>No events yet. Use the button above to add your first one.</p>
+        <p>No events yet. Use the buttons above to add your first one.</p>
       </div>
     `;
     return;
@@ -84,6 +84,9 @@ function renderEvents() {
     .sort(function(a, b) { return b.date.localeCompare(a.date); }); // newest first
 
   let html = '';
+
+  // Tentative events always appear first
+  html += renderTentativeEventsSection();
 
   if (upcoming.length > 0) {
     html += '<div class="events-section-label">Upcoming</div>';
@@ -504,4 +507,402 @@ function renderUpcomingEvents() {
 // =============================================
 function initEvents() {
   renderEvents();
+}
+
+// =============================================
+// TENTATIVE EVENTS
+// Events not yet confirmed. Stored separately
+// in acc_tentative_events so they never appear
+// in the main Events list until confirmed.
+// Structure: {id, name, type, date, notes,
+//             hostSchoolId, schoolIds[]}
+// =============================================
+
+// Tracks form state while the add-tentative modal is open
+var tentativeHostSchoolId       = null;
+var tentativeAttendingSchoolIds = [];
+
+function getTentativeEvents() {
+  return loadData('tentative_events', []);
+}
+
+function saveTentativeEvents(events) {
+  saveData('tentative_events', events);
+}
+
+function resetTentativeFormState() {
+  tentativeHostSchoolId       = null;
+  tentativeAttendingSchoolIds = [];
+}
+
+// =============================================
+// ADD TENTATIVE EVENT FORM
+// =============================================
+function openAddTentativeEvent() {
+  resetTentativeFormState();
+  var today = new Date().toISOString().split('T')[0];
+
+  var body = `
+    ${buildEventTypeDatalist()}
+    <div class="form-group">
+      <label>Event Name <span class="required">*</span></label>
+      <input type="text" id="f-tent-name" placeholder="e.g. Gibson County College Fair" />
+    </div>
+    <div class="form-group">
+      <label>Event Type <span class="form-optional">(optional)</span></label>
+      <input type="text" id="f-tent-type" placeholder="e.g. College Fair"
+        list="event-type-list" autocomplete="off" />
+    </div>
+    <div class="form-group">
+      <label>Expected Date <span class="required">*</span></label>
+      <input type="date" id="f-tent-date" value="${today}" />
+    </div>
+    <div class="form-group">
+      <label>Host School <span class="required">*</span></label>
+      <small class="form-hint">The school where the event will be physically held.</small>
+      <div class="school-dropdown-wrapper" style="margin-top:0.4rem;">
+        <input type="text" id="f-tent-host-school"
+          placeholder="Type to search schools..." autocomplete="off" />
+        <ul class="school-dropdown-list hidden" id="tent-host-dd-list"></ul>
+      </div>
+      <div id="tent-host-selected"></div>
+    </div>
+    <div class="form-group">
+      <label>Attending Schools <span class="form-optional">(optional)</span></label>
+      <small class="form-hint">Other schools whose students will be at this event.</small>
+      <div class="event-school-picker" style="margin-top:0.4rem;">
+        <div class="event-school-chips" id="tent-attending-chips"></div>
+        <div class="school-dropdown-wrapper">
+          <input type="text" id="f-tent-attending-search"
+            placeholder="Type to search schools..." autocomplete="off" />
+          <ul class="school-dropdown-list hidden" id="tent-attending-dd-list"></ul>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notes <span class="form-optional">(optional)</span></label>
+      <textarea id="f-tent-notes" rows="3"
+        placeholder="Location, contact, what you are waiting on..."></textarea>
+    </div>
+  `;
+
+  openModal('Add Tentative Event', body, function() {
+    var name  = document.getElementById('f-tent-name').value.trim();
+    var type  = document.getElementById('f-tent-type').value.trim();
+    var date  = document.getElementById('f-tent-date').value;
+    var notes = document.getElementById('f-tent-notes').value.trim();
+
+    if (!name)                  { alert('Event name is required.'); return; }
+    if (!date)                  { alert('Date is required.'); return; }
+    if (!tentativeHostSchoolId) { alert('Please select a host school.'); return; }
+
+    if (type) addEventTypeIfNew(type);
+
+    var events = getTentativeEvents();
+    events.push({
+      id:           makeId(),
+      name:         name,
+      type:         type,
+      date:         date,
+      notes:        notes,
+      hostSchoolId: tentativeHostSchoolId,
+      schoolIds:    tentativeAttendingSchoolIds.slice(),
+    });
+    saveTentativeEvents(events);
+    closeModal();
+    renderEvents();
+    if (typeof renderDashboardCalendar === 'function') renderDashboardCalendar();
+  });
+
+  setTimeout(function() {
+    initTentativeHostPicker();
+    initTentativeAttendingPicker();
+  }, 0);
+}
+
+// Single-select host school picker - replaces previous selection on click
+function initTentativeHostPicker() {
+  var input    = document.getElementById('f-tent-host-school');
+  var list     = document.getElementById('tent-host-dd-list');
+  var selectedEl = document.getElementById('tent-host-selected');
+  if (!input || !list) return;
+
+  var schools = getSchools().sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+  function showOptions(filter) {
+    var q       = (filter || '').toLowerCase();
+    var matches = schools.filter(function(s) { return s.name.toLowerCase().includes(q); });
+    list.innerHTML = matches.length
+      ? matches.map(function(s) {
+          return '<li class="school-dd-item" data-id="' + s.id + '" data-name="'
+            + escapeHtml(s.name) + '">' + escapeHtml(s.name) + '</li>';
+        }).join('')
+      : '<li class="school-dd-item school-dd-no-match">No schools found</li>';
+    list.classList.remove('hidden');
+  }
+
+  input.addEventListener('input', function() { showOptions(input.value); });
+  input.addEventListener('focus', function() { showOptions(input.value); });
+  input.addEventListener('blur',  function() { setTimeout(function() { list.classList.add('hidden'); }, 150); });
+
+  list.addEventListener('mousedown', function(e) {
+    var item = e.target.closest('.school-dd-item');
+    if (!item || item.classList.contains('school-dd-no-match')) return;
+    tentativeHostSchoolId = item.dataset.id;
+    // Show selected chip and clear the input
+    if (selectedEl) {
+      selectedEl.innerHTML = '<span class="event-school-chip tent-host-chip">'
+        + '&#128205; ' + escapeHtml(item.dataset.name)
+        + '<button type="button" class="chip-remove" onclick="clearTentativeHost()">&times;</button>'
+        + '</span>';
+    }
+    input.value = '';
+    list.classList.add('hidden');
+  });
+}
+
+// Clears the selected host school
+function clearTentativeHost() {
+  tentativeHostSchoolId = null;
+  var el = document.getElementById('tent-host-selected');
+  if (el) el.innerHTML = '';
+}
+
+// Multi-select attending schools picker - same chip pattern as event school picker
+function initTentativeAttendingPicker() {
+  var input = document.getElementById('f-tent-attending-search');
+  var list  = document.getElementById('tent-attending-dd-list');
+  if (!input || !list) return;
+
+  var schools = getSchools().sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+  function renderAttendingChips() {
+    var chips = document.getElementById('tent-attending-chips');
+    if (!chips) return;
+    chips.innerHTML = tentativeAttendingSchoolIds.map(function(id) {
+      var s    = schools.find(function(s) { return s.id === id; });
+      var name = s ? s.name : 'Unknown';
+      return '<span class="event-school-chip">' + escapeHtml(name)
+        + '<button type="button" class="chip-remove" '
+        + 'onclick="removeTentativeAttendingSchool(\'' + id + '\')">&times;</button></span>';
+    }).join('');
+  }
+
+  function showOptions(filter) {
+    var q       = (filter || '').toLowerCase();
+    // Exclude the host school and already-selected schools from the list
+    var matches = schools.filter(function(s) {
+      return s.name.toLowerCase().includes(q)
+        && s.id !== tentativeHostSchoolId
+        && !tentativeAttendingSchoolIds.includes(s.id);
+    });
+    list.innerHTML = matches.length
+      ? matches.map(function(s) {
+          return '<li class="school-dd-item" data-id="' + s.id + '" data-name="'
+            + escapeHtml(s.name) + '">' + escapeHtml(s.name) + '</li>';
+        }).join('')
+      : '<li class="school-dd-item school-dd-no-match">No schools found</li>';
+    list.classList.remove('hidden');
+  }
+
+  input.addEventListener('input', function() { showOptions(input.value); });
+  input.addEventListener('focus', function() { showOptions(input.value); });
+  input.addEventListener('blur',  function() { setTimeout(function() { list.classList.add('hidden'); }, 150); });
+
+  list.addEventListener('mousedown', function(e) {
+    var item = e.target.closest('.school-dd-item');
+    if (!item || item.classList.contains('school-dd-no-match')) return;
+    tentativeAttendingSchoolIds.push(item.dataset.id);
+    renderAttendingChips();
+    input.value = '';
+    list.classList.add('hidden');
+  });
+}
+
+// Removes one school from the attending list and re-renders chips
+function removeTentativeAttendingSchool(schoolId) {
+  tentativeAttendingSchoolIds = tentativeAttendingSchoolIds.filter(function(id) { return id !== schoolId; });
+  var chips   = document.getElementById('tent-attending-chips');
+  if (!chips) return;
+  var schools = getSchools();
+  chips.innerHTML = tentativeAttendingSchoolIds.map(function(id) {
+    var s    = schools.find(function(s) { return s.id === id; });
+    var name = s ? s.name : 'Unknown';
+    return '<span class="event-school-chip">' + escapeHtml(name)
+      + '<button type="button" class="chip-remove" '
+      + 'onclick="removeTentativeAttendingSchool(\'' + id + '\')">&times;</button></span>';
+  }).join('');
+}
+
+// =============================================
+// CONFIRM TENTATIVE EVENT
+// Moves the record from acc_tentative_events
+// into acc_events. Host school is merged into
+// schoolIds so the tag carries over.
+// =============================================
+function confirmTentativeEvent(tentativeId) {
+  if (!confirm('Confirm this event? It will move to your main Events list.')) return;
+
+  var tentative = getTentativeEvents();
+  var ev        = tentative.find(function(e) { return e.id === tentativeId; });
+  if (!ev) return;
+
+  // Include host school in the schoolIds tag list on the confirmed event
+  var allSchoolIds = [ev.hostSchoolId]
+    .concat(ev.schoolIds || [])
+    .filter(function(id, idx, arr) { return id && arr.indexOf(id) === idx; });
+
+  var events = getEvents();
+  events.push({
+    id:        makeId(),
+    name:      ev.name,
+    type:      ev.type || '',
+    date:      ev.date,
+    endDate:   '',
+    time:      '',
+    endTime:   '',
+    notes:     ev.notes || '',
+    schoolIds: allSchoolIds,
+  });
+  saveEvents(events);
+
+  // Remove from tentative list
+  saveTentativeEvents(tentative.filter(function(e) { return e.id !== tentativeId; }));
+
+  // Re-render both pages
+  if (typeof renderDirectory === 'function') renderDirectory();
+  renderEvents();
+  if (typeof renderDashboardCalendar === 'function') renderDashboardCalendar();
+  alert('"' + ev.name + '" confirmed and moved to your Events list.');
+}
+
+// =============================================
+// DELETE TENTATIVE EVENT
+// =============================================
+function deleteTentativeEvent(tentativeId) {
+  if (!confirm('Remove this tentative event?')) return;
+  saveTentativeEvents(getTentativeEvents().filter(function(e) { return e.id !== tentativeId; }));
+  if (typeof renderDirectory === 'function') renderDirectory();
+  renderEvents();
+}
+
+// =============================================
+// RENDER TENTATIVE EVENTS ON SCHOOL DETAIL PAGE
+// Shows events where this school is the host OR
+// an attending school, with the correct badge.
+// Returns HTML string (empty string if none).
+// =============================================
+function renderSchoolTentativeEvents(schoolId) {
+  var all = getTentativeEvents();
+
+  var relevant = all.filter(function(ev) {
+    return ev.hostSchoolId === schoolId
+      || (ev.schoolIds || []).includes(schoolId);
+  });
+
+  if (relevant.length === 0) return '';
+
+  relevant.sort(function(a, b) { return a.date.localeCompare(b.date); });
+
+  var schools = getSchools();
+
+  return relevant.map(function(ev) {
+    var isHost = ev.hostSchoolId === schoolId;
+
+    var roleBadge = isHost
+      ? '<span class="tent-role-badge tent-hosting">&#128205; Hosting</span>'
+      : '<span class="tent-role-badge tent-attending">&#128206; Attending</span>';
+
+    var d       = new Date(ev.date);
+    var dateStr = new Date(d.getTime() + d.getTimezoneOffset() * 60000)
+      .toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+
+    // Show context - attending schools if hosting, or host school if attending
+    var contextLine = '';
+    if (isHost && ev.schoolIds && ev.schoolIds.length > 0) {
+      var attendingNames = ev.schoolIds.map(function(id) {
+        var s = schools.find(function(s) { return s.id === id; });
+        return s ? s.name : null;
+      }).filter(Boolean);
+      if (attendingNames.length > 0) {
+        contextLine = '<span class="school-visit-card-meta">Also attending: '
+          + escapeHtml(attendingNames.join(', ')) + '</span>';
+      }
+    } else if (!isHost) {
+      var host = schools.find(function(s) { return s.id === ev.hostSchoolId; });
+      if (host) {
+        contextLine = '<span class="school-visit-card-meta">Hosted at: '
+          + escapeHtml(host.name) + '</span>';
+      }
+    }
+
+    return `
+      <div class="school-visit-card tentative-card">
+        <div class="school-visit-card-left">
+          <span class="visit-mood-icon">&#10067;</span>
+          <div class="school-visit-card-info">
+            <span class="school-visit-card-title">${escapeHtml(ev.name)}</span>
+            <span class="school-visit-card-date">${dateStr}&nbsp;&nbsp;${roleBadge}</span>
+            ${ev.type ? '<span class="school-visit-card-meta">' + escapeHtml(ev.type) + '</span>' : ''}
+            ${contextLine}
+            ${ev.notes ? '<span class="school-visit-card-meta">' + escapeHtml(ev.notes) + '</span>' : ''}
+          </div>
+        </div>
+        <div class="school-visit-card-right">
+          <button class="btn btn-sm btn-confirm-event"
+            onclick="confirmTentativeEvent('${ev.id}')">&#10003; Confirm</button>
+          <button class="btn-icon-danger"
+            onclick="deleteTentativeEvent('${ev.id}')" title="Remove">&#10005;</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// =============================================
+// RENDER TENTATIVE SECTION ON EVENTS PAGE
+// Shows a "Pending Confirmation" section above
+// the confirmed events list.
+// =============================================
+function renderTentativeEventsSection() {
+  var all = getTentativeEvents();
+  if (all.length === 0) return '';
+
+  all.sort(function(a, b) { return a.date.localeCompare(b.date); });
+
+  var schools = getSchools();
+
+  var rows = all.map(function(ev) {
+    var d       = new Date(ev.date);
+    var dateStr = new Date(d.getTime() + d.getTimezoneOffset() * 60000)
+      .toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+
+    var host        = schools.find(function(s) { return s.id === ev.hostSchoolId; });
+    var hostName    = host ? host.name : 'Unknown school';
+    var attendCount = (ev.schoolIds || []).length;
+    var attendLabel = attendCount > 0 ? ' + ' + attendCount + ' attending' : '';
+
+    return `
+      <div class="event-row tentative-event-row">
+        <div class="event-row-left">
+          <div class="event-type-badge tentative-badge">Tentative</div>
+          <div class="event-row-info">
+            <span class="event-name">${escapeHtml(ev.name)}</span>
+            <div class="event-school-list">&#128205; ${escapeHtml(hostName)}${escapeHtml(attendLabel)}</div>
+          </div>
+        </div>
+        <div class="event-row-right">
+          <span class="event-date">${dateStr}</span>
+          <button class="btn btn-sm btn-confirm-event"
+            onclick="event.stopPropagation(); confirmTentativeEvent('${ev.id}')">&#10003; Confirm</button>
+          <button class="btn-icon btn-icon-danger"
+            onclick="event.stopPropagation(); deleteTentativeEvent('${ev.id}')"
+            title="Remove tentative event">&#128465;</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  return '<div class="events-section-label events-tentative-label">&#10067; Pending Confirmation</div>'
+    + rows;
 }

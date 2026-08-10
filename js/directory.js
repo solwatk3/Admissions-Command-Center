@@ -631,6 +631,21 @@ function renderSchoolDetail(schoolId) {
 
     </div>
 
+    <!-- Tentative events for this school (hosting or attending) -->
+    ${(function() {
+      var tentHtml = typeof renderSchoolTentativeEvents === 'function'
+        ? renderSchoolTentativeEvents(school.id) : '';
+      if (!tentHtml) return '';
+      return `
+        <div class="school-visit-history">
+          <div class="school-visit-history-header">
+            <h3>Tentative Events</h3>
+          </div>
+          ${tentHtml}
+        </div>
+      `;
+    })()}
+
     <!-- Planned (future) visits for this school -->
     <div class="school-visit-history">
       <div class="school-visit-history-header">

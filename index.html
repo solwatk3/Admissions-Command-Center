@@ -382,8 +382,9 @@
             <h1>Events</h1>
             <p class="subtitle">Boss-assigned events: fairs, conferences, open houses, and more</p>
           </div>
-          <div style="display:flex;gap:0.5rem;">
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
             <button class="btn btn-ghost" onclick="openBuildRouteFromPlanned()">&#128197; From Planned Visits</button>
+            <button class="btn btn-ghost btn-tentative" onclick="openAddTentativeEvent()">&#10067; Tentative</button>
             <button class="btn btn-accent" onclick="openAddEvent()">+ Add Event</button>
           </div>
         </div>

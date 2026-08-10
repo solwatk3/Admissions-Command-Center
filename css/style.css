@@ -1262,3 +1262,89 @@ a {
   white-space: nowrap;
 }
 
+/* =============================================
+   TENTATIVE EVENTS
+   Amber/yellow color scheme to distinguish from
+   confirmed events (teal) and planned visits (orange).
+============================================== */
+
+/* Tentative section label on Events page */
+.events-tentative-label {
+  color: #f59e0b;
+  border-left: 3px solid #f59e0b;
+  padding-left: 0.6rem;
+}
+
+/* Tentative event row on Events page */
+.tentative-event-row {
+  border-left: 3px solid #f59e0b;
+}
+
+/* "Tentative" type badge on Events page */
+.event-type-badge.tentative-badge {
+  background: rgba(245, 158, 11, 0.18);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+/* Amber card on school detail page */
+.school-visit-card.tentative-card {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.06);
+}
+
+/* Hosting / Attending inline badges */
+.tent-role-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.1rem 0.5rem;
+  border-radius: 20px;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tent-hosting {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.tent-attending {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+/* Host school chip in the add-tentative modal */
+.tent-host-chip {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: rgba(245, 158, 11, 0.45);
+  margin-top: 0.35rem;
+}
+
+/* Green Confirm button */
+.btn-confirm-event {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  border-radius: var(--radius);
+  padding: 0.25rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.btn-confirm-event:hover {
+  background: rgba(34, 197, 94, 0.28);
+}
+
+/* Tentative button in Events page header */
+.btn-tentative {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+

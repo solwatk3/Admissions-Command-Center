@@ -561,7 +561,7 @@ async function exportAllData() {
   const emailKeys = ['acc_counties', 'acc_schools', 'acc_visits',
                      'acc_colleagues', 'acc_routes', 'acc_archives',
                      'acc_events', 'acc_event_types', 'acc_planned_visits',
-                     'acc_gh_token'];
+                     'acc_tentative_events', 'acc_gh_token'];
   const emailSnap = {};
   emailKeys.forEach(function(k) {
     if (snapshot[k] !== undefined) emailSnap[k] = snapshot[k];
