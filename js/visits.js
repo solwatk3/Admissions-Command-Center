@@ -64,6 +64,7 @@ function initVisits() {
 function renderVisits() {
   if (visitsView === 'list')   renderVisitList();
   if (visitsView === 'detail') renderVisitDetail(activeVisitId);
+  if (visitsView === 'report') renderVisitReport();
 }
 
 // =============================================
@@ -842,6 +843,250 @@ function startVoiceMemo(textareaId, btnEl) {
   };
 
   recognition.start();
+}
+
+// =============================================
+// VISIT REPORT
+// Full-page view showing visits grouped by school
+// over a user-selected date range.
+// =============================================
+
+// Switches visitsView to 'report' and renders the report page
+function openVisitReport() {
+  visitsView = 'report';
+  renderVisits();
+}
+
+// Renders the report page shell with preset buttons and an output area.
+// Auto-runs "This Year" on load so there is immediately something to see.
+function renderVisitReport() {
+  var container = document.getElementById('visits-content');
+  if (!container) return;
+
+  var now          = new Date();
+  var thisYearFrom = now.getFullYear() + '-01-01';
+  var thisYearTo   = now.getFullYear() + '-12-31';
+
+  container.innerHTML = `
+    <div class="report-page">
+      <div class="view-header no-print">
+        <button class="btn btn-ghost back-btn" onclick="backToVisitList()">&#8592; Back to Visit Log</button>
+        <button class="btn btn-ghost" onclick="window.print()">&#128438; Print / Save PDF</button>
+      </div>
+
+      <div class="report-header">
+        <h2>Visit Report</h2>
+        <p class="subtitle">Summary of school visits over a selected time period</p>
+      </div>
+
+      <div class="report-controls no-print">
+        <div class="report-presets">
+          <button class="btn btn-ghost btn-sm report-preset" onclick="applyReportPreset('this-month', this)">This Month</button>
+          <button class="btn btn-ghost btn-sm report-preset" onclick="applyReportPreset('last-month', this)">Last Month</button>
+          <button class="btn btn-ghost btn-sm report-preset active-preset" onclick="applyReportPreset('this-year', this)">This Year</button>
+          <button class="btn btn-ghost btn-sm report-preset" onclick="applyReportPreset('last-year', this)">Last Year</button>
+          <button class="btn btn-ghost btn-sm report-preset" onclick="applyReportPreset('custom', this)">Custom</button>
+        </div>
+        <div class="report-custom-range hidden" id="report-custom-range">
+          <div class="report-range-inputs">
+            <div class="form-group">
+              <label>From</label>
+              <input type="date" id="report-date-from" />
+            </div>
+            <div class="form-group">
+              <label>To</label>
+              <input type="date" id="report-date-to" />
+            </div>
+            <button class="btn btn-accent btn-sm" onclick="runCustomReport()">Generate</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="report-output"></div>
+    </div>
+  `;
+
+  // Auto-generate This Year on page load
+  runReport(thisYearFrom, thisYearTo, 'This Year');
+}
+
+// Handles preset button clicks - calculates date range and calls runReport()
+function applyReportPreset(preset, btnEl) {
+  // Highlight the active preset button
+  document.querySelectorAll('.report-preset').forEach(function(b) {
+    b.classList.remove('active-preset');
+  });
+  if (btnEl) btnEl.classList.add('active-preset');
+
+  // Hide custom range unless Custom is picked
+  var customRange = document.getElementById('report-custom-range');
+  if (customRange) customRange.classList.add('hidden');
+
+  var now   = new Date();
+  var year  = now.getFullYear();
+  var month = now.getMonth(); // 0-indexed
+
+  var from, to, label;
+
+  if (preset === 'this-month') {
+    var lastDay = new Date(year, month + 1, 0).getDate();
+    from  = year + '-' + reportPad(month + 1) + '-01';
+    to    = year + '-' + reportPad(month + 1) + '-' + reportPad(lastDay);
+    label = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+  } else if (preset === 'last-month') {
+    var lmStart = new Date(year, month - 1, 1);
+    var lmEnd   = new Date(year, month, 0);
+    from  = lmStart.getFullYear() + '-' + reportPad(lmStart.getMonth() + 1) + '-01';
+    to    = lmEnd.getFullYear() + '-' + reportPad(lmEnd.getMonth() + 1) + '-' + reportPad(lmEnd.getDate());
+    label = lmStart.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+  } else if (preset === 'this-year') {
+    from  = year + '-01-01';
+    to    = year + '-12-31';
+    label = 'Year ' + year;
+
+  } else if (preset === 'last-year') {
+    from  = (year - 1) + '-01-01';
+    to    = (year - 1) + '-12-31';
+    label = 'Year ' + (year - 1);
+
+  } else if (preset === 'custom') {
+    // Show the custom date range pickers and wait for the user to click Generate
+    if (customRange) customRange.classList.remove('hidden');
+    return;
+  }
+
+  runReport(from, to, label);
+}
+
+// Reads the custom date pickers and runs the report
+function runCustomReport() {
+  var from = (document.getElementById('report-date-from') || {}).value;
+  var to   = (document.getElementById('report-date-to')   || {}).value;
+  if (!from || !to) { alert('Please pick both a start and end date.'); return; }
+  if (from > to)    { alert('Start date must be before end date.'); return; }
+  runReport(from, to, from + ' to ' + to);
+}
+
+// Zero-pads a number to 2 digits for building date strings (e.g. 8 -> "08")
+function reportPad(n) {
+  return String(n).padStart(2, '0');
+}
+
+// Core function - filters visits by date range and renders the stats + school table
+function runReport(from, to, label) {
+  var output = document.getElementById('report-output');
+  if (!output) return;
+
+  var allVisits = getVisits();
+  var schools   = getSchools();
+  var counties  = typeof getCounties === 'function' ? getCounties() : [];
+
+  // Filter to the selected date range - string comparison works perfectly on YYYY-MM-DD
+  var filtered = allVisits.filter(function(v) {
+    return v.date >= from && v.date <= to;
+  });
+
+  if (filtered.length === 0) {
+    output.innerHTML = '<p class="empty-state" style="margin-top:2rem;">No visits found in this time period.</p>';
+    return;
+  }
+
+  // Summary stats
+  var totalStudents = filtered.reduce(function(sum, v) { return sum + (v.studentCount || 0); }, 0);
+  var uniqueSchools = new Set(filtered.map(function(v) { return v.schoolId; })).size;
+  var moodCounts    = { Great: 0, Good: 0, Okay: 0, Tough: 0 };
+  filtered.forEach(function(v) { if (moodCounts[v.mood] !== undefined) moodCounts[v.mood]++; });
+
+  // Group visits by school, then sort by most visits first
+  var bySchool = {};
+  filtered.forEach(function(v) {
+    var key = v.schoolId || v.schoolName;
+    if (!bySchool[key]) {
+      var school  = schools.find(function(s) { return s.id === v.schoolId; });
+      var county  = school ? counties.find(function(c) { return c.id === school.countyId; }) : null;
+      bySchool[key] = {
+        name:     school ? school.name : (v.schoolName || 'Unknown'),
+        county:   county ? county.name : '',
+        priority: school ? (school.priority || '') : '',
+        visits:   [],
+      };
+    }
+    bySchool[key].visits.push(v);
+  });
+
+  var schoolList = Object.values(bySchool).sort(function(a, b) {
+    return b.visits.length - a.visits.length;
+  });
+
+  var moodEmoji = { Great: '&#128512;', Good: '&#128578;', Okay: '&#128528;', Tough: '&#128533;' };
+
+  // Build one table row per school
+  var schoolRows = schoolList.map(function(s) {
+    // List visit dates oldest to newest, using the timezone offset fix
+    var visitDates = s.visits
+      .slice()
+      .sort(function(a, b) { return a.date.localeCompare(b.date); })
+      .map(function(v) {
+        var d      = new Date(v.date);
+        var offset = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+        return offset.toLocaleDateString('default', { month: 'short', day: 'numeric' });
+      }).join(', ');
+
+    var priorityClass = s.priority.toLowerCase();
+
+    return `
+      <tr class="report-school-row">
+        <td class="report-school-name">
+          ${escapeHtml(s.name)}
+          ${s.priority ? '<span class="report-priority-badge ' + priorityClass + '">' + escapeHtml(s.priority) + '</span>' : ''}
+        </td>
+        <td class="report-county">${escapeHtml(s.county)}</td>
+        <td class="report-visit-count">${s.visits.length}</td>
+        <td class="report-visit-dates">${visitDates}</td>
+      </tr>
+    `;
+  }).join('');
+
+  output.innerHTML = `
+    <div class="report-label-row">
+      <h3 class="report-period-label">${escapeHtml(label)}</h3>
+    </div>
+
+    <div class="report-stats-row">
+      <div class="report-stat">
+        <span class="report-stat-value">${filtered.length}</span>
+        <span class="report-stat-label">Total Visits</span>
+      </div>
+      <div class="report-stat">
+        <span class="report-stat-value">${uniqueSchools}</span>
+        <span class="report-stat-label">Schools Visited</span>
+      </div>
+      <div class="report-stat">
+        <span class="report-stat-value">${totalStudents.toLocaleString()}</span>
+        <span class="report-stat-label">Students Talked To</span>
+      </div>
+      <div class="report-stat mood-stat">
+        <span class="report-stat-value">${moodEmoji['Great']} ${moodCounts.Great}&nbsp;&nbsp;${moodEmoji['Good']} ${moodCounts.Good}&nbsp;&nbsp;${moodEmoji['Okay']} ${moodCounts.Okay}&nbsp;&nbsp;${moodEmoji['Tough']} ${moodCounts.Tough}</span>
+        <span class="report-stat-label">Mood Breakdown</span>
+      </div>
+    </div>
+
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>School</th>
+          <th>County</th>
+          <th>Visits</th>
+          <th>Dates</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${schoolRows}
+      </tbody>
+    </table>
+  `;
 }
 
 // =============================================

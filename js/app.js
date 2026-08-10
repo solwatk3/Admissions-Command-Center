@@ -437,13 +437,15 @@ function openArchiveSeason() {
     // Load existing archives (array of past seasons)
     const archives = loadData('archives', []);
 
-    // Build the archive entry
+    // Build the archive entry - planned visits are snapshotted but NOT cleared
+    // so they carry forward into the new season automatically
     archives.push({
-      id:       makeId(),
-      name:     name,
-      archivedOn: new Date().toISOString().split('T')[0],
-      visits:   visits,
-      routes:   routes,
+      id:            makeId(),
+      name:          name,
+      archivedOn:    new Date().toISOString().split('T')[0],
+      visits:        visits,
+      routes:        routes,
+      plannedVisits: loadData('planned_visits', []),
     });
 
     // Save archive, then clear current visits and routes
