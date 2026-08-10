@@ -2111,5 +2111,25 @@
     "SOAR",
     "UT Breakfast",
     "Admissions Fall Retreat"
+  ],
+  "acc_planned_visits": [
+    {
+      "id": "msmqklmycllj",
+      "schoolId": "mro2punk74o2",
+      "schoolName": "Crocket County HS",
+      "title": "Crocket County HS College Fair",
+      "date": "2026-08-26",
+      "time": "08:00",
+      "notes": ""
+    },
+    {
+      "id": "msmqn7vgwq66",
+      "schoolId": "mrtpink3v651",
+      "schoolName": "Grainger High School",
+      "title": "Grainger HS College Fair",
+      "date": "2026-08-28",
+      "time": "09:00",
+      "notes": ""
+    }
   ]
 }
