@@ -937,6 +937,28 @@
   border-color: #ef4444;
 }
 
+/* Green checkmark button - confirms a tentative planned visit */
+.btn-icon-confirm {
+  background: transparent;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #22c55e;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-icon-confirm:hover {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: #22c55e;
+}
+
 /* =============================================
    A-Z PILL EXTRAS
    Additional elements inside A-Z county pills.

@@ -734,8 +734,13 @@ function renderSchoolPlannedVisits(schoolId) {
     var tentativeClass = p.tentative ? ' tentative' : '';
     var tentativeBadge = p.tentative ? '<span class="tentative-badge">Tentative</span>' : '';
 
+    // Show a confirm (checkmark) button only on tentative cards so one tap locks it in
+    var confirmBtn = p.tentative
+      ? `<button class="btn-icon-confirm" onclick="event.stopPropagation(); confirmPlannedVisit('${p.id}')" title="Mark as confirmed">&#10003;</button>`
+      : '';
+
     return `
-      <div class="school-visit-card planned${tentativeClass}">
+      <div class="school-visit-card planned${tentativeClass}" onclick="openEditPlannedVisit('${p.id}')" style="cursor:pointer;">
         <div class="school-visit-card-left">
           <span class="visit-mood-icon">&#128197;</span>
           <div class="school-visit-card-info">
@@ -745,7 +750,8 @@ function renderSchoolPlannedVisits(schoolId) {
           </div>
         </div>
         <div class="school-visit-card-right">
-          <button class="btn-icon-danger" onclick="deletePlannedVisit('${p.id}')" title="Remove planned visit">&#10005;</button>
+          ${confirmBtn}
+          <button class="btn-icon-danger" onclick="event.stopPropagation(); deletePlannedVisit('${p.id}')" title="Remove planned visit">&#10005;</button>
         </div>
       </div>
     `;

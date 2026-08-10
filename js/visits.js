@@ -635,6 +635,90 @@ function deletePlannedVisit(plannedId) {
 }
 
 // =============================================
+// CONFIRM PLANNED VISIT
+// Flips a tentative planned visit to confirmed with one tap.
+// =============================================
+function confirmPlannedVisit(plannedId) {
+  var planned = getPlannedVisits();
+  var idx = planned.findIndex(function(p) { return p.id === plannedId; });
+  if (idx === -1) return;
+  planned[idx].tentative = false;
+  savePlannedVisits(planned);
+  if (typeof renderDirectory === 'function') renderDirectory();
+}
+
+// =============================================
+// EDIT PLANNED VISIT MODAL
+// Opens a pre-filled modal for an existing planned visit record.
+// =============================================
+function openEditPlannedVisit(plannedId) {
+  var planned = getPlannedVisits();
+  var record  = planned.find(function(p) { return p.id === plannedId; });
+  if (!record) return;
+
+  // Seed the tentative flag from the existing record
+  plannedVisitIsTentative = !!record.tentative;
+
+  var confirmedActive = plannedVisitIsTentative ? '' : ' active';
+  var tentativeActive = plannedVisitIsTentative ? ' active' : '';
+
+  var body = `
+    <div class="form-group">
+      <label>School</label>
+      <input type="text" value="${escapeHtml(record.schoolName)}" disabled style="opacity:0.7;" />
+    </div>
+    <div class="form-group">
+      <label>Title <span class="form-optional">(optional)</span></label>
+      <input type="text" id="f-edit-pv-title" value="${escapeHtml(record.title || '')}" placeholder="e.g. Fall Recruitment, College Fair..." />
+    </div>
+    <div class="form-row-split">
+      <div class="form-group">
+        <label>Planned Date <span class="required">*</span></label>
+        <input type="date" id="f-edit-pv-date" value="${escapeHtml(record.date || '')}" />
+      </div>
+      <div class="form-group">
+        <label>Start Time <span class="form-optional">(optional)</span></label>
+        <input type="time" id="f-edit-pv-time" value="${escapeHtml(record.time || '')}" />
+      </div>
+      <div class="form-group">
+        <label>End Time <span class="form-optional">(optional)</span></label>
+        <input type="time" id="f-edit-pv-end-time" value="${escapeHtml(record.endTime || '')}" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notes / Purpose <span class="form-optional">(optional)</span></label>
+      <textarea id="f-edit-pv-notes" rows="3">${escapeHtml(record.notes || '')}</textarea>
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <div class="tentative-toggle" id="tentative-toggle-wrap">
+        <button type="button" class="tentative-btn${confirmedActive}" id="btn-confirmed" onclick="setPlannedTentative(false)">Confirmed</button>
+        <button type="button" class="tentative-btn${tentativeActive}" id="btn-tentative" onclick="setPlannedTentative(true)">Tentative</button>
+      </div>
+    </div>
+  `;
+
+  openModal('Edit Planned Visit', body, function() {
+    var date = document.getElementById('f-edit-pv-date').value;
+    if (!date) { alert('Please enter a date.'); return; }
+
+    var idx2 = planned.findIndex(function(p) { return p.id === plannedId; });
+    if (idx2 === -1) return;
+
+    planned[idx2].title     = document.getElementById('f-edit-pv-title').value.trim();
+    planned[idx2].date      = date;
+    planned[idx2].time      = document.getElementById('f-edit-pv-time').value;
+    planned[idx2].endTime   = document.getElementById('f-edit-pv-end-time').value;
+    planned[idx2].notes     = document.getElementById('f-edit-pv-notes').value.trim();
+    planned[idx2].tentative = plannedVisitIsTentative;
+
+    savePlannedVisits(planned);
+    closeModal();
+    if (typeof renderDirectory === 'function') renderDirectory();
+  });
+}
+
+// =============================================
 // EDIT VISIT FORM
 // =============================================
 function openEditVisit(visitId) {
