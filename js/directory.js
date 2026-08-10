@@ -485,6 +485,10 @@ function openSchoolDetail(schoolId) {
   activeSchoolId = schoolId;
   // Always set the county so the back button knows where to return
   activeCountyId = school.countyId;
+
+  // Save the open school so a page refresh returns here instead of the county list
+  localStorage.setItem('acc_last_school_id', schoolId);
+
   renderDirectory();
 }
 
@@ -805,12 +809,16 @@ function backToCounties() {
   dirView        = 'counties';
   activeCountyId = null;
   activeSchoolId = null;
+  // Clear saved school so a refresh from the county list doesn't re-open a detail page
+  localStorage.removeItem('acc_last_school_id');
   renderDirectory();
 }
 
 function backToSchools() {
   dirView        = 'schools';
   activeSchoolId = null;
+  // Clear saved school so a refresh from the school list doesn't re-open a detail page
+  localStorage.removeItem('acc_last_school_id');
   renderDirectory();
 }
 

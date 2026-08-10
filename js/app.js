@@ -2000,9 +2000,15 @@ async function checkRestoreParam() {
 function init() {
   // Restore the last page the user was on before refreshing.
   // Fall back to dashboard if nothing is saved or the saved value is invalid.
-  var validPages = Object.keys(PAGE_TITLES);
-  var lastPage   = localStorage.getItem('acc_last_page');
+  var validPages   = Object.keys(PAGE_TITLES);
+  var lastPage     = localStorage.getItem('acc_last_page');
+  var lastSchoolId = localStorage.getItem('acc_last_school_id');
   navigateTo(validPages.includes(lastPage) ? lastPage : 'dashboard');
+
+  // If the user was on a school detail page, re-open it after the directory initializes
+  if (lastPage === 'directory' && lastSchoolId) {
+    openSchoolDetail(lastSchoolId);
+  }
   initHoverSidebar();
   initCalendar();
 
