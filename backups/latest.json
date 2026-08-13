@@ -652,9 +652,20 @@
       "id": "mrtezm1ueveu",
       "countyId": "mrpvndctmimt",
       "name": "Soddy Daisy High School",
-      "address": "618 Sequoyah Access Rd, Soddy-Daisy, TN 37379, TN",
+      "address": "618 Sequoyah Access Rd, Soddy-Daisy, TN",
       "priority": "Secondary",
-      "contacts": [],
+      "contacts": [
+        {
+          "id": "msnnov6vodqb",
+          "title": "Soddy Daisy College and Career Advisor",
+          "name": "Kelly Martin",
+          "emails": [
+            "martin_kelly@hcde.org"
+          ],
+          "phone": "(423)-332-8828",
+          "ext": ""
+        }
+      ],
       "notes": ""
     },
     {
@@ -688,9 +699,20 @@
       "id": "mrtf768q4v4u",
       "countyId": "mrtf5zbtvtzv",
       "name": "Farragut HS",
-      "address": "11237 Kingston Pike, Knoxville, TN 37934, TN",
+      "address": "11237 Kingston Pike, Knoxville, TN",
       "priority": "Secondary",
-      "contacts": [],
+      "contacts": [
+        {
+          "id": "msorceg3jbpn",
+          "title": "College and Career Facilitator",
+          "name": "Laura Austin",
+          "emails": [
+            "laura.austin@knoxschools.org"
+          ],
+          "phone": "(865)-966-9775",
+          "ext": "72397"
+        }
+      ],
       "notes": ""
     },
     {
@@ -717,9 +739,20 @@
       "id": "mrtf8l8ig0oo",
       "countyId": "mrtf5zbtvtzv",
       "name": "Knoxville Catholic HS",
-      "address": "9245 Fox Lonas Rd NW, Knoxville, TN 37923, TN",
+      "address": "9245 Fox Lonas Rd NW, Knoxville, TN",
       "priority": "Secondary",
-      "contacts": [],
+      "contacts": [
+        {
+          "id": "msp0qn04f7a5",
+          "title": "Guidance Assistant",
+          "name": "Lori Kinney",
+          "emails": [
+            "lori.kinney@knoxvillecatholic.com"
+          ],
+          "phone": "(865)-560-0532",
+          "ext": ""
+        }
+      ],
       "notes": ""
     },
     {
@@ -1054,9 +1087,20 @@
       "id": "mrtp61ugyrcd",
       "countyId": "mrtp51ehem8o",
       "name": "Cocke County HS",
-      "address": "216 Hedrick Dr, Newport, TN 37821, TN",
+      "address": "216 Hedrick Dr, Newport, TN",
       "priority": "Tertiary",
-      "contacts": [],
+      "contacts": [
+        {
+          "id": "msorb7um4ry4",
+          "title": "College Access Counselor",
+          "name": "Tristin Self",
+          "emails": [
+            "tristin.self@theayersfoundation.org"
+          ],
+          "phone": "(423)-465-7717",
+          "ext": ""
+        }
+      ],
       "notes": ""
     },
     {
@@ -1400,9 +1444,20 @@
       "id": "mruw95vvpgid",
       "countyId": "mrtf5zbtvtzv",
       "name": "First Baptist Academy",
-      "address": "7706 Ewing Rd, Powell, TN 37849, TN",
+      "address": "7706 Ewing Rd, Powell, TN",
       "priority": "Tertiary",
-      "contacts": [],
+      "contacts": [
+        {
+          "id": "msor3qvz5w2m",
+          "title": "Head of Guidance",
+          "name": "Marissa Sowers",
+          "emails": [
+            "marissasowers@fbaeagles.org"
+          ],
+          "phone": "(865)-947-8503",
+          "ext": ""
+        }
+      ],
       "notes": ""
     },
     {
@@ -1879,7 +1934,18 @@
       "name": "David Crockett HS",
       "address": "684 Old State Rte 34, Jonesborough, TN",
       "priority": "Tertiary",
-      "contacts": [],
+      "contacts": [
+        {
+          "id": "msor0vxun20y",
+          "title": "NiswongerCARE Advisor",
+          "name": "Madison McGinnis",
+          "emails": [
+            "mcginnism@wcde.org"
+          ],
+          "phone": "",
+          "ext": ""
+        }
+      ],
       "notes": ""
     },
     {
@@ -2130,6 +2196,17 @@
       "date": "2026-08-28",
       "time": "09:00",
       "notes": ""
+    },
+    {
+      "id": "msor2h6xa46g",
+      "schoolId": "mrv3mqzp4bkz",
+      "schoolName": "David Crockett HS",
+      "title": "David Crockett HS College Fair",
+      "date": "2026-08-26",
+      "time": "13:00",
+      "endTime": "15:00",
+      "notes": "",
+      "tentative": true
     }
   ]
 }
