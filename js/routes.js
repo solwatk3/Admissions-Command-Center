@@ -419,12 +419,19 @@ function renderRouteDetail(routeId) {
 
       <div class="route-detail-body">
 
-        <!-- Starting location row -->
+        <!-- Starting location row - inline editable, saves on blur or Enter -->
         <div class="route-origin-item">
           <div class="route-origin-dot"></div>
           <div class="route-stop-info">
             <span style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Starting From</span>
-            <span style="font-size:0.9rem; color:#ffffff; font-weight:500;">${escapeHtml(route.origin || DEFAULT_ORIGIN)}</span>
+            <input
+              type="text"
+              id="detail-origin-input"
+              value="${escapeHtml(route.origin || DEFAULT_ORIGIN)}"
+              onchange="updateRouteOrigin('${route.id}', this.value)"
+              onkeydown="if(event.key==='Enter') this.blur()"
+              style="font-size:0.9rem; color:#ffffff; font-weight:500; background:transparent; border:none; border-bottom:1px dashed var(--text-muted); outline:none; width:100%; padding:0;"
+            />
           </div>
         </div>
 
@@ -464,6 +471,23 @@ function renderRouteDetail(routeId) {
       </div>
     </div>
   `;
+}
+
+// =============================================
+// UPDATE ROUTE ORIGIN (inline edit on detail view)
+// Called when the user edits the Starting From field directly
+// on the route detail page. Saves immediately and re-renders
+// so the Google Maps link updates to use the new address.
+// =============================================
+function updateRouteOrigin(routeId, newOrigin) {
+  var routes = getRoutes();
+  var route  = routes.find(function(r) { return r.id === routeId; });
+  if (!route) return;
+  // Save the new origin - fall back to DEFAULT_ORIGIN if left blank
+  route.origin = newOrigin.trim() || DEFAULT_ORIGIN;
+  saveRoutes(routes);
+  // Re-render the detail view so the Maps link reflects the new starting point
+  renderRouteDetail(routeId);
 }
 
 // =============================================
