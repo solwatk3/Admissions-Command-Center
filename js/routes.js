@@ -32,11 +32,15 @@ function saveRoutes(routes) {
 // Called by navigateTo() when the user switches to this page
 // =============================================
 function initRoutes() {
-  routesView     = 'list';
+  // If openBuildRouteFromPlanned (or similar) already set up the builder before
+  // navigating here, preserve that state instead of resetting to the list view.
+  if (routesView !== 'builder') {
+    routesView     = 'list';
+    builderStops   = [];
+    builderPreFill = null;
+  }
   activeRouteId  = null;
   editingRouteId = null;
-  builderStops   = [];
-  builderPreFill = null;
   renderRoutes();
 }
 
@@ -638,14 +642,24 @@ function renderRouteBuilder() {
   const route     = isEditing ? getRoutes().find(r => r.id === editingRouteId) : null;
   const schools   = getSchools().sort((a, b) => a.name.localeCompare(b.name));
 
-  // Name/origin come from the existing route (edit), a duplicate pre-fill, or blank (new)
-  const nameValue   = route ? escapeHtml(route.name)
-                    : builderPreFill ? escapeHtml(builderPreFill.name)
-                    : '';
-  const originValue = route && route.origin ? escapeHtml(route.origin)
-                    : builderPreFill && builderPreFill.origin ? escapeHtml(builderPreFill.origin)
-                    : DEFAULT_ORIGIN;
-  const headingLabel = isEditing ? 'Edit Route' : builderPreFill ? 'Duplicate Route' : 'New Route';
+  // Name/origin/dates come from the existing route (edit), a pre-fill object, or blank (new)
+  const nameValue     = route ? escapeHtml(route.name)
+                      : builderPreFill && builderPreFill.name ? escapeHtml(builderPreFill.name)
+                      : '';
+  const originValue   = route && route.origin ? escapeHtml(route.origin)
+                      : builderPreFill && builderPreFill.origin ? escapeHtml(builderPreFill.origin)
+                      : DEFAULT_ORIGIN;
+  // Date fields: check route (edit mode), then builderPreFill (planned visits / duplicate)
+  const dateValue     = route ? (route.date || '')
+                      : builderPreFill && builderPreFill.date ? builderPreFill.date
+                      : '';
+  const endDateValue  = route ? (route.endDate || '')
+                      : builderPreFill && builderPreFill.endDate ? builderPreFill.endDate
+                      : '';
+  const headingLabel  = isEditing ? 'Edit Route'
+                      : builderPreFill && builderPreFill.name ? 'Duplicate Route'
+                      : builderPreFill && builderPreFill.date ? 'New Route from Planned Visits'
+                      : 'New Route';
 
   container.innerHTML = `
     <div class="view-header">
@@ -654,7 +668,8 @@ function renderRouteBuilder() {
 
     <div class="route-builder-card">
       <h2 class="builder-heading">${headingLabel}</h2>
-      ${builderPreFill ? '<p style="font-size:0.82rem; color:var(--text-muted); margin-top:-12px;">Stops copied - pick a new date and save.</p>' : ''}
+      ${builderPreFill && builderPreFill.name ? '<p style="font-size:0.82rem; color:var(--text-muted); margin-top:-12px;">Stops copied - pick a new date and save.</p>' : ''}
+      ${builderPreFill && builderPreFill.date && !builderPreFill.name ? '<p style="font-size:0.82rem; color:var(--text-muted); margin-top:-12px;">Stops loaded from your planned visits. Review and save.</p>' : ''}
 
       <!-- Route name -->
       <div class="form-group">
@@ -666,11 +681,11 @@ function renderRouteBuilder() {
       <div class="form-row-split">
         <div class="form-group">
           <label>Start Date <span class="required">*</span></label>
-          <input type="date" id="rb-date" value="${route ? route.date : ''}" />
+          <input type="date" id="rb-date" value="${dateValue}" />
         </div>
         <div class="form-group">
           <label>End Date <span class="form-optional">(optional)</span></label>
-          <input type="date" id="rb-end-date" value="${route ? (route.endDate || '') : ''}" />
+          <input type="date" id="rb-end-date" value="${endDateValue}" />
         </div>
       </div>
 
@@ -1447,12 +1462,12 @@ function openBuildRouteFromPlanned() {
     });
 
     closeModal();
-    // Switch to the route builder view with the stops pre-loaded
+    // Set builder state BEFORE navigating so initRoutes() preserves it instead of resetting
     routesView     = 'builder';
     editingRouteId = null;
+    // Pass the selected date range into the builder so the date fields auto-populate
+    builderPreFill = { date: from, endDate: to };
     navigateTo('routes');
-    // Small delay so the routes page finishes rendering before we call renderRouteBuilder
-    setTimeout(function() { renderRouteBuilder(); }, 50);
   });
 
   // Wire up a live preview that updates as the user changes dates
