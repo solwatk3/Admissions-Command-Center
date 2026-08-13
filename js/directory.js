@@ -214,6 +214,40 @@ function readSchoolContacts() {
 }
 
 // =============================================
+// REGISTRATION LINK HELPERS
+// Adds/reads dynamic link rows in the add/edit school modal.
+// Each row has a label and a URL input.
+// =============================================
+
+// Injects a new link row into #links-list in the modal.
+// prefill is optional - { label, url } to pre-populate an existing link.
+function addLinkRow(prefill) {
+  var list = document.getElementById('links-list');
+  if (!list) return;
+  var row = document.createElement('div');
+  row.className = 'link-entry';
+  row.style.cssText = 'display:flex; gap:8px; align-items:center; margin-bottom:8px;';
+  row.innerHTML = `
+    <input type="text" class="l-label" placeholder="Label (e.g. RepVisit)" value="${prefill ? escapeHtml(prefill.label || '') : ''}" style="flex:0 0 130px;" />
+    <input type="url"  class="l-url"   placeholder="https://..." value="${prefill ? escapeHtml(prefill.url || '') : ''}" style="flex:1;" />
+    <button type="button" class="btn btn-ghost btn-sm" onclick="this.closest('.link-entry').remove()" style="flex-shrink:0;">&#10005;</button>
+  `;
+  list.appendChild(row);
+}
+
+// Reads all link rows from the modal and returns a clean array.
+// Rows with no URL are silently skipped.
+function readSchoolLinks() {
+  var entries = document.querySelectorAll('#links-list .link-entry');
+  return Array.from(entries).map(function(row) {
+    return {
+      label: row.querySelector('.l-label').value.trim(),
+      url:   row.querySelector('.l-url').value.trim(),
+    };
+  }).filter(function(l) { return l.url.length > 0; });
+}
+
+// =============================================
 // ADDRESS HELPERS
 // Builds and parses the standardized address format
 // used for geocoding: "Street, City, TN ZIP"
@@ -622,14 +656,34 @@ function renderSchoolDetail(schoolId) {
             <span class="detail-value">${escapeHtml(school.notes)}</span>
           </div>
           ` : ''}
+          ${(function() {
+            // Registration links - only render if at least one URL is saved
+            var links = school.registrationLinks || [];
+            if (links.length === 0) return '';
+            return `
+              <div class="detail-field">
+                <span class="detail-label">Registration</span>
+                <div class="detail-links-list">
+                  ${links.map(function(l) {
+                    var label = escapeHtml(l.label || 'Visit Portal');
+                    return `<a href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer" class="detail-link-btn">&#128279; ${label}</a>`;
+                  }).join('')}
+                </div>
+              </div>`;
+          })()}
         </div>
       </div>
 
-      <!-- Map panel - only shown when the school has an address -->
-      ${school.address ? `
+      <!-- Map panel - shown when the school has an address or exact coordinates -->
+      ${(school.address || (school.lat != null && school.lng != null)) ? `
         <div class="school-detail-map-wrap">
           <div id="school-detail-map"></div>
-          <p class="school-detail-map-note">&#128205; ${escapeHtml(school.address)} &nbsp;&middot;&nbsp; <span style="opacity:0.6;">Drag pin to correct position</span></p>
+          <p class="school-detail-map-note">
+            ${school.lat != null && school.lng != null
+              ? `&#127919; ${school.lat}, ${school.lng} &nbsp;&middot;&nbsp; <span style="opacity:0.6;">Exact coordinates</span>`
+              : `&#128205; ${escapeHtml(school.address)} &nbsp;&middot;&nbsp; <span style="opacity:0.6;">Drag pin to correct position</span>`
+            }
+          </p>
         </div>
       ` : ''}
 
@@ -669,11 +723,11 @@ function renderSchoolDetail(schoolId) {
     </div>
   `;
 
-  // After the HTML is in the DOM, initialize the mini-map if there's an address.
-  // Pass the full school object so the map can use county name as a last-resort fallback.
-  if (school.address) {
+  // After the HTML is in the DOM, initialize the mini-map if there's an address or exact coords.
+  // Pass the full school object so the map can use lat/lng directly or fall back to geocoding.
+  if (school.address || (school.lat != null && school.lng != null)) {
     setTimeout(function() {
-      initSchoolDetailMap(school.address, school);
+      initSchoolDetailMap(school.address || '', school);
     }, 0);
   }
 }
@@ -1012,9 +1066,24 @@ function openAddSchool(countyId) {
         <option value="Tertiary">Tertiary</option>
       </select>
     </div>
+    <!-- Exact coordinates - paste from Google Maps for pin-accurate placement -->
+    <div class="form-row-split">
+      <div class="form-group">
+        <label>Latitude <span class="form-optional">(optional)</span></label>
+        <input type="text" id="f-lat" placeholder="e.g. 36.1627" />
+      </div>
+      <div class="form-group">
+        <label>Longitude <span class="form-optional">(optional)</span></label>
+        <input type="text" id="f-lng" placeholder="e.g. -86.7816" />
+      </div>
+    </div>
     <div class="contacts-section-label">Contacts</div>
     <div id="contacts-list"></div>
     <button type="button" class="btn btn-ghost btn-sm" onclick="addSchoolContact()" style="margin-bottom:14px;">+ Add Contact</button>
+    <!-- Registration links - portals used to schedule visits at this school -->
+    <div class="contacts-section-label">Registration Links</div>
+    <div id="links-list"></div>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="addLinkRow()" style="margin-bottom:14px;">+ Add Link</button>
     <div class="form-group">
       <label>Notes</label>
       <textarea id="f-notes" rows="3" placeholder="e.g. Park in back lot, contact prefers email..."></textarea>
@@ -1036,18 +1105,25 @@ function openAddSchool(countyId) {
     });
     if (duplicate) { alert('"' + name + '" already exists in this county.'); return; }
 
+    // Parse lat/lng - store as numbers if valid, otherwise leave undefined
+    var latRaw = parseFloat(document.getElementById('f-lat').value.trim());
+    var lngRaw = parseFloat(document.getElementById('f-lng').value.trim());
+
     schools.push({
-      id:       makeId(),
-      countyId: selectedCountyId,
-      name:     name,
-      address:  buildAddress(
-                  document.getElementById('f-street').value.trim(),
-                  document.getElementById('f-city').value.trim(),
-                  document.getElementById('f-zip').value.trim()
-                ),
-      priority: document.getElementById('f-priority').value,
-      contacts: readSchoolContacts(),
-      notes:    document.getElementById('f-notes').value.trim(),
+      id:                makeId(),
+      countyId:          selectedCountyId,
+      name:              name,
+      address:           buildAddress(
+                           document.getElementById('f-street').value.trim(),
+                           document.getElementById('f-city').value.trim(),
+                           document.getElementById('f-zip').value.trim()
+                         ),
+      priority:          document.getElementById('f-priority').value,
+      contacts:          readSchoolContacts(),
+      registrationLinks: readSchoolLinks(),
+      lat:               isNaN(latRaw) ? undefined : latRaw,
+      lng:               isNaN(lngRaw) ? undefined : lngRaw,
+      notes:             document.getElementById('f-notes').value.trim(),
     });
 
     saveSchools(schools);
@@ -1115,9 +1191,24 @@ function openEditSchool(schoolId) {
         <option value="Tertiary"  ${school.priority === 'Tertiary'  ? 'selected' : ''}>Tertiary</option>
       </select>
     </div>
+    <!-- Exact coordinates - paste from Google Maps for pin-accurate placement -->
+    <div class="form-row-split">
+      <div class="form-group">
+        <label>Latitude <span class="form-optional">(optional)</span></label>
+        <input type="text" id="f-lat" value="${school.lat != null ? school.lat : ''}" placeholder="e.g. 36.1627" />
+      </div>
+      <div class="form-group">
+        <label>Longitude <span class="form-optional">(optional)</span></label>
+        <input type="text" id="f-lng" value="${school.lng != null ? school.lng : ''}" placeholder="e.g. -86.7816" />
+      </div>
+    </div>
     <div class="contacts-section-label">Contacts</div>
     <div id="contacts-list"></div>
     <button type="button" class="btn btn-ghost btn-sm" onclick="addSchoolContact()" style="margin-bottom:14px;">+ Add Contact</button>
+    <!-- Registration links - portals used to schedule visits at this school -->
+    <div class="contacts-section-label">Registration Links</div>
+    <div id="links-list"></div>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="addLinkRow()" style="margin-bottom:14px;">+ Add Link</button>
     <div class="form-group">
       <label>Notes</label>
       <textarea id="f-notes" rows="3">${escapeHtml(school.notes || '')}</textarea>
@@ -1136,23 +1227,30 @@ function openEditSchool(schoolId) {
     });
     if (duplicate) { alert('"' + name + '" already exists in that county.'); return; }
 
+    // Parse lat/lng - store as numbers if valid, clear if left blank
+    var latRaw = parseFloat(document.getElementById('f-lat').value.trim());
+    var lngRaw = parseFloat(document.getElementById('f-lng').value.trim());
+
     const idx = schools.findIndex(s => s.id === schoolId);
     schools[idx] = {
       ...schools[idx],
-      name:     name,
-      countyId: countyId,
-      address:  buildAddress(
-                  document.getElementById('f-street').value.trim(),
-                  document.getElementById('f-city').value.trim(),
-                  document.getElementById('f-zip').value.trim()
-                ),
-      priority: document.getElementById('f-priority').value,
-      contacts: readSchoolContacts(),
+      name:              name,
+      countyId:          countyId,
+      address:           buildAddress(
+                           document.getElementById('f-street').value.trim(),
+                           document.getElementById('f-city').value.trim(),
+                           document.getElementById('f-zip').value.trim()
+                         ),
+      priority:          document.getElementById('f-priority').value,
+      contacts:          readSchoolContacts(),
+      registrationLinks: readSchoolLinks(),
+      lat:               isNaN(latRaw) ? undefined : latRaw,
+      lng:               isNaN(lngRaw) ? undefined : lngRaw,
       // Clear old single-contact fields so migrated data doesn't linger
-      contact:      undefined,
-      contactEmail: undefined,
-      contactPhone: undefined,
-      notes:    document.getElementById('f-notes').value.trim(),
+      contact:           undefined,
+      contactEmail:      undefined,
+      contactPhone:      undefined,
+      notes:             document.getElementById('f-notes').value.trim(),
     };
 
     saveSchools(schools);
@@ -1168,6 +1266,10 @@ function openEditSchool(schoolId) {
   } else {
     addSchoolContact();
   }
+
+  // Pre-populate existing registration links (no default blank row - links are optional)
+  var existingLinks = school.registrationLinks || [];
+  existingLinks.forEach(function(l) { addLinkRow(l); });
 }
 
 // =============================================

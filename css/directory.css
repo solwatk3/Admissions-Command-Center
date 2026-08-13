@@ -1784,3 +1784,37 @@
 .print-map-toggle-wrap input:checked + .print-map-toggle-slider::before {
   transform: translateX(18px);
 }
+
+/* =============================================
+   REGISTRATION LINKS (school detail page)
+   Displayed as tappable pill buttons that open
+   the registration portal in a new tab.
+============================================== */
+.detail-links-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.detail-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: rgba(155, 48, 255, 0.12);
+  border: 1px solid rgba(155, 48, 255, 0.4);
+  color: #c084fc;
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.detail-link-btn:hover {
+  background: rgba(155, 48, 255, 0.25);
+  border-color: rgba(155, 48, 255, 0.7);
+  color: #e0b0ff;
+}

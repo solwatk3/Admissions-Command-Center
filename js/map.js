@@ -128,6 +128,18 @@ async function geocodeAllSchools(schools, onProgress) {
   let fetched = 0;
 
   for (const school of schools) {
+    // If the school has exact coordinates pasted in, use them directly -
+    // no geocoding needed and no cache entry required.
+    if (school.lat != null && school.lng != null) {
+      results.push({
+        school:   school,
+        lat:      school.lat,
+        lng:      school.lng,
+        fallback: false,
+      });
+      continue;
+    }
+
     if (!school.address || !school.address.trim()) continue;
 
     const key = school.address.trim().toLowerCase();
@@ -420,11 +432,21 @@ async function initSchoolDetailMap(address, school) {
     detailMapInstance = null;
   }
 
-  // Try the cache first so we never re-geocode a known address
-  const key   = address.trim().toLowerCase();
+  // If the school has exact coordinates, use them directly - skip cache and geocoding entirely.
+  // This gives pin-accurate placement when the user has pasted in coords from Google Maps.
+  let coords     = null;
+  let isFallback = false;
+  if (school && school.lat != null && school.lng != null) {
+    coords = { lat: school.lat, lng: school.lng };
+  }
+
+  // Try the cache next (includes manual drag corrections) if no exact coords
+  const key   = address ? address.trim().toLowerCase() : '';
   const cache = getGeoCache();
-  let coords     = cache[key] || null;
-  let isFallback = coords ? !!coords.fallback : false;
+  if (!coords && key) {
+    coords     = cache[key] || null;
+    isFallback = coords ? !!coords.fallback : false;
+  }
 
   if (!coords) {
     // Build the same fallback chain used in geocodeAllSchools:
