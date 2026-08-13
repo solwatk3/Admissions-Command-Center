@@ -1402,19 +1402,43 @@ function printSelectedRoutes(routeIds) {
 
 // =============================================
 // BUILD ROUTE FROM PLANNED VISITS
-// Opens a modal to pick a date or week, finds
-// matching planned visits, and pre-fills the
-// route builder with those schools as stops.
+// Opens a modal to pick a date range, groups
+// planned visits by day, and creates one route
+// per day automatically. Days with no visits
+// are skipped. Routes are saved directly -
+// no builder step needed.
 // Triggered from the Route Planner, Visit Log,
 // and Events pages.
 // =============================================
+
+// Formats a YYYY-MM-DD string into a readable label like "Mon, Aug 13, 2026"
+// Uses the timezone offset fix so UTC midnight dates don't shift to the prior day.
+function formatPlannedDate(dateStr) {
+  var d      = new Date(dateStr);
+  var offset = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+  return offset.toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// Groups an array of planned visits by their date field.
+// Returns an array of { date, label, visits } objects sorted chronologically.
+function groupPlannedByDay(planned) {
+  var days = {};
+  planned.forEach(function(p) {
+    if (!days[p.date]) days[p.date] = [];
+    days[p.date].push(p);
+  });
+  return Object.keys(days).sort().map(function(dateStr) {
+    return { date: dateStr, label: formatPlannedDate(dateStr), visits: days[dateStr] };
+  });
+}
+
 function openBuildRouteFromPlanned() {
   var today = new Date().toISOString().split('T')[0];
 
   var body = `
     <p style="color:var(--text-muted);margin-bottom:1rem;">
-      Pick a date range and ACC will find all your scheduled visits in that window
-      and create a route from them.
+      Pick a date range and ACC will create one route per day based on your scheduled visits.
+      Days with no visits are skipped.
     </p>
     <div class="form-row-split">
       <div class="form-group">
@@ -1429,7 +1453,7 @@ function openBuildRouteFromPlanned() {
     <div id="rbp-preview" style="margin-top:0.75rem;"></div>
   `;
 
-  openModal('Build Route from Planned Visits', body, function() {
+  openModal('Build Routes from Planned Visits', body, function() {
     var from = document.getElementById('f-rbp-from').value;
     var to   = document.getElementById('f-rbp-to').value;
     if (!from || !to) { alert('Please pick a date range.'); return; }
@@ -1444,33 +1468,59 @@ function openBuildRouteFromPlanned() {
       return;
     }
 
-    var schools = getSchools();
+    var schools  = getSchools();
+    var days     = groupPlannedByDay(planned);
+    var routes   = getRoutes();
 
-    // Build stops from each planned visit - use the school address as the stop address
-    builderStops = planned.map(function(p) {
-      var school  = schools.find(function(s) { return s.id === p.schoolId; });
-      var address = school && school.address ? school.address : '';
+    // Create one route per day and push it directly into the routes array
+    var newRoutes = days.map(function(day) {
+      // Build stops for this day from each planned visit
+      var stops = day.visits.map(function(p) {
+        var school  = schools.find(function(s) { return s.id === p.schoolId; });
+        var address = school && school.address ? school.address : '';
+        // Sort by start time - stops with no time fall to the end
+        return {
+          id:        makeId(),
+          type:      'school',
+          schoolId:  p.schoolId,
+          name:      p.schoolName || (school ? school.name : 'Unknown School'),
+          address:   address,
+          startTime: p.time    || '',
+          endTime:   p.endTime || '',
+        };
+      }).sort(function(a, b) {
+        if (!a.startTime && !b.startTime) return 0;
+        if (!a.startTime) return 1;
+        if (!b.startTime) return -1;
+        return a.startTime.localeCompare(b.startTime);
+      });
+
       return {
-        id:        makeId(),
-        type:      'school',
-        schoolId:  p.schoolId,
-        name:      p.schoolName || (school ? school.name : 'Unknown School'),
-        address:   address,
-        startTime: p.time    || '',
-        endTime:   p.endTime || '',
+        id:                makeId(),
+        name:              'Visits - ' + day.label,
+        date:              day.date,
+        endDate:           '',
+        origin:            DEFAULT_ORIGIN,
+        stops:             stops,
+        reminderDismissed: false,
+        createdAt:         Date.now(),
       };
     });
 
+    // Save all new routes at once
+    newRoutes.forEach(function(r) { routes.push(r); });
+    saveRoutes(routes);
+
+    // Sync each new route to Google Calendar if connected
+    newRoutes.forEach(function(r) { syncRouteToCalendar(r); });
+
     closeModal();
-    // Set builder state BEFORE navigating so initRoutes() preserves it instead of resetting
-    routesView     = 'builder';
-    editingRouteId = null;
-    // Pass the selected date range into the builder so the date fields auto-populate
-    builderPreFill = { date: from, endDate: to };
+    // Go straight to the route list so Sol can see all the new routes
+    routesView = 'list';
     navigateTo('routes');
   });
 
-  // Wire up a live preview that updates as the user changes dates
+  // Wire up a live preview grouped by day - updates as the user changes dates
   setTimeout(function() {
     function updatePreview() {
       var from    = (document.getElementById('f-rbp-from') || {}).value;
@@ -1479,22 +1529,24 @@ function openBuildRouteFromPlanned() {
       if (!preview || !from || !to || from > to) return;
 
       var planned = (typeof getPlannedVisits === 'function' ? getPlannedVisits() : [])
-        .filter(function(p) { return p.date >= from && p.date <= to; })
-        .sort(function(a, b) { return a.date.localeCompare(b.date); });
+        .filter(function(p) { return p.date >= from && p.date <= to; });
 
       if (planned.length === 0) {
         preview.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;">No scheduled visits in this range.</p>';
         return;
       }
 
-      preview.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:0.4rem;">'
-        + planned.length + ' visit' + (planned.length !== 1 ? 's' : '') + ' found:</p>'
-        + planned.map(function(p) {
-            var d      = new Date(p.date);
-            var offset = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
-            var ds     = offset.toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric' });
-            return '<div style="font-size:0.85rem;padding:0.2rem 0;color:var(--text);">&#128205; '
-              + escapeHtml(p.schoolName || 'Unknown') + ' &middot; ' + ds + '</div>';
+      var days = groupPlannedByDay(planned);
+
+      // Show how many routes will be created and what stops each day has
+      preview.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:0.5rem;">'
+        + days.length + ' route' + (days.length !== 1 ? 's' : '') + ' will be created:</p>'
+        + days.map(function(day) {
+            var names = day.visits.map(function(p) { return escapeHtml(p.schoolName || 'Unknown'); }).join(', ');
+            return '<div style="font-size:0.85rem;padding:0.25rem 0;color:var(--text);">'
+              + '&#128197; <strong>' + day.label + '</strong> &mdash; '
+              + day.visits.length + ' stop' + (day.visits.length !== 1 ? 's' : '')
+              + ': ' + names + '</div>';
           }).join('');
     }
 
