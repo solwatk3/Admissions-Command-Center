@@ -386,10 +386,19 @@
       "name": "Chattanooga Girls Leadership Academy",
       "address": "1802 Bailey Ave Chattanooga, TN 37404, TN",
       "priority": "Secondary",
-      "contact": "",
-      "contactEmail": "",
-      "contactPhone": "",
-      "notes": ""
+      "notes": "",
+      "contacts": [
+        {
+          "id": "msrpbraxmur6",
+          "title": "Director of College Advisement Chattanooga Girls Leadership Academy",
+          "name": "Zapouria Wadley",
+          "emails": [
+            "zapouriawadley@cglaonline.com"
+          ],
+          "phone": "",
+          "ext": ""
+        }
+      ]
     },
     {
       "id": "mrpvpu1qj0nn",
@@ -406,12 +415,21 @@
       "id": "mrpvq2ec2iqq",
       "countyId": "mrpvndctmimt",
       "name": "Chattanooga Preparatory School",
-      "address": "1815 Union Ave Chattanooga, TN 37404, TN",
+      "address": "1849 Union Avenue, Chattanooga, TN 37404",
       "priority": "Secondary",
-      "contact": "",
-      "contactEmail": "",
-      "contactPhone": "",
-      "notes": ""
+      "notes": "",
+      "contacts": [
+        {
+          "id": "msrp5hbo2dgx",
+          "title": "Director of College & Career Pathways Chattanooga Preparatory School",
+          "name": "Clarence Shields",
+          "emails": [
+            "clarenceshields@prepschools.org"
+          ],
+          "phone": "(423)-635-1423",
+          "ext": ""
+        }
+      ]
     },
     {
       "id": "mrpvqg311lgm",
@@ -1190,7 +1208,38 @@
       "name": "Morristown Hamblen East HS",
       "address": "1 Hurricane Ln, Morristown, TN",
       "priority": "Tertiary",
-      "contacts": [],
+      "contacts": [
+        {
+          "id": "msrotocwh3r9",
+          "title": "Admissions Counselor",
+          "name": "Brian Bowlin",
+          "emails": [
+            "bowlinc10@hcboe.net"
+          ],
+          "phone": "",
+          "ext": ""
+        },
+        {
+          "id": "msrovrlvzou5",
+          "title": "Ag Teacher",
+          "name": "Mrs. Jennifer Overbay",
+          "emails": [
+            "overbayj@hcboe.net"
+          ],
+          "phone": "",
+          "ext": ""
+        },
+        {
+          "id": "msrowj57x0k8",
+          "title": "Ag Teacher",
+          "name": "Mr. David Johnson",
+          "emails": [
+            "johnsond6@hcboe.net"
+          ],
+          "phone": "",
+          "ext": ""
+        }
+      ],
       "notes": ""
     },
     {
@@ -1464,9 +1513,20 @@
       "id": "mruw9vnvwi38",
       "countyId": "mrtf5zbtvtzv",
       "name": "Fulton County HS",
-      "address": "2509 N Broadway St, Knoxville, TN 37917, TN",
+      "address": "2509 N Broadway St, Knoxville, TN",
       "priority": "Tertiary",
-      "contacts": [],
+      "contacts": [
+        {
+          "id": "msroxzjv7fod",
+          "title": "College and Career Counselor",
+          "name": "Anne Troutman",
+          "emails": [
+            "anne.troutman@knoxschools.org"
+          ],
+          "phone": "(865)-594-1240",
+          "ext": ""
+        }
+      ],
       "notes": ""
     },
     {
@@ -1653,9 +1713,20 @@
       "id": "mruy7s6ufoks",
       "countyId": "mruy0jweqcjj",
       "name": "Tellico Plains High School",
-      "address": "9180 TN-68, Tellico Plains, TN 37385, TN",
+      "address": "9180 TN-68, Tellico Plains, TN",
       "priority": "Tertiary",
-      "contacts": [],
+      "contacts": [
+        {
+          "id": "msrp0voo5ya1",
+          "title": "GEAR UP Site Coordinator",
+          "name": "Kim Harris",
+          "emails": [
+            "grabowskia@monroek12.org"
+          ],
+          "phone": "",
+          "ext": ""
+        }
+      ],
       "notes": ""
     },
     {
@@ -2205,6 +2276,39 @@
       "date": "2026-08-26",
       "time": "13:00",
       "endTime": "15:00",
+      "notes": "",
+      "tentative": true
+    },
+    {
+      "id": "msrp3qz4cf6d",
+      "schoolId": "mruy7s6ufoks",
+      "schoolName": "Tellico Plains High School",
+      "title": "College App Day",
+      "date": "2026-09-09",
+      "time": "08:00",
+      "endTime": "14:00",
+      "notes": "We will be hosting the event in our Alumni Center, which is located right in front of the high school. We will have seniors coming throughout the day to work on their college applications, and we would love to have college admissions representatives available to answer questions and assist students.",
+      "tentative": true
+    },
+    {
+      "id": "msrpattrf16f",
+      "schoolId": "mrpvq2ec2iqq",
+      "schoolName": "Chattanooga Preparatory School",
+      "title": "Fall College Fair",
+      "date": "2026-10-21",
+      "time": "09:00",
+      "endTime": "12:00",
+      "notes": "",
+      "tentative": true
+    },
+    {
+      "id": "msrpib760rap",
+      "schoolId": "mrtf7wh6w0do",
+      "schoolName": "Hardin Valley Academy",
+      "title": "HVA/BHS/FHS College Fair 2026",
+      "date": "2026-09-26",
+      "time": "16:30",
+      "endTime": "19:00",
       "notes": "",
       "tentative": true
     }
