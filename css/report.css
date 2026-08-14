@@ -146,6 +146,29 @@
   color: #f97316;
 }
 
+/* ---- Status badges: Confirmed (purple) and Tentative (orange) ---- */
+
+.report-status-badge {
+  display: inline-block;
+  font-size: 0.73rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.report-status-confirmed {
+  background: rgba(155, 48, 255, 0.15);
+  color: #c084ff;
+  border: 1px solid rgba(155, 48, 255, 0.5);
+}
+
+.report-status-tentative {
+  background: rgba(249, 115, 22, 0.12);
+  color: #f97316;
+  border: 1px solid rgba(249, 115, 22, 0.6);
+}
+
 /* ---- Report table: scrollable wrapper and grid rows ---- */
 
 .report-table-wrap {
@@ -157,14 +180,14 @@
 }
 
 .report-table {
-  /* Columns: Date | Name | Region | Drive | Miles | School Visits | Region Visits | Notes */
-  min-width: 860px;
+  /* Columns: Date | Status | School/Event | Region | School Visits | Region Visits */
+  min-width: 660px;
   width: 100%;
 }
 
 .report-row {
   display: grid;
-  grid-template-columns: 140px 1fr 110px 100px 75px 90px 100px 1fr;
+  grid-template-columns: 140px 110px 1fr 110px 90px 90px;
   border-bottom: 1px solid #1a1a1a;
 }
 

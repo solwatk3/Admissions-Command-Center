@@ -15,6 +15,29 @@ let regionOpenState = {};
 let countyOpenState = {};
 
 // =============================================
+// COORDINATE AUTO-PARSE
+// When a user pastes a combined "lat, lng"
+// string into the Latitude field (e.g. from
+// Google Maps: "36.3369, -88.8569"), this
+// function detects the pattern and automatically
+// splits it into the Latitude and Longitude
+// fields so the user doesn't have to do it manually.
+// Called via oninput on the f-lat input.
+// =============================================
+function coordAutoParse() {
+  var latEl = document.getElementById('f-lat');
+  var lngEl = document.getElementById('f-lng');
+  if (!latEl || !lngEl) return;
+  var val = latEl.value.trim();
+  // Match "number, number" - handles optional spaces and negative signs
+  var match = val.match(/^(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)$/);
+  if (match) {
+    latEl.value = match[1];
+    lngEl.value = match[2];
+  }
+}
+
+// =============================================
 // DATA HELPERS
 // =============================================
 function getCounties() {
@@ -1070,7 +1093,7 @@ function openAddSchool(countyId) {
     <div class="form-row-split">
       <div class="form-group">
         <label>Latitude <span class="form-optional">(optional)</span></label>
-        <input type="text" id="f-lat" placeholder="e.g. 36.1627" />
+        <input type="text" id="f-lat" placeholder="e.g. 36.1627" oninput="coordAutoParse()" />
       </div>
       <div class="form-group">
         <label>Longitude <span class="form-optional">(optional)</span></label>
@@ -1195,7 +1218,7 @@ function openEditSchool(schoolId) {
     <div class="form-row-split">
       <div class="form-group">
         <label>Latitude <span class="form-optional">(optional)</span></label>
-        <input type="text" id="f-lat" value="${school.lat != null ? school.lat : ''}" placeholder="e.g. 36.1627" />
+        <input type="text" id="f-lat" value="${school.lat != null ? school.lat : ''}" placeholder="e.g. 36.1627" oninput="coordAutoParse()" />
       </div>
       <div class="form-group">
         <label>Longitude <span class="form-optional">(optional)</span></label>

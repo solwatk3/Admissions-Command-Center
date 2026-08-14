@@ -3,16 +3,13 @@
 // Generates a travel planning snapshot for a
 // selected date range. Shows planned school
 // visits (confirmed + tentative) and events
-// with drive time, distance, and visit counts.
+// in one unified chronological table with a
+// Status column.
 //
 // Depends on: app.js (loadData, saveData,
 //   DEFAULT_ORIGIN, PAGE_TITLES) which always
 //   loads before this file.
 // =============================================
-
-// Cached coordinates for DEFAULT_ORIGIN so we
-// only geocode the office address once per session.
-var reportOriginCoords = null;
 
 // Tracks which preset button is currently active
 var reportActivePreset = 'month';
@@ -143,10 +140,10 @@ function toYMD(d) {
 
 // =============================================
 // RUN REPORT
-// Main async function - pulls all data, fetches
-// drive times, and renders the report output.
+// Pulls all data, builds a unified items array
+// sorted by date, and renders the report output.
 // =============================================
-async function runReport() {
+function runReport() {
   var fromStr = document.getElementById('report-date-from') ? document.getElementById('report-date-from').value : '';
   var toStr   = document.getElementById('report-date-to')   ? document.getElementById('report-date-to').value   : '';
 
@@ -159,11 +156,6 @@ async function runReport() {
     return;
   }
 
-  // Show loading state while drive times are being fetched
-  var output = document.getElementById('report-output');
-  if (output) {
-    output.innerHTML = '<div class="report-loading">&#8987; Fetching drive times - this may take a moment...</div>';
-  }
   var printBtn = document.getElementById('report-print-btn');
   if (printBtn) printBtn.style.display = 'none';
 
@@ -187,29 +179,18 @@ async function runReport() {
   var filteredEvents    = events.filter(function(e)        { return e.date >= fromStr && e.date <= toStr; });
   var filteredTentative = tentativeEvents.filter(function(e) { return e.date >= fromStr && e.date <= toStr; });
 
-  // Geocode Sol's office once - needed for OSRM drive time requests
-  var originCoords = await geocodeOrigin();
-
   // ---- Build the unified items array ----
   var items = [];
 
   // Planned school visits (confirmed and tentative)
-  for (var i = 0; i < filteredPlanned.length; i++) {
-    var pv     = filteredPlanned[i];
+  filteredPlanned.forEach(function(pv) {
     var school = schoolMap[pv.schoolId] || null;
     var county = school ? (countyMap[school.countyId] || null) : null;
     var region = county ? county.region : null;
 
     // Count how many logged visits this school and region have this season
-    var schoolVisitCount  = countSchoolVisits(pv.schoolId, visits);
-    var regionVisitCount  = countRegionVisits(region, schools, counties, visits);
-
-    // Get drive time from origin to this school
-    var schoolCoords = school ? getSchoolCoords(school) : null;
-    var driveInfo    = null;
-    if (originCoords && schoolCoords) {
-      driveInfo = await fetchDriveInfo(originCoords, schoolCoords);
-    }
+    var schoolVisitCount = countSchoolVisits(pv.schoolId, visits);
+    var regionVisitCount = countRegionVisits(region, schools, counties, visits);
 
     items.push({
       type:             'visit',
@@ -222,10 +203,8 @@ async function runReport() {
       region:           region,
       schoolVisitCount: schoolVisitCount,
       regionVisitCount: regionVisitCount,
-      driveInfo:        driveInfo,
-      notes:            pv.notes || '',
     });
-  }
+  });
 
   // Confirmed events (boss-assigned)
   filteredEvents.forEach(function(ev) {
@@ -236,7 +215,6 @@ async function runReport() {
       date:      ev.date,
       time:      null,
       eventType: ev.type || '',
-      notes:     ev.notes || '',
     });
   });
 
@@ -251,7 +229,6 @@ async function runReport() {
       date:        ev.date,
       time:        null,
       eventType:   ev.type || '',
-      notes:       ev.notes || '',
       hostSchool:  hostSchool,
       attendCount: attendCount,
     });
@@ -268,96 +245,6 @@ async function runReport() {
   // Render the finished report
   renderReport(items, fromStr, toStr);
   if (printBtn) printBtn.style.display = '';
-}
-
-// =============================================
-// GEOCODE ORIGIN
-// Looks up DEFAULT_ORIGIN in the geo_cache
-// first, then falls back to Nominatim.
-// Result is stored in reportOriginCoords so
-// we only do this once per session.
-// =============================================
-async function geocodeOrigin() {
-  // Already fetched this session - reuse it
-  if (reportOriginCoords) return reportOriginCoords;
-
-  // Check the existing geo_cache (shared with map.js)
-  var cache = loadData('geo_cache', {});
-  var key   = DEFAULT_ORIGIN.trim().toLowerCase();
-  if (cache[key]) {
-    reportOriginCoords = { lat: cache[key].lat, lng: cache[key].lng };
-    return reportOriginCoords;
-  }
-
-  // Not cached - ask Nominatim
-  try {
-    var url = 'https://nominatim.openstreetmap.org/search?q='
-      + encodeURIComponent(DEFAULT_ORIGIN)
-      + '&format=json&limit=1&countrycodes=us';
-    var res  = await fetch(url, { headers: { 'Accept-Language': 'en-US' } });
-    var data = await res.json();
-    if (data && data.length) {
-      var coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-      // Cache it so future calls (and map.js) can reuse it
-      cache[key] = coords;
-      saveData('geo_cache', cache);
-      reportOriginCoords = coords;
-      return coords;
-    }
-  } catch (e) {
-    console.error('ACC Report: geocoding origin failed -', e);
-  }
-
-  // Geocode failed - drive times will show as N/A
-  return null;
-}
-
-// =============================================
-// GET SCHOOL COORDS
-// Checks the school record for exact lat/lng
-// first, then falls back to the geo_cache.
-// Returns {lat, lng} or null.
-// =============================================
-function getSchoolCoords(school) {
-  // Some schools have exact coordinates pinned by the user
-  if (school.lat != null && school.lng != null) {
-    return { lat: school.lat, lng: school.lng };
-  }
-  // Fall back to the cached geocode result
-  if (!school.address) return null;
-  var cache = loadData('geo_cache', {});
-  var key   = school.address.trim().toLowerCase();
-  var entry = cache[key];
-  if (entry && entry.lat != null) return { lat: entry.lat, lng: entry.lng };
-  return null;
-}
-
-// =============================================
-// FETCH DRIVE INFO
-// Calls the OSRM public routing API to get
-// road distance and drive time between two
-// coordinate pairs. Returns {seconds, meters}
-// or null if the request fails.
-// OSRM uses lng,lat order (not lat,lng).
-// =============================================
-async function fetchDriveInfo(originCoords, destCoords) {
-  var url = 'https://router.project-osrm.org/route/v1/driving/'
-    + originCoords.lng + ',' + originCoords.lat + ';'
-    + destCoords.lng   + ',' + destCoords.lat
-    + '?overview=false';
-  try {
-    var res  = await fetch(url);
-    if (!res.ok) return null;
-    var data = await res.json();
-    if (!data.routes || !data.routes.length) return null;
-    return {
-      seconds: Math.round(data.routes[0].duration),
-      meters:  Math.round(data.routes[0].distance),
-    };
-  } catch (e) {
-    // OSRM unreachable or rate-limited - drive time will show N/A
-    return null;
-  }
 }
 
 // =============================================
@@ -386,8 +273,9 @@ function countRegionVisits(region, schools, counties, visits) {
 
 // =============================================
 // RENDER REPORT
-// Splits items into confirmed/tentative sections
-// and builds the HTML output.
+// Builds one unified chronological table with
+// a Status column so confirmed and tentative
+// items can be compared side by side.
 // =============================================
 function renderReport(items, fromStr, toStr) {
   var output = document.getElementById('report-output');
@@ -411,43 +299,32 @@ function renderReport(items, fromStr, toStr) {
     '</div>',
   ].join('');
 
-  if (confirmed.length === 0 && tentative.length === 0) {
+  if (items.length === 0) {
     html += '<div class="report-empty">No visits or events scheduled in this date range.</div>';
     output.innerHTML = html;
     return;
   }
 
-  if (confirmed.length) {
-    html += '<div class="report-section-label confirmed-label">&#10003; Confirmed (' + confirmed.length + ')</div>';
-    html += '<div class="report-table-wrap"><div class="report-table">';
-    html += renderTableHeader();
-    confirmed.forEach(function(item) { html += renderRow(item); });
-    html += '</div></div>';
-  }
-
-  if (tentative.length) {
-    html += '<div class="report-section-label tentative-label">&#10067; Tentative (' + tentative.length + ')</div>';
-    html += '<div class="report-table-wrap"><div class="report-table">';
-    html += renderTableHeader();
-    tentative.forEach(function(item) { html += renderRow(item); });
-    html += '</div></div>';
-  }
+  // One unified table - all items sorted by date
+  html += '<div class="report-table-wrap"><div class="report-table">';
+  html += renderTableHeader();
+  items.forEach(function(item) { html += renderRow(item); });
+  html += '</div></div>';
 
   output.innerHTML = html;
 }
 
 // Renders the sticky column header row
+// Columns: Date | Status | School/Event | Region | School Visits | Region Visits
 function renderTableHeader() {
   return [
     '<div class="report-row report-header-row">',
       '<div class="report-col">Date</div>',
+      '<div class="report-col">Status</div>',
       '<div class="report-col">School / Event</div>',
       '<div class="report-col">Region</div>',
-      '<div class="report-col report-col-drive">Drive Time</div>',
-      '<div class="report-col report-col-dist">Distance</div>',
       '<div class="report-col report-col-visits">School Visits</div>',
       '<div class="report-col report-col-rvisits">Region Visits</div>',
-      '<div class="report-col report-col-notes">Notes / Purpose</div>',
     '</div>',
   ].join('');
 }
@@ -455,8 +332,13 @@ function renderTableHeader() {
 // Renders one data row for a visit or event item
 function renderRow(item) {
   // Date and time cell
-  var timeStr = item.time ? '<span class="report-time-str">' + reportFmtTime(item.time) + '</span>' : '';
+  var timeStr  = item.time ? '<span class="report-time-str">' + reportFmtTime(item.time) + '</span>' : '';
   var dateCell = '<span class="report-date-str">' + reportFmtDate(item.date) + '</span>' + timeStr;
+
+  // Status badge - color-coded Confirmed or Tentative
+  var statusLabel = item.tentative ? 'Tentative' : 'Confirmed';
+  var statusClass = item.tentative ? 'report-status-tentative' : 'report-status-confirmed';
+  var statusCell  = '<span class="report-status-badge ' + statusClass + '">' + statusLabel + '</span>';
 
   // Name cell - name + priority/type badge + host school for tentative events
   var nameHtml = '<span class="report-item-name">' + reportEsc(item.name) + '</span>';
@@ -475,38 +357,24 @@ function renderRow(item) {
   }
 
   // Region cell
-  var regionStr = item.region ? reportEsc(item.region) : (item.type === 'event' ? '<span class="report-na">Event</span>' : '<span class="report-na">-</span>');
-
-  // Drive time and distance cells
-  var driveStr, distStr;
-  if (item.driveInfo) {
-    driveStr = reportFmtDriveTime(item.driveInfo.seconds);
-    distStr  = reportFmtMiles(item.driveInfo.meters);
-  } else if (item.type === 'event') {
-    driveStr = '<span class="report-na">N/A</span>';
-    distStr  = '<span class="report-na">N/A</span>';
-  } else {
-    driveStr = '<span class="report-na">-</span>';
-    distStr  = '<span class="report-na">-</span>';
-  }
+  var regionStr = item.region
+    ? reportEsc(item.region)
+    : (item.type === 'event'
+        ? '<span class="report-na">Event</span>'
+        : '<span class="report-na">-</span>');
 
   // Visit counts - only shown for planned school visits
-  var schoolVisitsStr  = (item.type === 'visit') ? item.schoolVisitCount  : '<span class="report-na">-</span>';
-  var regionVisitsStr  = (item.type === 'visit') ? item.regionVisitCount  : '<span class="report-na">-</span>';
-
-  // Notes cell
-  var notesHtml = item.notes ? reportEsc(item.notes) : '<span class="report-na">-</span>';
+  var schoolVisitsStr = (item.type === 'visit') ? item.schoolVisitCount  : '<span class="report-na">-</span>';
+  var regionVisitsStr = (item.type === 'visit') ? item.regionVisitCount  : '<span class="report-na">-</span>';
 
   return [
     '<div class="report-row">',
-      '<div class="report-col">', dateCell, '</div>',
-      '<div class="report-col">', nameHtml, '</div>',
-      '<div class="report-col">', regionStr, '</div>',
-      '<div class="report-col report-col-drive">', driveStr, '</div>',
-      '<div class="report-col report-col-dist">',  distStr,  '</div>',
-      '<div class="report-col report-col-visits">', schoolVisitsStr, '</div>',
+      '<div class="report-col">',             dateCell,        '</div>',
+      '<div class="report-col">',             statusCell,      '</div>',
+      '<div class="report-col">',             nameHtml,        '</div>',
+      '<div class="report-col">',             regionStr,       '</div>',
+      '<div class="report-col report-col-visits">',  schoolVisitsStr, '</div>',
       '<div class="report-col report-col-rvisits">', regionVisitsStr, '</div>',
-      '<div class="report-col report-col-notes">', notesHtml, '</div>',
     '</div>',
   ].join('');
 }
@@ -560,19 +428,4 @@ function reportFmtTime(timeStr) {
   var ampm  = h >= 12 ? 'PM' : 'AM';
   h = h % 12 || 12;
   return h + ':' + m + ' ' + ampm;
-}
-
-// Formats OSRM duration in seconds as "1 hr 14 min" or "42 min"
-function reportFmtDriveTime(seconds) {
-  var mins = Math.round(seconds / 60);
-  if (mins < 60) return mins + ' min';
-  var hrs  = Math.floor(mins / 60);
-  var rem  = mins % 60;
-  return hrs + ' hr' + (rem ? ' ' + rem + ' min' : '');
-}
-
-// Formats OSRM distance in meters as "47.2 mi"
-function reportFmtMiles(meters) {
-  var miles = meters / 1609.344;
-  return miles.toFixed(1) + ' mi';
 }
