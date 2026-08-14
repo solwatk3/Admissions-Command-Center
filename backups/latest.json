@@ -209,6 +209,12 @@
       "name": "Washington",
       "region": "East TN",
       "notes": ""
+    },
+    {
+      "id": "mst20m2h9lvw",
+      "name": "Bledsoe",
+      "region": "East TN",
+      "notes": ""
     }
   ],
   "acc_schools": [
@@ -231,7 +237,10 @@
           "phone": "",
           "ext": ""
         }
-      ]
+      ],
+      "registrationLinks": [],
+      "lat": 35.79578406585762,
+      "lng": -89.14977130281488
     },
     {
       "id": "mrogee7753ho",
@@ -239,10 +248,20 @@
       "name": "South Gibson HS",
       "address": "100 Mount Zion Rd, Medina, TN 38355",
       "priority": "Primary",
-      "contact": "Melanie Morales",
-      "contactEmail": "Moralesm@gcssd.org",
-      "contactPhone": "",
-      "notes": ""
+      "notes": "",
+      "contacts": [
+        {
+          "id": "legacy",
+          "title": "",
+          "name": "Melanie Morales",
+          "emails": [
+            "Moralesm@gcssd.org"
+          ],
+          "phone": "",
+          "ext": ""
+        }
+      ],
+      "registrationLinks": []
     },
     {
       "id": "mroi3z0ag9vf",
@@ -449,7 +468,21 @@
       "address": "205 Island Ave Chattanooga, TN 37405, TN",
       "priority": "Tertiary",
       "notes": "",
-      "contacts": []
+      "contacts": [
+        {
+          "id": "mst1ljm8v6bn",
+          "title": "Director of Enrollment Strategy & Director of College Counseling",
+          "name": "Andrew Reich",
+          "emails": [
+            "areich@gps.edu"
+          ],
+          "phone": "(423)-634-5441",
+          "ext": ""
+        }
+      ],
+      "registrationLinks": [],
+      "lat": 35.0613410186616,
+      "lng": -85.29891897400466
     },
     {
       "id": "mrpvr3xgrai6",
@@ -684,7 +717,10 @@
           "ext": ""
         }
       ],
-      "notes": ""
+      "notes": "",
+      "registrationLinks": [],
+      "lat": 35.2343996296731,
+      "lng": -85.17972329490101
     },
     {
       "id": "mrtf276xanhf",
@@ -1134,10 +1170,13 @@
       "id": "mrtpink3v651",
       "countyId": "mrtpiadtlaz7",
       "name": "Grainger High School",
-      "address": "2201 US-11W, Rutledge, TN 37861, TN",
+      "address": "2201 US-11W, Rutledge, TN",
       "priority": "Tertiary",
       "contacts": [],
-      "notes": ""
+      "notes": "",
+      "registrationLinks": [],
+      "lat": 36.30767276829126,
+      "lng": -83.44313290543366
     },
     {
       "id": "mrtpreyrelxa",
@@ -1254,11 +1293,14 @@
     {
       "id": "mruuu1z9h66r",
       "countyId": "mrpvndctmimt",
-      "name": "Chattanooga Christian",
-      "address": "3354 Charger Dr, Chattanooga, TN",
+      "name": "Chattanooga Christian School",
+      "address": "3354 Charger Dr, Chattanooga, TN 37409",
       "priority": "Tertiary",
       "contacts": [],
-      "notes": ""
+      "notes": "",
+      "registrationLinks": [],
+      "lat": 35.01402205593976,
+      "lng": -85.32312661794747
     },
     {
       "id": "mruuvc368eao",
@@ -1359,7 +1401,10 @@
           "ext": "2278"
         }
       ],
-      "notes": ""
+      "notes": "",
+      "registrationLinks": [],
+      "lat": 35.0623298044777,
+      "lng": -85.13872878379101
     },
     {
       "id": "mruv956p4l8x",
@@ -1650,10 +1695,24 @@
       "id": "mruxr933we52",
       "countyId": "mruxq2se0rc9",
       "name": "Lenoir City High School",
-      "address": "1485 Old Hwy 95, Lenoir City, TN 37771, TN",
+      "address": "1485 Old Hwy 95, Lenoir City, TN",
       "priority": "Tertiary",
-      "contacts": [],
-      "notes": ""
+      "contacts": [
+        {
+          "id": "mssyxtcbf7x4",
+          "title": "College & Career Transition Counselor",
+          "name": "Kim Kelly",
+          "emails": [
+            "kwkelly@lenoircityschools.net"
+          ],
+          "phone": "(865)-988-7252",
+          "ext": ""
+        }
+      ],
+      "notes": "",
+      "registrationLinks": [],
+      "lat": 35.80702927254692,
+      "lng": -84.28538100281447
     },
     {
       "id": "mruxubcejins",
@@ -2045,6 +2104,18 @@
       "priority": "Tertiary",
       "contacts": [],
       "notes": ""
+    },
+    {
+      "id": "mst21begb5ir",
+      "countyId": "mst20m2h9lvw",
+      "name": "Bledsoe County High School",
+      "address": "877 Main St, Pikeville, TN 37367",
+      "priority": "Tertiary",
+      "contacts": [],
+      "registrationLinks": [],
+      "lat": 35.58624657213158,
+      "lng": -85.21601758747791,
+      "notes": ""
     }
   ],
   "acc_visits": [],
@@ -2200,7 +2271,8 @@
       "endDate": "",
       "time": "08:00",
       "endTime": "12:00",
-      "notes": "10+ High Schools\nScience Hill, University High, Greeneville, Dobyns Bennett, DB Excel, Unicoi,\nCloudland, Happy Valley, Hampton, Unaka, Morristown East, Cosby, Cocke County\n6:00pm-8:00pm. – Open to Public\nThis will be a great opportunity for your college or university to share admissions\nrequirements, scholarships, academic programs, campus life, and more with prospective\nstudents and families.\nMore information and registration links to come later this summer.\nLocation\nFreedom Hall Civic Center\n1320 Pactolas Road, Johnson City, TN 37604"
+      "notes": "10+ High Schools\nScience Hill, University High, Greeneville, Dobyns Bennett, DB Excel, Unicoi,\nCloudland, Happy Valley, Hampton, Unaka, Morristown East, Cosby, Cocke County\n6:00pm-8:00pm. – Open to Public\nThis will be a great opportunity for your college or university to share admissions\nrequirements, scholarships, academic programs, campus life, and more with prospective\nstudents and families.\nMore information and registration links to come later this summer.\nLocation\nFreedom Hall Civic Center\n1320 Pactolas Road, Johnson City, TN 37604",
+      "schoolIds": []
     },
     {
       "id": "mrtr5f3bbkft",
@@ -2241,6 +2313,50 @@
       "time": "16:30",
       "endTime": "19:30",
       "notes": "Event Details:\n\nDate: Thursday, August 6th\nTime: 4:30 PM – 7:30 PM (set up will begin at 4:00 pm)\nLocation: WCHS Gymnasium"
+    },
+    {
+      "id": "mst08ra9ylrs",
+      "name": "Memphis UT Breakfast",
+      "type": "UT Breakfast",
+      "date": "2026-08-17",
+      "endDate": "",
+      "time": "06:00",
+      "endTime": "15:00",
+      "notes": "",
+      "schoolIds": []
+    },
+    {
+      "id": "mst097l0n6sl",
+      "name": "Jackson UT Breakfast",
+      "type": "UT Breakfast",
+      "date": "2026-08-18",
+      "endDate": "",
+      "time": "",
+      "endTime": "",
+      "notes": "",
+      "schoolIds": []
+    },
+    {
+      "id": "mst1gqmicwny",
+      "name": "Lincoln County HS College Fair",
+      "type": "College Fair",
+      "date": "2026-08-25",
+      "endDate": "",
+      "time": "14:30",
+      "endTime": "18:00",
+      "notes": "",
+      "schoolIds": []
+    },
+    {
+      "id": "mst24d209qel",
+      "name": "Chattanooga Area Schools College and Career Fair",
+      "type": "College Fair",
+      "date": "2026-09-03",
+      "endDate": "2026-09-04",
+      "time": "09:00",
+      "endTime": "15:00",
+      "notes": "",
+      "schoolIds": []
     }
   ],
   "acc_event_types": [
@@ -2311,6 +2427,72 @@
       "endTime": "19:00",
       "notes": "",
       "tentative": true
+    },
+    {
+      "id": "mst0e5wfnmad",
+      "schoolId": "mrtezm1ueveu",
+      "schoolName": "Soddy Daisy High School",
+      "title": "Soddy Daisy High School Senior Survival Night",
+      "date": "2026-08-24",
+      "time": "18:00",
+      "endTime": "20:00",
+      "notes": "",
+      "tentative": false
+    },
+    {
+      "id": "mst1qmvnzyfb",
+      "schoolId": "mrpvqo0i7395",
+      "schoolName": "Girls Preparatory School",
+      "title": "GPS/McCallie/Baylor College Night",
+      "date": "2026-08-31",
+      "time": "17:30",
+      "endTime": "20:15",
+      "notes": "",
+      "tentative": false
+    },
+    {
+      "id": "mst1xfj4pieq",
+      "schoolId": "mruuu1z9h66r",
+      "schoolName": "Chattanooga Christian School",
+      "title": "Chattanooga Christian School College Fair",
+      "date": "2026-09-01",
+      "time": "15:15",
+      "endTime": "16:15",
+      "notes": "",
+      "tentative": false
+    },
+    {
+      "id": "mst1ymhup7au",
+      "schoolId": "mruv8ap4h56h",
+      "schoolName": "Silverdale Baptist Academy",
+      "title": "Silverdale Baptist Academy College Fair",
+      "date": "2026-09-02",
+      "time": "18:30",
+      "endTime": "20:00",
+      "notes": "",
+      "tentative": false
+    },
+    {
+      "id": "mst21zqiwr9u",
+      "schoolId": "mst21begb5ir",
+      "schoolName": "Bledsoe County High School",
+      "title": "Bledsoe County High School Fair",
+      "date": "2026-09-02",
+      "time": "12:00",
+      "endTime": "13:30",
+      "notes": "",
+      "tentative": false
+    },
+    {
+      "id": "mst233ugn5hd",
+      "schoolId": "mrpvr3xgrai6",
+      "schoolName": "Notre Dame High School",
+      "title": "Notre Dame High School Fair",
+      "date": "2026-09-02",
+      "time": "18:30",
+      "endTime": "20:00",
+      "notes": "",
+      "tentative": false
     }
   ]
 }
