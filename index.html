@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="css/map.css" />
   <link rel="stylesheet" href="css/calendar.css" />
   <link rel="stylesheet" href="css/events.css" />
+  <link rel="stylesheet" href="css/report.css" />
   <!-- Leaflet CSS - the mapping library used for the school map view -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
@@ -88,6 +89,11 @@
       <li>
         <a href="#" onclick="navigateTo('events')" class="nav-link" data-page="events">
           <span class="nav-icon">&#128197;</span> Events
+        </a>
+      </li>
+      <li>
+        <a href="#" onclick="navigateTo('report')" class="nav-link" data-page="report">
+          <span class="nav-icon">&#128202;</span> Boss Report
         </a>
       </li>
     </ul>
@@ -392,6 +398,22 @@
       <div id="events-content"></div>
     </section>
 
+    <!-- BOSS REPORT PAGE -->
+    <section id="page-report" class="page">
+      <div class="page-header">
+        <div class="page-header-row">
+          <div>
+            <h1>Boss Report</h1>
+            <p class="subtitle">Travel planning snapshot for your next review meeting</p>
+          </div>
+        </div>
+      </div>
+      <!-- Date range controls - built by initReport() in report.js -->
+      <div id="report-controls" class="report-controls"></div>
+      <!-- Report output - populated by runReport() in report.js -->
+      <div id="report-output"></div>
+    </section>
+
   </main>
 
   <!-- Bottom tab bar - visible on mobile only -->
@@ -414,6 +436,9 @@
     <button class="bottom-nav-btn" data-page="events" onclick="navigateTo('events')">
       <span class="bnav-icon">&#127937;</span>Events
     </button>
+    <button class="bottom-nav-btn" data-page="report" onclick="navigateTo('report')">
+      <span class="bnav-icon">&#128202;</span>Report
+    </button>
   </nav>
 
   <!-- EmailJS SDK - enables sending emails directly from the browser -->
@@ -431,5 +456,6 @@
   <script src="js/map.js"></script>
   <script src="js/calendar.js"></script>
   <script src="js/events.js"></script>
+  <script src="js/report.js"></script>
 </body>
 </html>

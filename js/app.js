@@ -18,6 +18,7 @@ const PAGE_TITLES = {
   visits:     'Visit Log',
   routes:     'Route Planner',
   events:     'Events',
+  report:     'Boss Report',
 };
 
 // =============================================
@@ -59,6 +60,7 @@ function navigateTo(pageId) {
   if (pageId === 'visits')    initVisits();
   if (pageId === 'routes')    initRoutes();
   if (pageId === 'events')    initEvents();
+  if (pageId === 'report')    initReport();
 }
 
 // =============================================

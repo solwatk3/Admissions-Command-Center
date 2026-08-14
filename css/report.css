@@ -1,0 +1,418 @@
+/* =============================================
+   REPORT VIEW
+   Boss travel planning report - shows confirmed
+   and tentative visits/events in a date range
+   with drive time, distance, and visit counts.
+   ============================================= */
+
+/* ---- Controls: preset buttons and date pickers ---- */
+
+.report-controls {
+  margin-bottom: 1.5rem;
+}
+
+.report-preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.report-preset-btn {
+  padding: 0.4rem 1rem;
+  border-radius: 30px;
+  border: 1px solid #4a2e6a;
+  background: #1a1a1a;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.report-preset-btn:hover {
+  border-color: #9b30ff;
+  color: #fff;
+}
+
+.report-preset-btn.active {
+  background: #9b30ff;
+  border-color: #9b30ff;
+  color: #fff;
+}
+
+.report-date-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.report-date-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.report-date-group label {
+  font-size: 0.73rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.report-date-group input[type="date"] {
+  background: #1a1a1a;
+  border: 1px solid #4a2e6a;
+  color: #fff;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+/* ---- Loading and empty states ---- */
+
+.report-loading {
+  color: #888;
+  text-align: center;
+  padding: 2.5rem 1rem;
+  font-size: 0.95rem;
+}
+
+.report-empty {
+  color: #666;
+  text-align: center;
+  padding: 3rem 1rem;
+  font-size: 0.95rem;
+}
+
+/* ---- Summary bar: date range label and count pills ---- */
+
+.report-summary-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #2a1a3a;
+  margin-bottom: 1rem;
+}
+
+.report-range-label {
+  font-size: 0.9rem;
+  color: #bbb;
+  margin-right: auto;
+  font-weight: 500;
+}
+
+.report-count-pill {
+  font-size: 0.78rem;
+  padding: 0.25rem 0.8rem;
+  border-radius: 30px;
+  font-weight: 600;
+}
+
+.report-count-pill.confirmed-pill {
+  background: rgba(155, 48, 255, 0.15);
+  color: #c084ff;
+  border: 1px solid #7c3aed;
+}
+
+.report-count-pill.tentative-pill {
+  background: rgba(249, 115, 22, 0.12);
+  color: #f97316;
+  border: 1px solid rgba(249, 115, 22, 0.6);
+}
+
+/* ---- Section labels (Confirmed / Tentative) ---- */
+
+.report-section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  padding: 0.35rem 0.85rem;
+  border-radius: 6px;
+  margin: 1.25rem 0 0.5rem;
+  display: inline-block;
+}
+
+.report-section-label.confirmed-label {
+  background: rgba(155, 48, 255, 0.15);
+  color: #c084ff;
+}
+
+.report-section-label.tentative-label {
+  background: rgba(249, 115, 22, 0.12);
+  color: #f97316;
+}
+
+/* ---- Report table: scrollable wrapper and grid rows ---- */
+
+.report-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid #2a1a3a;
+  margin-bottom: 1rem;
+}
+
+.report-table {
+  /* Columns: Date | Name | Region | Drive | Miles | School Visits | Region Visits | Notes */
+  min-width: 860px;
+  width: 100%;
+}
+
+.report-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 110px 100px 75px 90px 100px 1fr;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.report-row:last-child {
+  border-bottom: none;
+}
+
+/* Header row - column labels */
+.report-header-row {
+  background: #190025;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #666;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* Alternate row tinting for readability */
+.report-row:not(.report-header-row):nth-child(even) {
+  background: #0f0f0f;
+}
+
+.report-row:not(.report-header-row):nth-child(odd) {
+  background: #0d0d0d;
+}
+
+.report-col {
+  padding: 0.65rem 0.8rem;
+  font-size: 0.87rem;
+  color: #ccc;
+  border-right: 1px solid #1a1a1a;
+  line-height: 1.4;
+}
+
+.report-col:last-child {
+  border-right: none;
+}
+
+/* Date cell */
+.report-date-str {
+  display: block;
+  font-weight: 600;
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+.report-time-str {
+  display: block;
+  font-size: 0.77rem;
+  color: #777;
+  margin-top: 0.15rem;
+}
+
+/* Name cell - school or event name + badges */
+.report-item-name {
+  font-weight: 600;
+  color: #fff;
+}
+
+.report-type-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 20px;
+  background: rgba(34, 211, 238, 0.12);
+  color: #22d3ee;
+  border: 1px solid rgba(34, 211, 238, 0.5);
+  margin-left: 0.4rem;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.report-priority-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 20px;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.report-priority-primary {
+  background: rgba(155, 48, 255, 0.15);
+  color: #c084ff;
+  border: 1px solid rgba(155, 48, 255, 0.5);
+}
+
+.report-priority-secondary {
+  background: rgba(34, 211, 238, 0.1);
+  color: #22d3ee;
+  border: 1px solid rgba(34, 211, 238, 0.4);
+}
+
+.report-priority-tertiary {
+  background: rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.report-host-school {
+  font-size: 0.77rem;
+  color: #888;
+  margin-top: 0.2rem;
+}
+
+/* Drive time / distance cells */
+.report-col-drive,
+.report-col-dist {
+  color: #9b30ff;
+  font-weight: 500;
+}
+
+/* Visit count cells */
+.report-col-visits,
+.report-col-rvisits {
+  text-align: center;
+  font-weight: 600;
+  color: #ddd;
+}
+
+/* Notes cell */
+.report-col-notes {
+  font-size: 0.81rem;
+  color: #999;
+  line-height: 1.45;
+}
+
+/* Dash placeholder for N/A values */
+.report-na {
+  color: #444;
+}
+
+/* =============================================
+   PRINT STYLES
+   Hides the app shell and switches to a
+   clean light theme for printing or PDF export.
+   ============================================= */
+
+@media print {
+  /* Hide app chrome */
+  .top-bar,
+  .sidebar,
+  .sidebar-overlay,
+  .sidebar-trigger,
+  .bottom-nav,
+  .page-header,
+  .report-controls,
+  .global-search-panel {
+    display: none !important;
+  }
+
+  /* Let the report fill the page */
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  #page-report {
+    padding: 1cm !important;
+  }
+
+  /* Light table styling */
+  .report-table-wrap {
+    border: 1px solid #ccc !important;
+    overflow: visible !important;
+  }
+
+  .report-row {
+    border-bottom: 1px solid #ddd !important;
+  }
+
+  .report-header-row {
+    background: #f2f2f2 !important;
+    color: #444 !important;
+  }
+
+  .report-row:not(.report-header-row):nth-child(even) {
+    background: #fafafa !important;
+  }
+
+  .report-row:not(.report-header-row):nth-child(odd) {
+    background: #fff !important;
+  }
+
+  .report-col {
+    color: #111 !important;
+    border-right: 1px solid #ddd !important;
+  }
+
+  .report-date-str {
+    color: #000 !important;
+  }
+
+  .report-time-str {
+    color: #555 !important;
+  }
+
+  .report-item-name {
+    color: #000 !important;
+  }
+
+  .report-col-drive,
+  .report-col-dist {
+    color: #5a00aa !important;
+  }
+
+  .report-host-school {
+    color: #555 !important;
+  }
+
+  .report-section-label {
+    background: #eee !important;
+    color: #222 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .report-count-pill,
+  .report-type-badge,
+  .report-priority-badge,
+  .report-priority-primary,
+  .report-priority-secondary,
+  .report-priority-tertiary {
+    background: #eee !important;
+    color: #333 !important;
+    border: 1px solid #aaa !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .report-summary-bar {
+    border-bottom: 2px solid #333 !important;
+  }
+
+  .report-range-label {
+    color: #111 !important;
+  }
+
+  .report-na {
+    color: #aaa !important;
+  }
+}
