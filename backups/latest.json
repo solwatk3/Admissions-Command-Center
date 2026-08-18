@@ -549,10 +549,24 @@
       "id": "mrtd4n870kg0",
       "countyId": "c3",
       "name": "Clarksville Christian School",
-      "address": "505 TN-76, Clarksville, TN 37043, TN",
+      "address": "505 TN-76, Clarksville, TN",
       "priority": "Primary",
-      "contacts": [],
-      "notes": ""
+      "contacts": [
+        {
+          "id": "mst661yvgu4k",
+          "title": "Guidance Counselor",
+          "name": "Martha Sheffield",
+          "emails": [
+            "msheffield@clarksvillechristianschool.org"
+          ],
+          "phone": "",
+          "ext": ""
+        }
+      ],
+      "notes": "",
+      "registrationLinks": [],
+      "lat": 36.51441292979797,
+      "lng": -87.25948666046126
     },
     {
       "id": "mrtd56zj2ajl",
@@ -575,10 +589,52 @@
       "id": "mrtd5izjls11",
       "countyId": "c3",
       "name": "Kenwood High School",
-      "address": "251 E Pine Mountain Rd, Clarksville, TN 37042, TN",
+      "address": "251 E Pine Mountain Rd, Clarksville, TN",
       "priority": "Primary",
-      "contacts": [],
-      "notes": ""
+      "contacts": [
+        {
+          "id": "mst2cekhjj9e",
+          "title": "School Counselor (First Year Students)",
+          "name": "Leilani Karls",
+          "emails": [
+            "leilani.karls@cmcss.net"
+          ],
+          "phone": "",
+          "ext": "1211"
+        },
+        {
+          "id": "mst2dv3yjoh8",
+          "title": "School Counselor (Second Year Students)",
+          "name": "Eufonda Eldridge",
+          "emails": [
+            "eufonda.eldridge@cmcss.net"
+          ],
+          "phone": "",
+          "ext": "1210"
+        },
+        {
+          "id": "mst2eqcpd4y9",
+          "title": "School Counselor (Third Year Students)",
+          "name": "Yvette Childs",
+          "emails": [
+            "yvette.childs@cmcss.net"
+          ],
+          "phone": "",
+          "ext": "1208"
+        },
+        {
+          "id": "mst2g2np3eg6",
+          "title": "School Counselor (Fourth Year Students)",
+          "name": "Michael Griggs",
+          "emails": [
+            "michael.griggs@cmcss.net"
+          ],
+          "phone": "",
+          "ext": "1209"
+        }
+      ],
+      "notes": "",
+      "registrationLinks": []
     },
     {
       "id": "mrtd5x4vx7kl",
