@@ -1089,8 +1089,70 @@
       "name": "Walker Valley HS",
       "address": "750 Lauderdale Memorial Hwy, Cleveland, TN",
       "priority": "Tertiary",
-      "contacts": [],
-      "notes": ""
+      "contacts": [
+        {
+          "id": "mt1ofnke35hj",
+          "title": "A-K Counselor (10-12 grades)",
+          "name": "Kathryn Riggs",
+          "emails": [
+            "mriggs@bradleyschools.org"
+          ],
+          "phone": "",
+          "ext": ""
+        },
+        {
+          "id": "mt1ogdzf28v3",
+          "title": "L-Z Counselor (10-12 grades)",
+          "name": "Leah Walker",
+          "emails": [
+            "lewalker@bradleyschools.org"
+          ],
+          "phone": "",
+          "ext": ""
+        },
+        {
+          "id": "mt1oh33mo515",
+          "title": "9th Grade Counselor",
+          "name": "Kim Blackaby",
+          "emails": [
+            "kblackaby@bradleyschools.org"
+          ],
+          "phone": "",
+          "ext": ""
+        },
+        {
+          "id": "mt1ohieamq6o",
+          "title": "Dept Chair, Dual Enrollment",
+          "name": "Katie DelBonis",
+          "emails": [
+            "kdelbonis@bradleyschools.org"
+          ],
+          "phone": "",
+          "ext": ""
+        },
+        {
+          "id": "mt1ohyu263br",
+          "title": "PIE Center Career Coach",
+          "name": "Richard Jackson",
+          "emails": [
+            "rjackson@bradleyschools.org"
+          ],
+          "phone": "",
+          "ext": ""
+        },
+        {
+          "id": "mt1oiaxsxxzk",
+          "title": "Registrar",
+          "name": "Robin Crisp",
+          "emails": [
+            "kcrisp@bradleyschools.org"
+          ],
+          "phone": "",
+          "ext": ""
+        }
+      ],
+      "notes": "",
+      "registrationLinks": []
     },
     {
       "id": "mrtofobrmao9",
@@ -2130,9 +2192,20 @@
           ],
           "phone": "",
           "ext": ""
+        },
+        {
+          "id": "msz1qewgnrx2",
+          "title": "School Counselor",
+          "name": "Lorie McCorkle",
+          "emails": [
+            "mccorklel@wcde.org"
+          ],
+          "phone": "(423)-753-1163",
+          "ext": ""
         }
       ],
-      "notes": ""
+      "notes": "",
+      "registrationLinks": []
     },
     {
       "id": "mrv3ot4uuu19",
@@ -2449,7 +2522,7 @@
       "time": "13:00",
       "endTime": "15:00",
       "notes": "",
-      "tentative": true
+      "tentative": false
     },
     {
       "id": "msrp3qz4cf6d",
